@@ -145,7 +145,37 @@ table {
   --card-dark: #241C15;
   --tan-deep: #C7AF8E;
   --cream-deep: #EADFCB;
-  --shadow-warm: 0 24px 48px -24px rgba(23, 18, 14, .28), 0 2px 10px rgba(23, 18, 14, .08);
+
+  /* Three-layer shadow, resting and hover, one variant per light ground.
+     A single soft blur reads as a diffuse smudge, not a lifted object;
+     this stacks a 1px contact ring (the card's own edge), a short tight
+     shadow for near-field lift, and a longer soft wash for ambient
+     depth, all tinted from --espresso, never black. White-on-cream
+     separates by only 1.18:1 relative luminance versus tan's 1.66:1 (two
+     near-white surfaces with almost no colour difference), so the cream
+     variant carries a heavier ambient layer to do proportionally more of
+     the depth-signalling work colour alone can't provide there. The
+     ring layer never moves between resting and hover, on purpose: it
+     stays put as the "this is still the card's edge" anchor while the
+     other two layers do the lifting. */
+  --shadow-card-tan:
+    0 0 0 1px rgba(23, 18, 14, .05),
+    0 2px 6px -2px rgba(23, 18, 14, .14),
+    0 20px 40px -20px rgba(23, 18, 14, .22);
+  --shadow-card-tan-hover:
+    0 0 0 1px rgba(23, 18, 14, .06),
+    0 4px 10px -3px rgba(23, 18, 14, .18),
+    0 32px 56px -22px rgba(23, 18, 14, .28);
+  --shadow-card-cream:
+    0 0 0 1px rgba(23, 18, 14, .06),
+    0 2px 6px -2px rgba(23, 18, 14, .16),
+    0 22px 44px -18px rgba(23, 18, 14, .26);
+  --shadow-card-cream-hover:
+    0 0 0 1px rgba(23, 18, 14, .07),
+    0 4px 10px -3px rgba(23, 18, 14, .20),
+    0 34px 60px -20px rgba(23, 18, 14, .32);
+  /* Kept as an alias for anywhere still reading the old flat name. */
+  --shadow-warm: var(--shadow-card-cream);
 
   /* Fonts, DIRECTION-V3 verbatim. Fraunces, Karla, IBM Plex Mono, Bricolage
      Grotesque and Space Mono must never appear in this file. */
@@ -244,7 +274,13 @@ table {
   --ground-line: var(--line-dark);
   --ground-card: var(--card-dark);
   --ground-card-border: var(--line-dark);
+  /* No drop shadow on a near-black ground; it would be invisible. The
+     dark-card equivalent of a light card's shadow doing the "this is a
+     raised object" job is an inset top highlight instead, wired
+     directly on .review-card (section 18), since a drop shadow simply
+     cannot read here at all. */
   --ground-card-shadow: none;
+  --ground-card-shadow-hover: none;
   --ground-btn-bg: var(--cream);
   --ground-btn-ink: var(--espresso);
   --ground-ghost-border: var(--line-dark);
@@ -261,7 +297,8 @@ table {
   --ground-line: var(--line);
   --ground-card: var(--card);
   --ground-card-border: transparent;
-  --ground-card-shadow: var(--shadow-warm);
+  --ground-card-shadow: var(--shadow-card-tan);
+  --ground-card-shadow-hover: var(--shadow-card-tan-hover);
   --ground-btn-bg: var(--espresso);
   --ground-btn-ink: var(--cream);
   --ground-ghost-border: var(--line);
@@ -278,7 +315,8 @@ table {
   --ground-line: var(--line);
   --ground-card: var(--card);
   --ground-card-border: transparent;
-  --ground-card-shadow: var(--shadow-warm);
+  --ground-card-shadow: var(--shadow-card-cream);
+  --ground-card-shadow-hover: var(--shadow-card-cream-hover);
   --ground-btn-bg: var(--espresso);
   --ground-btn-ink: var(--cream);
   --ground-ghost-border: var(--line);
@@ -287,9 +325,17 @@ table {
 }
 
 /* Band transitions are hard edges, never gradients, per DIRECTION-V3. No
-   rule needed here: a plain background-color change on adjacent sections
-   already draws a hard edge, and adding one would be the one thing the
-   direction explicitly forbids. */
+   rule is needed at most seams: an espresso band next to a light one is
+   an 11-17:1 luminance jump, plainly a seam on its own. The one place
+   that needs help is a light-to-light seam: --tan and --cream measure
+   only 1.41:1 against each other, barely perceptible as a hard edge on
+   some monitors. A very quiet 1px hairline drawn exactly on those two
+   seams (about->practitioners, fees->visit) gives the eye the edge the
+   colour alone almost doesn't. Never on an espresso neighbour, where it
+   would be redundant. */
+#practitioners, #visit {
+  border-top: 1px solid var(--line);
+}
 
 /* --------------------------------------------------------------------------
    3. TYPE SYSTEM
@@ -542,6 +588,19 @@ strong, b {
   outline-color: var(--bone);
 }
 
+/* Concentric with the control it rings: the 4px default above draws a
+   squared-off box around a pill or a circle, which is one of the
+   fastest tells of an un-designed focus state. Pills and circles
+   declare their own outline radius to match. */
+.btn:focus-visible, .nav a:focus-visible, .nav__toggle:focus-visible {
+  border-radius: var(--radius-pill);
+}
+
+.stone:focus-visible,
+[data-carousel-prev]:focus-visible, [data-carousel-next]:focus-visible {
+  border-radius: 50%;
+}
+
 /* Touch targets, 44px minimum, added without changing layout or display type. */
 @media (pointer: coarse) {
   .btn, .nav a, .faq-item__q, .site-footer__col a, .header-actions a {
@@ -675,7 +734,7 @@ strong, b {
   text-transform: uppercase;
   color: rgba(247, 241, 232, .78);
   text-decoration: none;
-  transition: color .2s var(--ease-out), background-color .2s var(--ease-out);
+  transition: color .2s var(--ease-out), background-color .2s var(--ease-out), scale .15s var(--ease-out);
 }
 
 .nav a:hover, .nav a:focus-visible {
@@ -772,7 +831,7 @@ strong, b {
   text-transform: uppercase;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color .25s var(--ease-out), background-color .25s var(--ease-out);
+  transition: border-color .25s var(--ease-out), background-color .25s var(--ease-out), scale .15s var(--ease-out);
 }
 
 .nav__toggle::before,
@@ -887,7 +946,7 @@ strong, b {
   cursor: pointer;
   white-space: nowrap;
   transform: translateY(0);
-  transition: transform .25s var(--ease-out),
+  transition: transform .25s var(--ease-out), scale .15s var(--ease-out),
               background-color .25s var(--ease-out), border-color .25s var(--ease-out),
               color .25s var(--ease-out);
 }
@@ -916,6 +975,17 @@ strong, b {
 .btn--ghost:hover, .btn--ghost:focus-visible {
   border-color: var(--ground-ink, var(--ink));
   transform: translateY(-2px);
+}
+
+/* Press feedback: never guarded behind (hover:hover), since a touch
+   visitor deserves confirmation a tap registered just as much as a
+   mouse user does. scale, not transform, so it composes cleanly with
+   the hover translateY above rather than needing one shared transform
+   value. */
+.btn:active, .nav a:active, .faq-item__q:active,
+[data-carousel-prev]:active, [data-carousel-next]:active,
+.nav__toggle:active {
+  scale: .96;
 }
 
 /* The hero and the header sit directly on photography rather than a flat
@@ -1275,7 +1345,12 @@ strong, b {
 
   .spine__node { width: 5px; height: 5px; }
 
-  body { padding-left: 6px; }
+  /* No reserved body gutter on phone: the spine is fixed, pointer-
+     events:none and reads by mix-blend-mode against whatever is behind
+     it (section 10), so it never needs page content to step aside for
+     it. A body padding-left here previously pushed the entire page,
+     including the full-bleed hero, 6px off the true left edge — a real,
+     measured gap, not a capture artifact. */
 }
 
 /* mix-blend-mode:difference lets one spine read correctly against both
@@ -1530,7 +1605,7 @@ strong, b {
   overflow: hidden;
   border-radius: var(--radius-card);
   aspect-ratio: 4 / 5;
-  box-shadow: var(--shadow-warm);
+  box-shadow: var(--ground-card-shadow);
 }
 
 @media (min-width: 860px) {
@@ -1572,13 +1647,18 @@ strong, b {
   color: var(--ink);
   border-radius: var(--radius-card);
   overflow: hidden;
-  box-shadow: var(--shadow-warm);
+  box-shadow: var(--ground-card-shadow);
   transform: translateY(0);
-  transition: transform .3s var(--ease-out);
+  transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out);
 }
 
+/* Elevation grows on hover, not just position: translateY alone makes a
+   card look like it slid rather than lifted. The ring layer inside
+   --ground-card-shadow-hover stays put; only the near and ambient
+   layers deepen. */
 .practitioner-card:hover {
   transform: translateY(-4px);
+  box-shadow: var(--ground-card-shadow-hover);
 }
 
 /* .practitioner-card__frame (the clip-path unwrap wrapper) is styled in
@@ -1661,7 +1741,11 @@ strong, b {
   margin: 0 0 var(--space-xl);
   border-radius: var(--radius-card);
   overflow: hidden;
-  box-shadow: var(--shadow-warm);
+  /* This sits on the espresso band, where a drop shadow is invisible; a
+     whisper of an inset top highlight (as if warm light from above is
+     catching the frame's edge) stands in for it instead, the same
+     dark-ground device .review-card uses (section 18). */
+  box-shadow: inset 0 1px 0 rgba(247, 241, 232, .08);
 }
 
 .treatments__opener img {
@@ -1911,7 +1995,12 @@ strong, b {
   border-radius: var(--radius-card);
   padding: var(--space-md);
   overflow-x: auto;
-  box-shadow: var(--shadow-warm);
+  box-shadow: var(--ground-card-shadow);
+  transition: box-shadow .3s var(--ease-out);
+}
+
+.fees__panel:hover {
+  box-shadow: var(--ground-card-shadow-hover);
 }
 
 .fees-table {
@@ -2063,7 +2152,7 @@ strong, b {
   overflow: hidden;
   border-radius: var(--radius-card);
   min-height: clamp(320px, 44vw, 460px);
-  box-shadow: var(--shadow-warm);
+  box-shadow: var(--ground-card-shadow);
 }
 
 .visit__image {
@@ -2085,7 +2174,7 @@ strong, b {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  box-shadow: var(--shadow-warm);
+  box-shadow: var(--ground-card-shadow);
 }
 
 .visit__address-block {
@@ -2156,8 +2245,14 @@ strong, b {
   position: relative;
 }
 
+/* A soft edge, not a hard clip: without it the carousel reads as a
+   viewport with items cut off rather than a continuous strip drifting
+   past. Transparent at the very edge, opaque by 8%, so a card is never
+   abruptly guillotined. */
 [data-carousel-view] {
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 
 [data-carousel-track] {
@@ -2193,7 +2288,7 @@ strong, b {
   color: var(--bone);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out);
+  transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out), scale .15s var(--ease-out);
 }
 
 [data-carousel-prev]:hover, [data-carousel-next]:hover,
@@ -2219,6 +2314,10 @@ strong, b {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  /* A drop shadow is invisible on this near-black ground; a whisper of
+     an inset top highlight, as if warm light from above is catching the
+     card's upper edge, stands in for it instead. */
+  box-shadow: inset 0 1px 0 rgba(247, 241, 232, .06);
 }
 
 /* .reviews__track carries both data-reveal and data-stagger in the real
@@ -2348,6 +2447,7 @@ strong, b {
   font-size: var(--fs-md);
   font-weight: 500;
   color: var(--ink);
+  transition: scale .15s var(--ease-out);
 }
 
 .faq-item__q::-webkit-details-marker {
@@ -2631,4 +2731,18 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
 
 .blob {
   border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%;
+}
+
+/* A visitor with increased-contrast enabled expects a visibly wider gap
+   than the default AA-passing pair, not just the pair that clears the
+   floor. Re-verified against every ground each token can render on
+   before shipping, the same discipline as the base tokens: --ink-soft
+   3D3128 measures 7.85:1 on --tan and 5.98:1 on --tan-deep; --bone-soft
+   DCD2C4 measures 13.4:1 on --espresso and 12.1:1 on --card-dark, both
+   comfortably past the already-passing base values. */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-soft: #3D3128;
+    --bone-soft: #DCD2C4;
+  }
 }

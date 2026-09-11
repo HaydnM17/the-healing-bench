@@ -1,4 +1,11 @@
+# PREVIEW BUILD. Indexing is blocked on purpose while this is a preview
+# so it cannot compete with the client's live site in search results.
+#
+# BEFORE LAUNCH: delete the two lines below, uncomment the Allow and the
+# Sitemap line, and set the real absolute sitemap URL.
 User-agent: *
-Allow: /
+Disallow: /
 
-Sitemap: [DEPLOY STEP: absolute URL to sitemap.xml, e.g. https://thehealingbench.ca/sitemap.xml]
+# User-agent: *
+# Allow: /
+# Sitemap: [DEPLOY STEP: absolute URL, e.g. https://thehealingbench.ca/sitemap.xml]

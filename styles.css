@@ -1,0 +1,2634 @@
+/* ==========================================================================
+   THE HEALING BENCH. Design system, owned entirely by Agent S.
+   Massage therapy and wellness in Beamsville.
+
+   DIRECTION-V3.md is binding on everything visual: warm spa editorial.
+   Alternating warm bands (espresso, tan, cream), Playfair Display for
+   display type, Jost for body and kickers, no mono face anywhere, no
+   chromatic accent anywhere. REDESIGN-PLAN.md and BUILD-CONTRACT-V2.md's
+   "one environment" and Lamborghini/ember palette are superseded on look;
+   their motion contract, file ownership and the copy gate still stand.
+
+   Read before touching this file: DIRECTION-V3.md, BUILD-CONTRACT-V2.md
+   (DOM/motion sections only), haydn-house-style. Phone first at 390px,
+   then widened. Animate only transform and opacity; never filter, width,
+   height, top or left, for anything continuous. Discrete hover/state
+   changes on colour are fine.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   0. RESET
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Overflow guard, hidden declared first as the fallback, clip as the real rule. */
+html, body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, video, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* A neutral, espresso-tinted 1px line on every framed photograph: with
+   no chromatic accent and a warm palette end to end, a themed or
+   literal-black outline would read as a colour decision rather than a
+   material fact. Inset by its own width so it hugs a card's 16px radius
+   instead of squaring the corner off. Excluded on the two full-bleed
+   backdrops (hero, book) which have no frame to hug in the first
+   place — an inset line there would just draw a faint box around the
+   whole viewport. */
+img {
+  outline: 1px solid rgba(23, 18, 14, .08);
+  outline-offset: -1px;
+}
+
+.hero__video, .hero__poster, .book__media,
+.fees__ground img, .faq__ground img, .reviews__ground img {
+  outline: none;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/* No chromatic accent anywhere per DIRECTION-V3: text selection stays a
+   neutral warm tan tint, never the removed ember token. */
+::selection {
+  background: rgba(217, 198, 172, .6);
+  color: #17120E;
+}
+
+/* --------------------------------------------------------------------------
+   1. TOKENS
+   The exact DIRECTION-V3 palette and fonts, character for character, plus
+   an internal-only scale nothing outside this file needs to reference.
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Palette, from DIRECTION-V3.md, verbatim. */
+  --espresso: #17120E;
+  --espresso-deep: #0E0B08;
+  --tan: #D9C6AC;
+  --cream: #F4EBDD;
+  --card: #FFFFFF;
+  --ink: #2A211A;
+  /* Darkened from the original #6B5B4C: that value measured 3.91:1 on
+     --tan, under the 4.5:1 AA floor, on live text (the About lede, every
+     Visit hours row). #4F4036 clears 5.96:1 on tan and 4.70:1 on
+     tan-deep, the darkest light ground it can render on, per a
+     from-scratch WCAG relative-luminance check that matches this
+     project's own independently-computed number. */
+  --ink-soft: #4F4036;
+  --bone: #F7F1E8;
+  --bone-soft: #C9BCAC;
+  --line: rgba(42, 33, 26, .14);
+  --line-dark: rgba(247, 241, 232, .16);
+
+  /* Derived, not in the direction doc but needed to build it out: a raised
+     dark-ground card fill (DIRECTION-V3 defines --card for tan/cream only
+     and says dark-ground cards carry no shadow, which still leaves them
+     needing a fill distinct from the espresso ground behind them), a
+     warm shadow for light-ground cards, and a couple of tan/cream steps
+     for internal contrast (table stripes, hairline panels). */
+  --card-dark: #241C15;
+  --tan-deep: #C7AF8E;
+  --cream-deep: #EADFCB;
+  --shadow-warm: 0 24px 48px -24px rgba(23, 18, 14, .28), 0 2px 10px rgba(23, 18, 14, .08);
+
+  /* Fonts, DIRECTION-V3 verbatim. Fraunces, Karla, IBM Plex Mono, Bricolage
+     Grotesque and Space Mono must never appear in this file. */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Jost', system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --gutter: clamp(20px, 5vw, 72px);
+  --measure: 62ch;
+
+  /* Internal spacing and radius scale. Two-tier radius policy per
+     DIRECTION-V3: 16px on every card and image, a full pill (999px) on
+     every control, nothing in between. Full-bleed hero/book photography
+     is the one deliberate exception, styled at 0 further down. */
+  --space-2xs: 6px;
+  --space-xs: 10px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+  --space-2xl: 96px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /* .site-header's real rendered height, plus breathing room, so an anchor
+     jump never lands a heading tucked under the fixed header. */
+  --header-h: 78px;
+
+  /* Type scale, phone value first, desktop second, all clamp()-built in
+     rem so a visitor's own root size still scales the page. Sizes hold
+     the v2 floors DIRECTION-V3 reaffirms: body 17/18px, section heading
+     40px phone up to 88px desktop. Nothing here dips under 15px except
+     the kicker, which DIRECTION-V3 sets at 12 to 13px by name. */
+  --fs-kicker:    clamp(.75rem, .72rem + .12vw, .8125rem);   /* 12 -> 13px */
+  --fs-sm:        clamp(.9375rem, .9rem + .18vw, 1rem);       /* 15 -> 16px */
+  --fs-base:      clamp(1.0625rem, 1.02rem + .2vw, 1.125rem); /* 17 -> 18px, contract floor */
+  --fs-md:        clamp(1.1875rem, 1.1rem + .38vw, 1.375rem); /* 19 -> 22px */
+  --fs-card-name: clamp(1.25rem, 1.16rem + .4vw, 1.5rem);     /* 20 -> 24px, image-card captions */
+  --fs-row-name:  clamp(1.375rem, 1.2rem + .8vw, 2rem);       /* 22 -> 32px, list/group headings */
+  --fs-lg:        clamp(1.75rem, 1.5rem + 1.2vw, 2.5rem);     /* 28 -> 40px */
+  --fs-shead:     clamp(2.5rem, 1.4rem + 5vw, 5.5rem);        /* 40 -> 88px, section heading floor */
+  --fs-heroword:  clamp(1.75rem, 1.55rem + 1vw, 2.75rem);     /* 28 -> 44px, hero crest wordmark */
+  --fs-heroh1:    clamp(2.75rem, 1.7rem + 5.6vw, 6.5rem);     /* 44 -> 104px, the hero's big serif line */
+
+  --lh-tight: 1.04;
+  --lh-snug: 1.18;
+  --lh-body: 1.6;
+  --lh-relaxed: 1.68;
+
+  --ls-tight: -.01em;
+  --ls-label: .18em;
+
+  /* Per-tier tracking: negative tracking should read more aggressively as
+     size grows (a 104px line has far more absolute white space between
+     glyphs than a 20px one, so a single flat value is either too loose
+     at hero scale or too tight at card scale). Replaces --ls-tight on
+     the four roles below; --ls-tight itself stays for anything not
+     covered by a tier. */
+  --ls-hero: -.028em;
+  --ls-shead: -.02em;
+  --ls-row: -.01em;
+  --ls-card: -.005em;
+}
+
+@media (min-width: 880px) {
+  :root {
+    --header-h: 84px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. GROUND CONTEXT
+   The alternating warm-band rhythm, DIRECTION-V3's defining structural
+   move. Agent M puts exactly one of three real classes on each section,
+   .tone-espresso / .tone-tan / .tone-cream, which is the actual switch;
+   the section ids and the .ground-* aliases below are kept as a second
+   way in, so the same result holds even if a class is ever missing.
+   Every section gets a local set of --ground-* variables (background,
+   ink, secondary ink, hairline colour, card surface, card border, card
+   shadow, and the two button-fill roles), which every component below
+   reads instead of hardcoding a light or dark assumption: a card, a
+   button or a rule never needs to know which band it is in. No two
+   neighbours share a ground, per the exact order in DIRECTION-V3.md:
+   hero espresso (photographic), about tan, practitioners cream,
+   treatments espresso, fees cream, visit tan, reviews espresso, faq
+   cream, book espresso (photographic).
+   -------------------------------------------------------------------------- */
+
+.ground-espresso, .tone-espresso,
+#hero, #treatments, #reviews, #book, .site-footer {
+  --ground-bg: var(--espresso);
+  --ground-bg-deep: var(--espresso-deep);
+  --ground-ink: var(--bone);
+  --ground-ink-soft: var(--bone-soft);
+  --ground-line: var(--line-dark);
+  --ground-card: var(--card-dark);
+  --ground-card-border: var(--line-dark);
+  --ground-card-shadow: none;
+  --ground-btn-bg: var(--cream);
+  --ground-btn-ink: var(--espresso);
+  --ground-ghost-border: var(--line-dark);
+  background: var(--ground-bg);
+  color: var(--ground-ink);
+}
+
+.ground-tan, .tone-tan,
+#intro, #visit {
+  --ground-bg: var(--tan);
+  --ground-bg-deep: var(--tan-deep);
+  --ground-ink: var(--ink);
+  --ground-ink-soft: var(--ink-soft);
+  --ground-line: var(--line);
+  --ground-card: var(--card);
+  --ground-card-border: transparent;
+  --ground-card-shadow: var(--shadow-warm);
+  --ground-btn-bg: var(--espresso);
+  --ground-btn-ink: var(--cream);
+  --ground-ghost-border: var(--line);
+  background: var(--ground-bg);
+  color: var(--ground-ink);
+}
+
+.ground-cream, .tone-cream,
+#practitioners, #fees, #faq {
+  --ground-bg: var(--cream);
+  --ground-bg-deep: var(--cream-deep);
+  --ground-ink: var(--ink);
+  --ground-ink-soft: var(--ink-soft);
+  --ground-line: var(--line);
+  --ground-card: var(--card);
+  --ground-card-border: transparent;
+  --ground-card-shadow: var(--shadow-warm);
+  --ground-btn-bg: var(--espresso);
+  --ground-btn-ink: var(--cream);
+  --ground-ghost-border: var(--line);
+  background: var(--ground-bg);
+  color: var(--ground-ink);
+}
+
+/* Band transitions are hard edges, never gradients, per DIRECTION-V3. No
+   rule needed here: a plain background-color change on adjacent sections
+   already draws a hard edge, and adding one would be the one thing the
+   direction explicitly forbids. */
+
+/* --------------------------------------------------------------------------
+   3. TYPE SYSTEM
+   -------------------------------------------------------------------------- */
+
+body {
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  font-weight: 400;
+}
+
+.font-display,
+h1, h2, h3, h4,
+.hero__h1, .hero__wordmark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  text-wrap: balance;
+  color: inherit;
+}
+
+/* 400 is the default per DIRECTION-V3 ("Playfair Display 400 for big
+   display, 500 and 600 only where a heading must hold against a busy
+   photograph"). Section headings read fine at 400 on a flat band; the
+   two headings that sit over real footage (the hero, the book CTA) step
+   up to weight below. */
+h1, h2 { font-weight: 400; }
+h3, h4 { font-weight: 500; }
+
+/* Tracking tightens as size grows: the only <h1> in this document is the
+   hero headline (.hero__h1 below re-sets its size larger still and
+   inherits this tracking); h2 covers every section .shead. */
+h1 { font-size: var(--fs-shead); letter-spacing: var(--ls-shead); }
+h2 { font-size: var(--fs-shead); letter-spacing: var(--ls-shead); }
+h3 { font-size: var(--fs-row-name); letter-spacing: var(--ls-row); }
+h4 { font-size: var(--fs-card-name); letter-spacing: var(--ls-card); }
+
+p, .lede, .prose {
+  text-wrap: pretty;
+}
+
+.fees-table caption {
+  text-wrap: balance;
+}
+
+/* Hyphenation on running copy only, scoped to guard the two-column fee
+   panels at 360-480px, where a compound word or a parenthetical caption
+   is more likely to overflow a narrow column than break cleanly; never
+   on display type or labels, where a mid-word break reads as a defect
+   rather than a save. lang="en" on <html> gives the browser a
+   dictionary to hyphenate from. */
+p, .faq-item__a, .fees-table caption {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+h1, h2, h3, h4, .shead, .kicker, .btn {
+  hyphens: none;
+}
+
+/* Text blocks measured in ch on the text element itself, never a container. */
+p, .lede, .prose p, blockquote, .faq-item__a {
+  max-width: var(--measure);
+}
+
+.lede {
+  font-size: var(--fs-md);
+  line-height: var(--lh-relaxed);
+  color: var(--ground-ink-soft, var(--ink-soft));
+}
+
+/* Kickers: uppercase Jost, wide tracking, 12 to 13px, per DIRECTION-V3.
+   This is the one small label size on the page; nothing else drops
+   under 15px. No mono face anywhere. */
+.kicker, .eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-kicker);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--ground-ink-soft, var(--ink-soft));
+}
+
+.figure {
+  font-variant-numeric: tabular-nums;
+}
+
+strong, b {
+  font-weight: 500;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   3A. WORD-MASK HEADING REVEAL, data-split="words"
+   Every h2 carries data-split="words" per the motion contract. Agent J
+   wraps each word in a .mask span at runtime and adds .in to the heading
+   itself once it enters view; the full string stays in the DOM for
+   screen readers via the heading's own text plus (if J chooses) an
+   aria-label duplicate. Purely additive: an unsplit heading with no .mask
+   children renders exactly as a plain heading, so this never depends on
+   the split actually having run. Transform and opacity only. */
+[data-split='words'] .mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-block: .08em;
+  margin-block: -.08em;
+}
+
+[data-split='words'] .mask > span {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform .8s var(--ease-out);
+}
+
+[data-split='words'].in .mask > span,
+[data-reveal].in [data-split='words'] .mask > span {
+  transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   4. LAYOUT UTILITIES
+   -------------------------------------------------------------------------- */
+
+.container {
+  width: 100%;
+  max-width: min(1240px, 100% - var(--gutter) * 2);
+  margin-inline: auto;
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(64px, 11vh, 132px);
+  scroll-margin-top: calc(var(--header-h) + var(--space-sm));
+}
+
+#main,
+#hero {
+  scroll-margin-top: calc(var(--header-h) + var(--space-sm));
+}
+
+/* --------------------------------------------------------------------------
+   4A. SECTION LABEL: .slabel (data-reveal) THEN .shead AS SIBLINGS
+   The real markup is BUILD-CONTRACT-V2's device (.slabel > .slabel__n +
+   .slabel__glyph + .slabel__rule, then a sibling <h2 class="shead">), not
+   wrapped in any .section__head container. DIRECTION-V3 retires the
+   numbered index and the cairn-as-label-glyph, so .slabel__n and
+   .slabel__glyph are hidden here rather than removed from markup — the
+   cairn stays reserved for the hero crest, the header brand and the
+   favicon only. .slabel itself collapses to nothing on a centred section
+   and survives only as the self-drawing hairline on the two split-layout
+   sections (About, Visit), which is the one place DIRECTION-V3 keeps it.
+   .shead is centred by default and left-aligned on those same two
+   sections. -------------------------------------------------------------------------- */
+
+.slabel__n,
+.slabel__glyph {
+  display: none;
+}
+
+.slabel {
+  display: none;
+}
+
+.shead {
+  display: block;
+  max-width: min(760px, 100% - var(--gutter) * 2);
+  margin-inline: auto;
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.about .slabel, .visit .slabel,
+#intro .slabel, #visit .slabel {
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+
+.about .shead, .visit .shead,
+#intro .shead, #visit .shead {
+  text-align: left;
+  margin-inline: 0;
+  max-width: none;
+}
+
+/* The self-drawing rule: a hairline, transform-origin left, scaled from 0
+   to 1 on .in. */
+.slabel__rule {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 1px;
+  background: var(--ground-line, var(--line));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.1s var(--ease-out);
+}
+
+.slabel.in .slabel__rule,
+[data-reveal].in .slabel__rule {
+  transform: scaleX(1);
+}
+
+/* --------------------------------------------------------------------------
+   5. SKIP LINK, FOCUS AND TOUCH TARGETS
+   -------------------------------------------------------------------------- */
+
+.skip-link {
+  position: fixed;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 200;
+  padding: .8em 1.2em;
+  background: var(--bone);
+  color: var(--espresso);
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  transform: translateY(-160%);
+  opacity: 0;
+  transition: transform .3s var(--ease-out), opacity .3s var(--ease-out);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* No chromatic accent: focus rings use ink on light grounds and bone on
+   dark, at a 2px offset, per DIRECTION-V3. Scoped by the same ground
+   variables everything else reads, so it flips automatically per band. */
+:focus-visible {
+  outline: 2px solid var(--ground-ink, var(--ink));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.site-header :focus-visible {
+  outline-color: var(--bone);
+}
+
+/* Touch targets, 44px minimum, added without changing layout or display type. */
+@media (pointer: coarse) {
+  .btn, .nav a, .faq-item__q, .site-footer__col a, .header-actions a {
+    min-height: 44px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav a, .site-footer__col a, .header-actions a {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .stone {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. THE MARK: THE CAIRN
+   Three stacked stones, Agent M's <symbol id="cairn"> referenced by
+   <use>. Styled here wherever it appears: the hero crest, the header
+   brand, and nowhere else in v3 (it drops out of the section label
+   device and stays out of the favicon's own markup, which is inline SVG
+   in <head>, not this file). Assumes the symbol paints with
+   fill="currentColor" so colour is set here, not baked into the artwork.
+   -------------------------------------------------------------------------- */
+
+.brand svg,
+.hero__mark {
+  color: currentColor;
+  flex: none;
+}
+
+.brand svg {
+  width: 26px;
+  height: 26px;
+}
+
+.hero__mark {
+  width: clamp(40px, 6vw, 56px);
+  height: clamp(40px, 6vw, 56px);
+  color: var(--bone);
+  margin-inline: auto;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .45));
+}
+
+/* --------------------------------------------------------------------------
+   7. HEADER AND THE FLOATING GLASS NAV PILL
+   Kept from v2/Roberts: dual-layer gradient fill, an ambient drop shadow
+   together with an inset top highlight, backdrop-filter blur+saturate,
+   and a masked-gradient hairline brighter on top than bottom. Retoned
+   warm: the highlight layers are bone-tinted, not cool white, and the
+   base fill mixes from --espresso, since the header sits over the dark,
+   photographic hero for most of a first viewport. A plain border cannot
+   produce the masked hairline's top/bottom asymmetry, so this is never
+   swapped for one.
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  padding: var(--space-sm) var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  background: linear-gradient(rgba(14, 11, 8, .55), transparent);
+  pointer-events: none;
+}
+
+.site-header > * {
+  pointer-events: auto;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.05rem, 1rem + .3vw, 1.25rem);
+  letter-spacing: var(--ls-tight);
+  color: var(--bone);
+  text-decoration: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+/* One line, always: the wordmark was wrapping to three stacked lines
+   inside the flex header row, since a flex item's default min-width:auto
+   lets its text wrap before it overflows. nowrap forces it to size to
+   its content instead. */
+.brand span {
+  white-space: nowrap;
+}
+
+/* Phone header is tight (brand, a Book pill and the toggle all in one
+   row at 360-390px); the wordmark drops to visually hidden text there,
+   leaving just the cairn mark, same technique as .visually-hidden. */
+@media (max-width: 560px) {
+  .brand span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+}
+
+.nav {
+  display: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav a {
+  position: relative;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  font: 500 .8125rem/1 var(--font-body);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(247, 241, 232, .78);
+  text-decoration: none;
+  transition: color .2s var(--ease-out), background-color .2s var(--ease-out);
+}
+
+.nav a:hover, .nav a:focus-visible {
+  color: var(--bone);
+  background: rgba(247, 241, 232, .1);
+}
+
+.nav a.is-current,
+.nav a[aria-current='true'] {
+  color: var(--bone);
+  background: rgba(247, 241, 232, .14);
+}
+
+@media (min-width: 900px) {
+  .site-header {
+    height: auto;
+    padding: 14px clamp(16px, 2.4vw, 28px);
+    gap: 14px;
+  }
+
+  .nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 0 0 auto;
+    padding: 6px 8px;
+    border-radius: var(--radius-pill);
+    isolation: isolate;
+    background:
+      linear-gradient(180deg, rgba(247, 241, 232, .09), rgba(247, 241, 232, .02)),
+      color-mix(in srgb, var(--espresso) 62%, transparent);
+    box-shadow: 0 14px 34px rgba(14, 11, 8, .38), inset 0 1px 0 rgba(247, 241, 232, .12);
+    backdrop-filter: blur(16px) saturate(135%);
+    -webkit-backdrop-filter: blur(16px) saturate(135%);
+  }
+
+  /* The masked-gradient hairline. Brighter along the top edge than the
+     bottom, which a plain 1px border cannot produce, because a border is
+     one flat colour all the way round. */
+  .nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(160deg,
+      rgba(247, 241, 232, .28) 0%,
+      rgba(247, 241, 232, .11) 38%,
+      rgba(247, 241, 232, .03) 70%,
+      rgba(247, 241, 232, .11) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nav {
+      background: color-mix(in srgb, var(--espresso) 92%, transparent);
+    }
+  }
+}
+
+.header-actions {
+  display: none;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+@media (min-width: 900px) {
+  .header-actions { display: flex; }
+}
+
+/* Mobile nav toggle and the panel it controls: #navToggle / .nav__toggle,
+   .nav as the panel (aria-controls resolves the id on it), .is-open added
+   to both. Also honoured on the legacy .nav__list class name in case that
+   is what ships, so the mobile panel opens correctly either way. */
+.nav__toggle {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-md) 0 calc(var(--space-sm) + 26px);
+  border: 1px solid rgba(247, 241, 232, .3);
+  border-radius: var(--radius-pill);
+  background: rgba(23, 18, 14, .35);
+  color: var(--bone);
+  font-family: var(--font-body);
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .25s var(--ease-out), background-color .25s var(--ease-out);
+}
+
+.nav__toggle::before,
+.nav__toggle::after {
+  content: '';
+  position: absolute;
+  left: var(--space-sm);
+  width: 16px;
+  height: 1.5px;
+  background: currentColor;
+  transition: transform .3s var(--ease-out), opacity .2s var(--ease-out);
+}
+
+.nav__toggle::before { top: 18px; }
+.nav__toggle::after { top: 24px; }
+
+.nav__toggle.is-open {
+  border-color: rgba(247, 241, 232, .5);
+  background: var(--espresso);
+}
+
+.nav__toggle.is-open::before { top: 21px; transform: rotate(45deg); }
+.nav__toggle.is-open::after { top: 21px; transform: rotate(-45deg); }
+
+/* Declared after .nav__toggle's own unconditional base rule (display:
+   inline-flex above) on purpose: that base rule carries no media query,
+   so a hide-on-desktop rule placed BEFORE it in source order loses the
+   cascade tie at 900px and up even though its condition matches, which
+   is exactly the bug that showed the hamburger next to the full glass
+   pill at 1280px. Placed after, this wins the tie the same way the
+   later declaration always does at equal specificity. */
+@media (min-width: 900px) {
+  .nav__toggle { display: none; }
+}
+
+@media (max-width: 899.98px) {
+  .nav, .nav__list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    position: fixed;
+    inset: 0 0 auto 0;
+    padding: calc(var(--space-2xl) + 12px) var(--gutter) var(--space-lg);
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(217, 198, 172, .12), transparent 70%),
+      var(--espresso-deep);
+    border-bottom: 1px solid rgba(247, 241, 232, .14);
+    box-shadow: 0 24px 56px -20px rgba(0, 0, 0, .7);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-14px);
+    pointer-events: none;
+    transition: opacity .3s var(--ease-out), transform .3s var(--ease-out),
+                visibility 0s linear .3s;
+  }
+
+  .nav.is-open, .nav__list.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity .3s var(--ease-out), transform .3s var(--ease-out),
+                visibility 0s linear;
+  }
+
+  .nav a {
+    padding-block: var(--space-sm);
+    font-size: var(--fs-md);
+    color: var(--bone);
+    border-bottom: 1px solid rgba(247, 241, 232, .14);
+  }
+}
+
+/* Phone header row: brand, one Book pill, the toggle — never the phone
+   number pill too, which was the fourth thing crowding 360-390px and
+   clipping the toggle at the right edge. The number is already reachable
+   from the hero and the footer, so it drops here specifically rather
+   than needing a narrower control of its own. */
+@media (max-width: 899.98px) {
+  .header-actions {
+    display: flex;
+  }
+
+  .header-actions .btn--ghost {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. BUTTONS AND CHIPS
+   Full pill, no chromatic accent: cream fill with espresso text on dark
+   grounds, espresso fill with cream text on light grounds, driven by the
+   --ground-btn-* variables set in section 2 so a button never needs to
+   know what ground it is on. A ghost variant carries a 1px border in the
+   current ground's own line colour.
+   -------------------------------------------------------------------------- */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6em;
+  padding: 16px 32px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: .9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transform: translateY(0);
+  transition: transform .25s var(--ease-out),
+              background-color .25s var(--ease-out), border-color .25s var(--ease-out),
+              color .25s var(--ease-out);
+}
+
+.btn--sm {
+  padding: 11px 22px;
+  font-size: .8125rem;
+}
+
+.btn--primary {
+  background: var(--ground-btn-bg, var(--espresso));
+  color: var(--ground-btn-ink, var(--cream));
+}
+
+.btn--primary:hover, .btn--primary:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ground-ink, var(--ink));
+  border-color: var(--ground-ghost-border, var(--line));
+}
+
+.btn--ghost:hover, .btn--ghost:focus-visible {
+  border-color: var(--ground-ink, var(--ink));
+  transform: translateY(-2px);
+}
+
+/* The hero and the header sit directly on photography rather than a flat
+   ground, so their buttons are pinned to the dark-ground pairing
+   explicitly rather than inheriting whatever --ground-btn-* the section
+   underneath happens to set. */
+.hero .btn--primary, .header-actions .btn--primary {
+  background: var(--cream);
+  color: var(--espresso);
+}
+
+.hero .btn--ghost, .header-actions .btn--ghost {
+  color: var(--bone);
+  border-color: rgba(247, 241, 232, .5);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(23, 18, 14, .55);
+  border: 1px solid rgba(247, 241, 232, .22);
+  border-radius: var(--radius-pill);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--bone);
+  padding: .5em .9em;
+}
+
+/* --------------------------------------------------------------------------
+   9. HERO STAGE
+   A full-bleed, low-lit treatment film (two source files, portrait and
+   landscape, chosen by Agent F's JS; both object-fit: cover, no
+   letterboxing) graded down so it supports rather than competes, since
+   the footage is AI-generated and does not survive close inspection.
+   Above centre: the cairn crest and a quiet wordmark. Below: a kicker, the
+   page's one big serif headline, and one or two pill buttons. Agent F
+   writes --heroOut (0 to 1, over 0.66 of a viewport height) onto
+   #heroStage; this file translates and fades the crest and caption off
+   with it. No CSS transition on that translate/opacity, deliberately, so
+   it can never fall a frame behind the JS driving it.
+   -------------------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  height: 1000vh;
+  background: var(--espresso-deep);
+}
+
+.hero__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--espresso-deep);
+  --heroOut: 0;
+}
+
+/* Agent M's call, taken: a real treatment-room photograph rather than
+   the generated frame, since it is warmer and reads as an actual place
+   rather than an AI still. One file, not two: hero-poster.jpg and
+   hero-wide-poster.jpg exist for the two *film* orientations Agent F's
+   engine picks between, but a poster is only ever seen before that film
+   is ready (or under the reduced-motion / short-viewport / video-failed
+   gates below), so there is no matching orientation logic to get wrong
+   here the way there would be with the two generated frames — one real
+   photo, cover-cropped, serves every width. Position tuned slightly per
+   orientation so the room's own focal point stays in frame. */
+.hero__poster {
+  position: absolute;
+  inset: 0;
+  background-image: url('assets/room-1.jpg');
+  background-size: cover;
+  background-position: center 38%;
+  opacity: 1;
+  transition: opacity .6s var(--ease-out);
+}
+
+@media (orientation: landscape) {
+  .hero__poster {
+    background-position: center 30%;
+  }
+}
+
+/* Both films use object-fit: cover at every width. The v1 contain-and-
+   feather letterbox system is removed entirely: a real landscape file
+   exists now, so the desktop over-zoom is solved by the asset, not by
+   CSS. */
+.hero__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: translateZ(0);
+  transition: opacity .8s var(--ease-out);
+}
+
+/* Grade the film down: it is AI-generated and does not survive close
+   inspection, so it is held back and a scrim plus real content carries
+   the frame instead. */
+.hero__video, .hero__poster {
+  filter: saturate(.78) contrast(1.02) brightness(.92);
+}
+
+.hero__stage.video-ready .hero__video { opacity: 1; }
+.hero__stage.video-ready .hero__poster { opacity: 0; }
+.hero__stage.video-failed .hero__video { display: none; }
+.hero__stage.video-failed .hero__poster { opacity: 1; }
+
+/* Lower right of the stage, small and quiet: it was sitting dead centre
+   over the kicker and the crest, reading as a bug rather than a loading
+   indicator. It never shares space with the crest or caption text at
+   this corner, at any width, and .video-ready below still takes it to
+   full transparent once the stream is live. */
+.hero__ring {
+  position: absolute;
+  bottom: clamp(20px, 4vh, 40px);
+  right: clamp(20px, 4vw, 40px);
+  width: 30px;
+  height: 30px;
+  transform: rotate(-90deg);
+  color: var(--bone);
+  opacity: .55;
+  pointer-events: none;
+  transition: opacity .4s var(--ease-out);
+  z-index: 5;
+}
+
+.hero__ring circle {
+  stroke-linecap: round;
+}
+
+.hero__stage.video-ready .hero__ring,
+.hero__stage.video-failed .hero__ring {
+  opacity: 0;
+}
+
+@media (max-height: 560px) {
+  .hero__ring { display: none; }
+}
+
+/* The four-layer legibility system, simplified for the crest+caption
+   composition: one strong base scrim, tuned so the crest (upper third)
+   and the caption (lower half) both sit on real dark, while the middle
+   of the frame stays legible as photography. */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 46% at 50% 50%, rgba(14, 11, 8, 0) 30%, rgba(14, 11, 8, .1) 60%),
+    linear-gradient(to top, rgba(14, 11, 8, .78) 0%, rgba(14, 11, 8, .28) 34%, rgba(14, 11, 8, .08) 55%),
+    linear-gradient(to bottom, rgba(14, 11, 8, .62) 0%, rgba(14, 11, 8, .12) 30%, rgba(14, 11, 8, 0) 48%);
+}
+
+.hero__crest {
+  position: absolute;
+  top: 36%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  text-align: center;
+  transform: translate3d(-50%, calc(-50% - var(--heroOut, 0) * 26vh), 0);
+  opacity: clamp(0, calc(1 - var(--heroOut, 0) * 1.7), 1);
+}
+
+.hero__wordmark {
+  font-size: var(--fs-heroword);
+  font-weight: 500;
+  color: var(--bone);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .5);
+}
+
+.hero__caption {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(48px, 9vh, 116px);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  width: min(680px, 100% - var(--gutter) * 2);
+  text-align: center;
+  transform: translate3d(-50%, calc(var(--heroOut, 0) * -16vh), 0);
+  opacity: clamp(0, calc(1 - var(--heroOut, 0) * 1.5), 1);
+}
+
+/* A real surface, not just a text-shadow: this line crosses the
+   brightest part of the frame (the lit stone stack) at every scroll
+   position, where a shadow alone left the contrast genuinely marginal.
+   A small blurred backing chip, the same treatment .chip already uses
+   elsewhere in this file, fixes it regardless of what is behind it. */
+.hero__caption .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  color: var(--bone);
+  background: rgba(14, 11, 8, .48);
+  border: 1px solid rgba(247, 241, 232, .16);
+  border-radius: var(--radius-pill);
+  padding: .55em 1.1em;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.hero__caption .kicker svg {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+
+.hero__h1 {
+  font-size: var(--fs-heroh1);
+  font-weight: 600;
+  letter-spacing: var(--ls-hero);
+  line-height: 1;
+  color: var(--bone);
+  text-shadow: 0 3px 24px rgba(0, 0, 0, .5);
+}
+
+.hero__actions {
+  margin-top: var(--space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+/* --------------------------------------------------------------------------
+   9A. THE FIVE HERO GATES
+   These five strings must stay character for character identical to
+   film-engine.js's GATES array. All five are listed here, in the same
+   order, for the audit that diffs them side by side. Only the last two
+   actually change anything in this file: they pin the frame to the
+   poster and stop the film, matching film-engine.js falling back to a
+   complete-without-video state. The first three keep the real
+   scroll-scrubbed film active (phones and portrait tablets included, per
+   MOBILE_SCRUB) and are listed for the audit, not as hiding rules.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+}
+
+@media (orientation: portrait) and (max-width: 1024px) {
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
+  .hero__video { display: none; }
+  .hero__poster { opacity: 1; }
+  .hero__ring { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__video { display: none; }
+  .hero__poster { opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   10. THE SPINE
+   A hairline rule with stone nodes, one per section, brightening as the
+   reader passes. No chromatic accent: state reads as a lightness jump
+   (dim stone-tone to full bone), never a colour change.
+   -------------------------------------------------------------------------- */
+
+/* Starts below the fixed header rather than at the true viewport top: a
+   node sitting flush against y:0 behind the header read as a stray
+   artifact rather than a deliberate element, since nothing else on the
+   page touches that edge. */
+.spine {
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  left: 32px;
+  z-index: 40;
+  width: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-xl);
+  pointer-events: none;
+  mix-blend-mode: difference;
+}
+
+.spine__rule {
+  position: absolute;
+  top: var(--space-xl);
+  bottom: var(--space-xl);
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(247, 241, 232, .35);
+}
+
+.spine__rule::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bone);
+  transform-origin: top;
+  transform: scaleY(var(--spine-progress, 0));
+  transition: transform .2s linear;
+}
+
+/* Sized to actually show the cairn glyph each node now contains, per
+   Agent M's real markup (<span class="spine__node"><svg><use
+   href="#cairn"/></svg></span>) — a plain 7px dot from v2 would reduce a
+   three-stone mark to an unreadable speck. */
+.spine__node {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.spine__node svg {
+  width: 60%;
+  height: 76%;
+  color: rgba(247, 241, 232, .32);
+  transition: color .4s var(--ease-out);
+}
+
+.spine__node.is-passed svg {
+  color: var(--bone);
+  filter: drop-shadow(0 0 4px rgba(247, 241, 232, .35));
+}
+
+@media (max-width: 720px) {
+  .spine {
+    left: 0;
+    width: 2px;
+    padding-block: var(--space-lg);
+  }
+
+  .spine__rule {
+    top: var(--space-lg);
+    bottom: var(--space-lg);
+    width: 2px;
+  }
+
+  .spine__node { width: 5px; height: 5px; }
+
+  body { padding-left: 6px; }
+}
+
+/* mix-blend-mode:difference lets one spine read correctly against both
+   dark and light bands without per-section colour logic; it is not
+   scoped to the reduced-motion query below because it is not motion. */
+
+/* --------------------------------------------------------------------------
+   11. THE HOLD INTERACTION
+   Press and hold the cairn to feel it warm. --heat runs 0 to 1. Retoned
+   off ember: the glow is warm bone/tan light, contrast doing the work a
+   chromatic accent used to. Agent M's actual markup replaces the drawn
+   stone body with the cairn mark itself (.stone__mark, an <svg><use
+   href="#cairn"/></svg>) as the button's one visual, plus its halo; the
+   button sits over the photographic backdrop styled in section 15. -------------------------------------------------------------------------- */
+
+.stone {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(88px, 18vw, 120px);
+  aspect-ratio: 1;
+  border: 1px solid var(--line-dark);
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(23, 18, 14, .4);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, .06),
+    0 14px 34px -10px rgba(0, 0, 0, .5);
+}
+
+.stone__mark {
+  position: relative;
+  z-index: 1;
+  width: 38%;
+  height: 52%;
+  color: var(--bone);
+  transition: color .18s linear, filter .18s linear;
+  filter: drop-shadow(0 0 calc(var(--heat, 0) * 10px) rgba(217, 198, 172, .8));
+}
+
+.stone__halo {
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(217, 198, 172, .4) 0%, transparent 70%);
+  opacity: var(--heat, 0);
+  transform: scale(calc(.55 + var(--heat, 0) * .6));
+  pointer-events: none;
+  transition: opacity .18s linear, transform .18s linear;
+}
+
+.stone:active {
+  transform: scale(.97);
+  transition: transform .15s var(--ease-out);
+}
+
+#heatStoneHint {
+  margin-top: var(--space-sm);
+  font-family: var(--font-body);
+  font-size: .8125rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ground-ink-soft, var(--bone-soft));
+}
+
+.heat-reveal {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.heat-reveal .heat-reveal__item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .5s var(--ease-out), transform .5s var(--ease-out);
+}
+
+.heat-reveal__item.btn {
+  transition: opacity .5s var(--ease-out), transform .25s var(--ease-out),
+              background-color .25s var(--ease-out), border-color .25s var(--ease-out);
+}
+
+.heat-reveal__item:nth-child(1) { transition-delay: 0ms; }
+.heat-reveal__item:nth-child(2) { transition-delay: 120ms; }
+.heat-reveal__item:nth-child(3) { transition-delay: 240ms; }
+.heat-reveal__item:nth-child(4) { transition-delay: 360ms; }
+
+.heat-reveal[data-state='warming'] .heat-reveal__item {
+  opacity: .4;
+  transform: translateY(6px);
+}
+
+.heat-reveal[data-state='done'] .heat-reveal__item {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0ms;
+}
+
+/* --------------------------------------------------------------------------
+   12. ENTRANCE CHOREOGRAPHY: [data-reveal]
+   Container gets .in from IntersectionObserver. Transform and opacity
+   only, fully reversible.
+   -------------------------------------------------------------------------- */
+
+[data-reveal] > * {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
+}
+
+[data-reveal].in > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* No nth-child transition-delay ladder here: data-stagger's own JS reads
+   the attribute and writes each child's transition-delay inline, and an
+   inline style would fight a CSS one targeting the same property rather
+   than simply losing to it (the two race on every re-render), so a
+   container that carries both data-reveal and data-stagger, which is how
+   Agent M's markup pairs them everywhere, must get its delay from JS
+   only. A plain data-reveal with no data-stagger just reveals every
+   child at once, which is correct for a single-item container (a lone
+   .about__copy, .book__frame). */
+[data-reveal][data-reveal].in > * {
+  transition-delay: 0ms;
+}
+
+/* Agent J's data-stagger: the same fade+rise as [data-reveal], on a
+   container whose own JS-written inline transition-delay staggers the
+   children. CSS supplies only the base transition and the two end
+   states, never a delay value. */
+[data-stagger] > * {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
+}
+
+[data-stagger].in > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   12A. PARALLAX: [data-parallax], reading --p (0 to 1 scroll progress
+   through the element). Agent M confirms this sits on the real <img>
+   itself in all eleven cases (About, each practitioner photo, the
+   Treatments opener, three treatment-row images, the hot-stone
+   backdrop, the Visit photograph) rather than on a wrapping figure, so
+   the transform is built for an image: scaled up so a translate never
+   uncovers an edge, then drifted opposite the scroll direction. Every
+   parallax image's own containing box (figure, card frame, media div)
+   carries overflow:hidden so the scale/translate stays clipped to that
+   box's own shape and radius. Transform only. -------------------------------------------------------------------------- */
+
+[data-parallax] {
+  --p: .5;
+  transform: translate3d(0, calc((var(--p, .5) - .5) * -12%), 0) scale(1.16);
+}
+
+/* --------------------------------------------------------------------------
+   12B. THE PRACTITIONER PHOTO UNWRAP: .practitioner-card__frame
+   The clip-path animates on this inner wrapper, never on
+   .practitioner-card itself, so the outer card's own 16px radius and
+   overflow:hidden are what actually bound the visible shape at every
+   frame of the animation; the frame's clip-path only ever changes how
+   much of the photo is revealed inside that already-rounded, already-
+   clipped box. Transform/opacity are untouched here, so this is exempt
+   from the transform-and-opacity-only rule the way a clip-path reveal
+   generally is (no discrete state to fake it with). -------------------------------------------------------------------------- */
+
+.practitioner-card__frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  clip-path: inset(0 0 34% 0);
+  transition: clip-path .9s var(--ease-out);
+}
+
+[data-reveal].in .practitioner-card__frame,
+[data-stagger].in .practitioner-card__frame,
+.practitioner-card__frame.in {
+  clip-path: inset(0);
+}
+
+/* --------------------------------------------------------------------------
+   12C. THE MAGNETIC BOOK CTA: [data-magnetic]
+   JS writes transform directly, per pointer move, with its own easing;
+   a CSS transition on transform here would fight and lag it. Every
+   other .btn transition (fill, border, text colour) still applies. -------------------------------------------------------------------------- */
+
+[data-magnetic] {
+  transition: background-color .25s var(--ease-out), border-color .25s var(--ease-out),
+              color .25s var(--ease-out), filter .25s var(--ease-out);
+}
+
+/* --------------------------------------------------------------------------
+   13. SECTION: ABOUT (tan, split layout)
+   Text left, still-linen.jpg right at full column height: a real <img>
+   in .about__media, per Agent M's actual markup (.about__grid >
+   .about__copy + .about__media > .about__image). room-1.jpg moved to
+   #heroPoster per Agent M's call (see section 9), so this is
+   still-linen.jpg, the raking-light linen fold: the room being made
+   ready, immediately below the hero. No image smaller than a third of
+   the viewport on desktop, per DIRECTION-V3: the media column runs a
+   full half of the grid, never a thumbnail.
+   -------------------------------------------------------------------------- */
+
+.about__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+@media (min-width: 860px) {
+  .about__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+}
+
+.about__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.about__copy p {
+  color: var(--ink-soft);
+  font-size: var(--fs-md);
+  line-height: var(--lh-relaxed);
+}
+
+.about__copy p:first-of-type {
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.about__media {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  aspect-ratio: 4 / 5;
+  box-shadow: var(--shadow-warm);
+}
+
+@media (min-width: 860px) {
+  .about__media {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+.about__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* --------------------------------------------------------------------------
+   14. SECTION: PRACTITIONERS (cream, image-card grid)
+   Three white, 16px-radius cards, three across on desktop, one column on
+   phone. Photo on top, caption below: name in Playfair, title and
+   description in Jost, the review pull-quote closing the card.
+   -------------------------------------------------------------------------- */
+
+.practitioners__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 760px) {
+  .practitioners__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+  }
+}
+
+.practitioner-card {
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-warm);
+  transform: translateY(0);
+  transition: transform .3s var(--ease-out);
+}
+
+.practitioner-card:hover {
+  transform: translateY(-4px);
+}
+
+/* .practitioner-card__frame (the clip-path unwrap wrapper) is styled in
+   section 12B; it sits directly around the <img> below. */
+.practitioner-card__photo {
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background-color: var(--tan-deep);
+  object-fit: cover;
+  object-position: center;
+}
+
+.practitioner-card__body {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.practitioner-card__name {
+  font-size: var(--fs-card-name);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.practitioner-card__title {
+  font-size: .8125rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.practitioner-card__desc {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--ink-soft);
+}
+
+.practitioner-card__quote {
+  margin-top: var(--space-2xs);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  /* Not italic: the Google Fonts request only loads Playfair Display's
+     roman weights, so font-style: italic here would be the browser
+     synthesizing a slant by matrix transform rather than rendering the
+     face's real italic cut, which looks genuinely off on a high-
+     contrast display serif. The blockquote's own indent plus this
+     smaller size already signal "quotation" without it. */
+  font-size: var(--fs-sm);
+  line-height: var(--lh-relaxed);
+  color: var(--ink);
+  hanging-punctuation: first;
+}
+
+.practitioner-card__quote cite {
+  display: block;
+  margin-top: var(--space-2xs);
+  font-style: normal;
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   15. SECTION: TREATMENTS (espresso, image-led)
+   massage-1.jpg opens the section full width in .treatments__opener, the
+   client's own real photograph in the section's single highest-
+   visibility slot. Selected rows (Hot Stones, Prenatal Massage,
+   Reflexology, Natural Lift Facial) carry their own real <img> in
+   .treatment-row--media, alternating side via data-side="left|right",
+   which is what turns eleven text-only rows into an image-led list
+   without needing eleven separate photographs. The press-and-hold
+   stone sits over its own layered photographic backdrop. -------------------------------------------------------------------------- */
+
+.treatments__opener {
+  margin: 0 0 var(--space-xl);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-warm);
+}
+
+.treatments__opener img {
+  display: block;
+  width: 100%;
+  height: clamp(240px, 34vw, 460px);
+  object-fit: cover;
+}
+
+.treatments__group + .treatments__group {
+  margin-top: var(--space-xl);
+}
+
+.treatments__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.treatments__group-name {
+  font-size: var(--fs-row-name);
+  font-weight: 500;
+}
+
+.treatments__group-count {
+  font-size: .8125rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--bone-soft);
+}
+
+.treatment-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2xs) var(--space-md);
+  padding-block: var(--space-md);
+  border-bottom: 1px solid var(--line-dark);
+}
+
+@media (min-width: 640px) {
+  .treatment-row {
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+  }
+}
+
+.treatment-row__name {
+  font-size: var(--fs-row-name);
+  font-weight: 500;
+  color: var(--bone);
+}
+
+.treatment-row__desc {
+  grid-column: 1 / -1;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--bone-soft);
+  max-width: var(--measure);
+}
+
+.treatment-row__price {
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  color: var(--bone);
+  white-space: nowrap;
+}
+
+.treatment-row__price.is-enquiry {
+  color: var(--bone-soft);
+  font-size: .8125rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Image-led rows: .treatment-row--media pairs a real photograph with the
+   row's own name/price/description, alternating which side the image
+   sits on via data-side, so the four illustrated rows (Hot Stones,
+   Prenatal Massage, Reflexology, Natural Lift Facial) read as a
+   deliberate rhythm rather than a repeated template. */
+.treatment-row--media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  align-items: center;
+  border-bottom: 1px solid var(--line-dark);
+  padding-block: var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .treatment-row--media {
+    grid-template-columns: minmax(0, 220px) 1fr;
+    border-bottom: none;
+  }
+
+  .treatment-row--media[data-side='right'] {
+    grid-template-columns: 1fr minmax(0, 220px);
+  }
+
+  .treatment-row--media[data-side='right'] .treatment-row__media {
+    order: 2;
+  }
+}
+
+.treatment-row__media {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  aspect-ratio: 4 / 5;
+}
+
+@media (min-width: 640px) {
+  .treatment-row__media {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+.treatment-row__media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.treatment-row--media .treatment-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding-block: 0;
+}
+
+.treatment-row--media .treatment-row__desc {
+  max-width: none;
+}
+
+/* The hot-stone hold interaction: a layered photographic backdrop
+   (still-heat.jpg parallaxing under still-falling.jpg's whisper of
+   motion, screen-blended so it reads as drifting light rather than a
+   second flat photo) behind the button and its reveal text, with a
+   scrim so both stay legible over real photography. */
+.stone-interaction {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  padding: var(--space-2xl) var(--space-md);
+  text-align: center;
+}
+
+.stone-interaction__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--card-dark);
+}
+
+.stone-interaction__bg,
+.stone-interaction__ambient {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stone-interaction__ambient {
+  opacity: .45;
+  mix-blend-mode: screen;
+}
+
+.stone-interaction__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%,
+    rgba(14, 11, 8, .35) 0%, rgba(14, 11, 8, .72) 100%);
+}
+
+.stone-interaction > .stone,
+.stone-interaction > #heatStoneHint,
+.stone-interaction > .heat-reveal {
+  position: relative;
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   16. SECTION: FEES (cream, quiet data)
+   Real tables on white, 16px-radius panels, a faint topographic texture
+   as the section's own ground rather than any representational photo,
+   so the numbers stay the one thing the eye reads.
+   -------------------------------------------------------------------------- */
+
+/* .fees__ground holds tex-contour.jpg, art-directed as a faint texture
+   for a dark ground; on Fees' cream band a plain low-opacity overlay
+   read as a washed-out grey smudge, so it runs through multiply blend
+   instead, which only ever darkens toward the texture's own warm-black
+   tone rather than greying the cream out evenly, at a whisper of
+   opacity so the numbers stay the one thing competing for attention. */
+.fees__ground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.fees__ground img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .09;
+  mix-blend-mode: multiply;
+}
+
+.fees .container {
+  position: relative;
+  z-index: 1;
+}
+
+.fees__note {
+  max-width: var(--measure);
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  margin-bottom: var(--space-lg);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.fees__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 820px) {
+  .fees__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.fees__panel {
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+  overflow-x: auto;
+  box-shadow: var(--shadow-warm);
+}
+
+.fees-table {
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .fees-table {
+    min-width: 360px;
+  }
+}
+
+.fees-table caption {
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink);
+  padding-bottom: var(--space-xs);
+}
+
+.fees-table th,
+.fees-table td {
+  text-align: left;
+  padding: .7em .8em;
+  font-size: var(--fs-sm);
+  border-bottom: 1px solid var(--line);
+}
+
+.fees-table thead th {
+  font-size: .75rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-bottom: 1px solid rgba(42, 33, 26, .3);
+}
+
+.fees-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.fees-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 719.98px) {
+  .fees-table:has(thead th:nth-child(6)) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-md);
+  }
+
+  .fees-table:has(thead th:nth-child(6)) caption {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .fees-table:has(thead th:nth-child(6)) thead,
+  .fees-table:has(thead th:nth-child(6)) tbody,
+  .fees-table:has(thead th:nth-child(6)) tr {
+    display: contents;
+  }
+
+  .fees-table:has(thead th:nth-child(6)) thead th {
+    grid-column: 1;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .fees-table:has(thead th:nth-child(6)) tbody td {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(1),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(1) { grid-row: 2; }
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(2),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(2) { grid-row: 3; }
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(3),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(3) { grid-row: 4; }
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(4),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(4) { grid-row: 5; }
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(5),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(5) { grid-row: 6; }
+  .fees-table:has(thead th:nth-child(6)) thead th:nth-child(6),
+  .fees-table:has(thead th:nth-child(6)) tbody td:nth-child(6) { grid-row: 7; }
+}
+
+.fees__addon {
+  margin-top: var(--space-sm);
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   17. SECTION: VISIT (tan, split layout)
+   Hours left; right, still-table.jpg (a real <img>, .visit__image) with
+   a floating white address card (.visit__card) anchored over its lower
+   edge, echoing About's split at reduced intensity, per Agent M's real
+   markup: .visit__grid > .visit__hours + .visit__media > .visit__image
+   + .visit__card.
+   -------------------------------------------------------------------------- */
+
+.visit__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 780px) {
+  .visit__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+}
+
+.visit__hours {
+  display: flex;
+  flex-direction: column;
+}
+
+.visit__hours-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-block: .6em;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.visit__hours-row.is-open-late .visit__hours-time {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.visit__hours-day {
+  color: var(--ink-soft);
+}
+
+.visit__hours-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.visit__media {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  min-height: clamp(320px, 44vw, 460px);
+  box-shadow: var(--shadow-warm);
+}
+
+.visit__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.visit__card {
+  position: relative;
+  z-index: 1;
+  margin: clamp(120px, 24vw, 220px) var(--space-md) var(--space-md);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-warm);
+}
+
+.visit__address-block {
+  font-style: normal;
+  line-height: var(--lh-body);
+}
+
+.visit__card a {
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: .15em;
+}
+
+/* --------------------------------------------------------------------------
+   18. SECTION: REVIEWS (espresso, image-card carousel)
+   Dark, borderless-per-DIRECTION-V3-exception raised cards (a hairline
+   border stands in for the shadow DIRECTION-V3 withholds on dark
+   grounds), each carrying a small circular headshot of the practitioner
+   the quote is about, since all three quotes here are the same three
+   quotes attributed on the Practitioners cards above.
+
+   Built to Agent J's carousel shape: [data-carousel] is the outer
+   wrapper, [data-carousel-view] the clipping viewport (overflow:hidden,
+   nothing else — no padding that would let a card show past its own
+   edge), [data-carousel-track] the flex row JS translates as a whole,
+   and [data-carousel-prev]/[data-carousel-next] real pill buttons for
+   keyboard and click control alongside the depth-drift auto-advance.
+   JS writes each .review-card's own scale and opacity every frame from
+   its distance to centre, so neither property gets a transition here;
+   fighting a per-frame write with a CSS transition is exactly what
+   would make it lag. -------------------------------------------------------------------------- */
+
+/* .reviews__ground holds tex-linen.jpg, art-directed warm-on-dark, so
+   it sits directly on this espresso band with no blend-mode correction
+   needed (unlike Fees'/FAQ's cream-band textures above) — soft-light at
+   a slightly higher opacity than a straight overlay would use, since
+   soft-light is what lets the texture's own highlights read against
+   near-black without ever washing the band out to grey. */
+.reviews__ground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reviews__ground img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .16;
+  mix-blend-mode: soft-light;
+}
+
+.reviews .container {
+  position: relative;
+  z-index: 1;
+}
+
+.reviews__rating {
+  font-size: var(--fs-sm);
+  color: var(--bone-soft);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+[data-carousel] {
+  position: relative;
+}
+
+[data-carousel-view] {
+  overflow: hidden;
+}
+
+[data-carousel-track] {
+  display: flex;
+  gap: var(--space-md);
+  padding-block: var(--space-xs);
+}
+
+[data-carousel-track] > .review-card {
+  flex: 0 0 min(84%, 360px);
+}
+
+@media (min-width: 880px) {
+  [data-carousel-track] > .review-card {
+    flex: 0 0 min(31%, 380px);
+  }
+}
+
+[data-carousel-prev],
+[data-carousel-next] {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-dark);
+  background: var(--card-dark);
+  color: var(--bone);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out);
+}
+
+[data-carousel-prev]:hover, [data-carousel-next]:hover,
+[data-carousel-prev]:focus-visible, [data-carousel-next]:focus-visible {
+  border-color: var(--bone-soft);
+}
+
+[data-carousel-prev] { left: clamp(-8px, -2vw, 0px); }
+[data-carousel-next] { right: clamp(-8px, -2vw, 0px); }
+
+[data-carousel-prev] svg, [data-carousel-next] svg {
+  width: 18px;
+  height: 18px;
+}
+
+.review-card {
+  position: relative;
+  background: var(--card-dark);
+  color: var(--bone);
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-card);
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* .reviews__track carries both data-reveal and data-stagger in the real
+   markup, so the generic rules in section 12 would otherwise put a .6s
+   transition on this card's opacity and transform — exactly what the
+   carousel's own per-frame distance-to-centre write must not fight.
+   This wins on source order (declared after section 12) at equal
+   selector specificity, so the entrance still happens (JS interpolates
+   from the .in state directly) but nothing here fights the ongoing
+   scroll-linked write once it starts. */
+[data-carousel-track] > .review-card {
+  transition: none;
+}
+
+/* Hidden rather than styled: the copy in the paragraph below already
+   opens and closes with its own straight quotation marks, so this
+   decorative glyph on top of it doubles the punctuation. Pick one; the
+   paragraph's own marks are the copy gate's verbatim text and stay,
+   this ornament does not. Kept in the DOM (aria-hidden already, so
+   nothing is lost to assistive tech) rather than asking for a markup
+   change, per the file-ownership rule. */
+.review-card__mark {
+  display: none;
+}
+
+/* A small circular headshot of the practitioner each quote is about,
+   in the opposite corner from the quote mark so neither crowds the
+   other; all three quotes here repeat the exact three attributions on
+   the Practitioners cards above, so this is free, no new asset. */
+.review-card::after {
+  content: '';
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--tan-deep);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 0 3px var(--card-dark), 0 0 0 4px var(--line-dark);
+}
+
+.review-card:nth-of-type(1)::after { background-image: url('assets/team-deborah.jpg'); }
+.review-card:nth-of-type(2)::after { background-image: url('assets/team-laurette.jpg'); }
+.review-card:nth-of-type(3)::after { background-image: url('assets/team-naira.jpg'); }
+
+.review-card__quote {
+  /* Clears the circular avatar (top: var(--space-md), 36px tall) sitting
+     in the same top-right corner: the card's own top padding alone
+     (var(--space-lg)) is not quite enough room. */
+  margin-top: var(--space-xs);
+  font-family: var(--font-display);
+  /* Not italic, same reasoning as .practitioner-card__quote above: no
+     italic axis is loaded for Playfair Display, so this would otherwise
+     be a synthesized slant, not the face's real italic cut. */
+  font-size: var(--fs-md);
+  line-height: var(--lh-relaxed);
+  color: var(--bone);
+  hanging-punctuation: first;
+}
+
+.review-card__attrib {
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--bone-soft);
+}
+
+/* --------------------------------------------------------------------------
+   19. SECTION: FAQ (cream, generous accordion)
+   A quiet steam texture as the section's own faint ground; the accordion
+   itself stays the plainest thing on the page on purpose.
+   -------------------------------------------------------------------------- */
+
+/* .faq__ground holds tex-steam.jpg: the same multiply-blend fix as
+   .fees__ground above, since it was also art-directed warm-on-dark and
+   washes out flat on this cream band otherwise. */
+.faq__ground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.faq__ground img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .08;
+  mix-blend-mode: multiply;
+}
+
+.faq .container {
+  position: relative;
+  z-index: 1;
+}
+
+.faq__list {
+  max-width: min(760px, 100% - var(--gutter) * 2);
+  margin-inline: auto;
+}
+
+/* Agent J measured this deliberately: the accordion animates the real
+   height property, not max-height, because max-height animations either
+   overshoot (a large fixed cap) or undershoot (a small one) whenever
+   the answer's actual wrapped line count changes at a given viewport
+   width. overflow:hidden here is what keeps the reveal clean while
+   height itself is mid-transition; the transition duration below is a
+   default in case JS toggles a class rather than setting its own. */
+.faq-item {
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  transition: height .35s var(--ease-out);
+}
+
+.faq-item__q {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-block: var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.faq-item__q::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item__q::after {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  /* 1.75px, not 1.5px: this chevron sits beside Playfair 500-weight
+     text; a thinner stroke reads faint and disconnected from a medium-
+     weight serif label. */
+  border-right: 1.75px solid var(--ink-soft);
+  border-bottom: 1.75px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transition: transform .3s var(--ease-out);
+}
+
+.faq-item[open] .faq-item__q::after {
+  transform: rotate(-135deg);
+}
+
+.faq-item__a {
+  padding-bottom: var(--space-md);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   20. SECTION: BOOK (espresso, full-bleed photograph, centred CTA)
+   room-2.jpg, the client's own warm treatment room, full-bleed behind
+   the closing call to action, echoing the hero's grading so the page
+   visually returns to where it started. Real elements per Agent M's
+   markup: .book__stage wraps .book__media (the <img>), .book__scrim
+   (a real div, not a pseudo-element) and .container; normal DOM order
+   already stacks scrim over photo and content over both, so no z-index
+   is load-bearing here, only position for the two absolutely-placed
+   layers. -------------------------------------------------------------------------- */
+
+/* Full-bleed to the section's own edges: .section's usual padding-block
+   would otherwise inset the photograph, so it moves onto .book__stage's
+   own content instead via the .container padding two rules down. */
+.book.section {
+  padding-block: 0;
+}
+
+.book {
+  text-align: center;
+}
+
+.book__stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.book__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.8) contrast(1.02) brightness(.7);
+}
+
+.book__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(14, 11, 8, .35) 0%, rgba(14, 11, 8, .7) 100%),
+    linear-gradient(to bottom, rgba(14, 11, 8, .35), rgba(14, 11, 8, .55));
+}
+
+.book__stage .container {
+  position: relative;
+  padding-block: clamp(96px, 16vh, 176px);
+}
+
+.book__frame {
+  max-width: 640px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.book__title {
+  font-size: var(--fs-shead);
+  font-weight: 600;
+  color: var(--bone);
+  text-shadow: 0 3px 20px rgba(0, 0, 0, .5);
+}
+
+.book__lede {
+  color: var(--bone-soft);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .4);
+}
+
+.book__actions {
+  margin-top: var(--space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.book__contact {
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  font-size: var(--fs-sm);
+  color: var(--bone-soft);
+}
+
+.book__contact a {
+  color: var(--bone);
+  text-decoration: underline;
+  text-decoration-color: rgba(247, 241, 232, .4);
+  text-underline-offset: .15em;
+}
+
+/* --------------------------------------------------------------------------
+   21. FOOTER (espresso)
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  padding-block: var(--space-xl) var(--space-lg);
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 720px) {
+  .site-footer__grid {
+    grid-template-columns: 1.4fr 1fr 1fr;
+  }
+}
+
+.site-footer__brand {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+  color: var(--bone);
+}
+
+.site-footer__col h3 {
+  font-family: var(--font-body);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--bone-soft);
+  margin-bottom: var(--space-xs);
+}
+
+.site-footer__col ul,
+.site-footer__col address {
+  display: flex;
+  flex-direction: column;
+  gap: .4em;
+  font-style: normal;
+  font-size: var(--fs-sm);
+  color: var(--bone-soft);
+}
+
+.site-footer__col a {
+  text-decoration: none;
+}
+
+.site-footer__col a:hover,
+.site-footer__col a:focus-visible {
+  color: var(--bone);
+}
+
+.site-footer__bottom {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--line-dark);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: .8125rem;
+  color: var(--bone-soft);
+}
+
+/* --------------------------------------------------------------------------
+   22. body.paused
+   -------------------------------------------------------------------------- */
+
+body.paused *, body.paused *::before, body.paused *::after { animation-play-state: paused !important; }
+body.paused::before, body.paused::after { animation-play-state: paused !important; }
+
+/* --------------------------------------------------------------------------
+   23. REDUCED MOTION
+   Honoured completely and live in both directions. Kill duration and
+   delay everywhere including pseudo-elements; pin every choreographed
+   element to its finished state without a blanket transform:none, which
+   would break elements that use transform for real positioning (the
+   hero crest/caption centring, the ring, the spine).
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+
+  [data-reveal] > *,
+  [data-stagger] > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-split='words'] .mask > span {
+    transform: none;
+  }
+
+  .practitioner-card__frame {
+    clip-path: inset(0);
+  }
+
+  [data-carousel-track] > .review-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  [data-magnetic] {
+    transform: none !important;
+  }
+
+  .hero__crest {
+    transform: translate3d(-50%, -50%, 0);
+    opacity: 1;
+  }
+
+  .hero__caption {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+
+  [data-parallax] {
+    transform: none;
+    opacity: 1;
+  }
+
+  .heat-reveal .heat-reveal__item {
+    opacity: 1;
+    transform: none;
+  }
+
+  .slabel__rule {
+    transform: scaleX(1);
+  }
+
+  .skip-link {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   24. QUALITY FLOOR, MISCELLANEOUS
+   No styled scrollbar anywhere in this file: color-scheme is all that is
+   set, on html, at the top of the file. Contrast: --ink on --cream/--tan
+   and --bone on --espresso both clear 4.5:1 for body text; --ink-soft and
+   --bone-soft are reserved for secondary text only, never for an
+   interactive line thinner than the buttons/border rules above, which
+   use the full-strength ink/bone pairing.
+   -------------------------------------------------------------------------- */
+
+.blob {
+  border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%;
+}

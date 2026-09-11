@@ -1,0 +1,71 @@
+# The Healing Bench, single static page. No contact form, no analytics script, no map or
+# video embed, no self-hosted fonts and no /vendor directory, so the security headers below
+# are scoped tighter than the client-site-kit template: nothing is allowed here that this
+# page does not actually load.
+#
+# Content-Security-Policy, directive by directive:
+#   default-src 'self'        Fallback for any fetch type not named below. Same origin only.
+#   script-src 'self'         The three page scripts (scrollcraft.js, film-engine.js, site.js)
+#                              are same-origin files loaded with defer, nothing else executes.
+#                              The JSON-LD block in <head> is type="application/ld+json", a
+#                              data island the browser never runs as script, so it is not
+#                              subject to this directive and needs no 'unsafe-inline' for it.
+#   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+#                              'self' for styles.css. fonts.googleapis.com for the Google
+#                              Fonts stylesheet link in <head>. 'unsafe-inline' for the
+#                              inline style="" attributes already in index.html (the hidden
+#                              cairn sprite and the hero ring's stroke-dashoffset custom
+#                              property) and for 404.html's own small inline style block.
+#                              Per the kit README this is expected and safe on these sites
+#                              because no inline <script> relies on the matching allowance.
+#   font-src https://fonts.gstatic.com
+#                              Google's font stylesheet points its woff2 files at this host.
+#                              There are no self-hosted font files to allow from 'self'.
+#   img-src 'self' data:      Every photo is same-origin under /assets. data: covers the
+#                              inline SVG favicon, which is a data: URI, not a file on disk.
+#   media-src 'self' blob:    The hero film and the scroll-triggered clips are fetched, then
+#                              handed to the <video> element as a blob: URL (see film-engine.js
+#                              loadVariantBlob and scrollcraft.js loadClip), never a plain file
+#                              path on the element itself.
+#   connect-src 'self'        The only fetch() calls in film-engine.js and scrollcraft.js
+#                              request the same-origin .mp4 files above. No analytics beacon,
+#                              no third-party API.
+#   object-src 'none'         No <object>, <embed> or plugin content anywhere on the page.
+#   base-uri 'self'           Stops an injected <base> tag from rewriting relative URLs.
+#   form-action 'self'        No <form> exists on the page today; this only guards against
+#                              one being added later and mis-pointed at another origin.
+#   frame-src 'none'          Nothing is framed. Booking is a plain link to ClinicSense
+#                              (https://thehealingbench.clinicsense.com/book/), a normal page
+#                              navigation, not an embed, so ClinicSense never needs to appear
+#                              in this policy at all.
+#   frame-ancestors 'none'    Pairs with X-Frame-Options below: this site cannot be framed by
+#                              anyone else's page either.
+#   upgrade-insecure-requests Belt and suspenders once the domain is fully on HTTPS.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+
+# DEPLOY STEP: the Strict-Transport-Security line above is safe to ship now but only actually
+# protects visitors once the custom domain shows a padlock (cloudflare-pages-launch, go-live
+# sequence). No edit needed here, just do not add the optional "preload" token before that.
+
+# This build keeps every image and the two hero/scroll films under /assets, so that is the
+# only long-cache rule this site needs. There is no local /fonts or /vendor directory here:
+# fonts load from Google's CDN and every script is a plain root-level file, both already
+# covered by the short default cache for HTML, CSS and JS that the kit deliberately leaves
+# alone (see templates/site/README.md).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cloudflare Pages preview and branch-deploy URLs. Keeps every non-production hostname out of
+# search results even if a preview link ever leaks.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex

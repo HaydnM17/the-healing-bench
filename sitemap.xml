@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The Healing Bench is one HTML document with in-page anchors (#hero #intro #practitioners
+     #treatments #fees #visit #reviews #faq #book), so this sitemap lists a single URL: the
+     document itself. The anchors are not separate pages and get no entries of their own. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <!-- DEPLOY STEP: replace with the real absolute production URL before launch. -->
+    <loc>[DEPLOY STEP: absolute production URL, e.g. https://thehealingbench.ca/]</loc>
+    <lastmod>2026-09-11</lastmod>
+  </url>
+</urlset>

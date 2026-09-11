@@ -1,0 +1,22 @@
+# Old thehealingbench.ca (Wix) URLs. The new build is one HTML document with in-page anchors
+# (#hero #intro #practitioners #treatments #fees #visit #reviews #faq #book), so there is no
+# same-named page left to redirect to. Each old URL 301s to the closest matching anchor
+# instead of 404ing. Test every line with curl -sI after deploy.
+/about-us                          /#intro       301
+/services-1                        /#treatments  301
+/services-2                        /#treatments  301
+/fees                               /#fees        301
+/book-online                        /#book        301
+/service-page/express-massage       /#treatments  301
+/service-page/full-body-massage     /#treatments  301
+/service-page/deep-tissue-massage   /#treatments  301
+
+# Wix's own empty placeholder pages. They never held real content, so there is no closest
+# section to send them to; they go to the home page instead.
+/blank    /  301
+/blank-1  /  301
+/blank-2  /  301
+/blank-3  /  301
+
+# Do not rely on a 200 rewrite to / or /index.html: on Pages that comes back as a 308 to /.
+# The www to apex redirect is a Cloudflare Redirect Rule in the dashboard, not a line here.

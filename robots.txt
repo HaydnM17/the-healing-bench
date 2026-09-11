@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: [DEPLOY STEP: absolute URL to sitemap.xml, e.g. https://thehealingbench.ca/sitemap.xml]

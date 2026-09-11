@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Healing Bench | Massage Therapy &amp; Reflexology in Beamsville, ON</title>
+<meta name="description" content="Registered massage therapy, reflexology and natural facials in Beamsville, Ontario. Three practitioners, evening and Saturday hours, book online.">
+<meta name="theme-color" content="#17120E">
+
+<!-- Favicon: the cairn mark, three stacked stones, on the espresso ground. Matches the in-page sprite drawn in #cairn below, redrawn here as a standalone file since a favicon loads before body markup exists. Recoloured for DIRECTION-V3.md's warm spa palette: no chromatic accent, so the stones sit in cream on espresso rather than the retired ember tone. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2317120E'/%3E%3Cg transform='translate(13,6) scale(0.8)'%3E%3Cellipse cx='24' cy='52' rx='19' ry='9' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='33' rx='13.5' ry='7.5' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='17' rx='8.5' ry='6.5' fill='%23F4EBDD'/%3E%3C/g%3E%3C/svg%3E">
+
+<!-- Fonts per DIRECTION-V3.md, warm spa editorial: Playfair Display for display, Jost for body, kickers and buttons. There is no mono face in this direction. Fraunces, Karla, IBM Plex Mono, Bricolage Grotesque and Space Mono are all retired. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Healing Bench">
+<meta property="og:title" content="The Healing Bench | Massage Therapy &amp; Reflexology in Beamsville, ON">
+<meta property="og:description" content="Registered massage therapy, reflexology and natural facials in Beamsville, Ontario. Three practitioners, evening and Saturday hours, book online.">
+<!-- DEPLOY STEP: og:url needs the absolute production URL once the domain is live. -->
+<meta property="og:url" content="[DEPLOY STEP: absolute production URL]">
+<!-- DEPLOY STEP: og:image needs an absolute production URL once the domain is live. -->
+<meta property="og:image" content="[DEPLOY STEP: absolute URL to assets/hero-poster.jpg]">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- DEPLOY STEP: canonical needs the absolute production URL once the domain is live. -->
+<link rel="canonical" href="[DEPLOY STEP: absolute production URL]">
+
+<!--
+  LocalBusiness structured data, carried over unchanged from the prior build.
+  Every fact below is taken only from DESIGN-PACKAGE.md section 14 (verified
+  facts). The old live site shipped a placeholder phone number,
+  123-456-7890, in this exact schema block; this is the fix. Sunday is
+  closed and is intentionally left out of openingHoursSpecification rather
+  than given a fabricated opens/closes pair, per Google's own
+  structured-data guidance for closed days. Sunday's closure is still shown
+  to visitors, in the visible hours table in #visit. No geo coordinates are
+  included because none appear in section 14 and this build never invents
+  a fact.
+-->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["MedicalClinic", "HealthAndBeautyBusiness"],
+  "name": "The Healing Bench",
+  "description": "Registered massage therapy, reflexology and natural facials in Beamsville, Ontario.",
+  "image": "[DEPLOY STEP: absolute URL to assets/hero-poster.jpg]",
+  "telephone": "+1-905-563-8826",
+  "email": "thehealingbench@hotmail.com",
+  "priceRange": "$40-$150",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "4460 Ontario Street, Unit 2",
+    "addressLocality": "Beamsville",
+    "addressRegion": "ON",
+    "postalCode": "L3J 0A9",
+    "addressCountry": "CA"
+  },
+  "areaServed": "Beamsville, Ontario",
+  "openingHoursSpecification": [
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Monday", "opens": "10:00", "closes": "19:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Tuesday", "opens": "10:00", "closes": "19:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Wednesday", "opens": "10:00", "closes": "19:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Thursday", "opens": "10:00", "closes": "19:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Friday", "opens": "09:00", "closes": "18:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "09:00", "closes": "17:00" }
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "19",
+    "bestRating": "5"
+  },
+  "url": "[DEPLOY STEP: absolute production URL]"
+}
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- The cairn mark below is a design proposal, not an existing brand asset. The Healing Bench has no logo today, so this mark stands in for one until Deborah accepts, adapts or replaces it. Drawn once here as a symbol and referenced everywhere else with use, per BUILD-CONTRACT-V2.md: the hero crest, the header brand, every section label, every spine node, the heat stone, and the favicon above. -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden" class="cairn-sprite">
+  <symbol id="cairn" viewBox="0 0 48 64">
+    <ellipse cx="24" cy="52" rx="19" ry="9" fill="currentColor"/>
+    <ellipse cx="24" cy="33" rx="13.5" ry="7.5" fill="currentColor"/>
+    <ellipse cx="24" cy="17" rx="8.5" ry="6.5" fill="currentColor"/>
+  </symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <a class="brand" href="#hero">
+    <svg aria-hidden="true"><use href="#cairn"/></svg>
+    <span>The Healing Bench</span>
+  </a>
+  <nav class="nav" id="navList" aria-label="Main">
+    <a class="nav__link" href="#intro">About</a>
+    <a class="nav__link" href="#practitioners">Practitioners</a>
+    <a class="nav__link" href="#treatments">Treatments</a>
+    <a class="nav__link" href="#fees">Fees</a>
+    <a class="nav__link" href="#visit">Visit</a>
+    <a class="nav__link" href="#reviews">Reviews</a>
+    <a class="nav__link" href="#faq">FAQ</a>
+    <a class="nav__link" href="#book">Book</a>
+  </nav>
+  <div class="header-actions">
+    <a class="btn btn--ghost btn--sm" href="tel:+19055638826">(905) 563-8826</a>
+    <a class="btn btn--primary btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book</a>
+  </div>
+  <button class="nav__toggle" id="navToggle" aria-controls="navList" aria-expanded="false">Menu</button>
+</header>
+
+<div class="spine" id="spine" aria-hidden="true">
+  <span class="spine__rule"></span>
+  <span class="spine__node" data-for="intro"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="practitioners"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="treatments"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="fees"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="visit"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="reviews"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="faq"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+  <span class="spine__node" data-for="book"><svg aria-hidden="true"><use href="#cairn"/></svg></span>
+</div>
+
+<main id="main" tabindex="-1">
+
+  <!-- Hero, exactly per BUILD-CONTRACT-V2.md. The five caption bands from
+       v1 are gone entirely. This is a single composed crest plus caption,
+       not a five-beat film narration. The section carries id="hero" per
+       the contract, since the engine looks that id up by name to compute
+       scroll progress through the pinned region and fails silently
+       (no scrub, no console error) if it is absent. The header brand's
+       href points at "#hero" directly rather than a separate "#top"
+       anchor. #heroRing is the streamed blob loader's progress ring,
+       restored here per BUILD-CONTRACT.md; Agent F writes its
+       stroke-dashoffset through the --ld custom property while the film
+       downloads. Agent F wires the poster and video backgrounds through
+       CSS/JS using the hero-poster / hero-scrub asset naming convention,
+       so no raster <img> tags live inside the stage. Agent F also writes
+       --heroOut (0 to 1) onto #heroStage over 0.66 of one viewport height;
+       Agent S uses it to translate and fade #heroCrest and #heroCaption
+       out on the first scroll. This is the one h1 on the page.
+
+       Per DIRECTION-V3.md, room-1.jpg (a real photograph of the practice's
+       own treatment room) is the recommended poster and opening-frame
+       asset here, since the client's own treatment-room photos are the
+       warmest and most human images available and this is one of the
+       three high-visibility slots named for them. The poster is an empty
+       div by contract, its background image wired in CSS by Agent S and
+       its video source chosen by Agent F, so this is a note for whoever
+       wires those two, not a markup change I can make directly. -->
+  <section id="hero" class="hero">
+    <div class="hero__stage" id="heroStage">
+      <div class="hero__poster" id="heroPoster"></div>
+      <video class="hero__video" id="heroVideo" preload="none" muted playsinline
+             aria-hidden="true" tabindex="-1"></video>
+      <div class="hero__scrim" aria-hidden="true"></div>
+      <svg class="hero__ring" id="heroRing" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/>
+      </svg>
+      <div class="hero__crest" id="heroCrest">
+        <svg class="hero__mark" aria-hidden="true"><use href="#cairn"/></svg>
+        <p class="hero__wordmark">The Healing Bench</p>
+      </div>
+      <div class="hero__caption" id="heroCaption">
+        <p class="kicker">
+          <svg aria-hidden="true"><use href="#cairn"/></svg>
+          Registered massage therapy in Beamsville
+        </p>
+        <h1 class="hero__h1">Warmth that travels</h1>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
+          <a class="btn btn--ghost" href="#treatments">See treatments</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01. About. Their real About copy, verbatim, the only edit being the
+       em dash in the original replaced with a comma, per DESIGN-PACKAGE.md
+       section 8.1. Offset editorial: copy left, tall image right, per
+       REDESIGN-PLAN.md's section table, kept as a split layout under
+       DIRECTION-V3.md. Warm tan band. still-linen.jpg runs large and
+       alone, per DIRECTION-V3.md's instruction that every image be
+       cropped generously with room to breathe, no image smaller than a
+       third of viewport width on desktop; room-1.jpg moved to the hero,
+       one of the three high-visibility slots the direction names for the
+       real treatment-room photographs. -->
+  <section id="intro" class="section about tone-tan">
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">01</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">About</h2>
+
+      <div class="about__grid">
+        <div class="about__copy" data-reveal>
+          <p>We have proudly served the Beamsville community and its surrounding areas for many years. Our emphasis has been on cultivating strong connections with our clients by recognizing their unique needs, it's all about you.</p>
+          <p>Our mission is to improve the well-being of each client through skilled and compassionate care. Whether you're dealing with an injury, chronic pain, or simply need to unwind, we are here to help you achieve your health care goals and become a stronger version of yourself.</p>
+        </div>
+        <div class="about__media" data-reveal>
+          <img class="about__image" data-parallax src="assets/still-linen.jpg" alt="Warm light falling across folded linen, ready for a treatment" width="1080" height="1920" loading="lazy" decoding="async">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02. The practitioners. Clients book by name, so each card carries
+       photo, name, title, focus and a real review quote. Photos are the
+       genuine team photographs from the practice's own site. Cream band.
+       Three cards read naturally as DIRECTION-V3.md's rounded image-card
+       grid, three across on desktop stacking to one column under 760px.
+       data-reveal plus data-stagger="80" sit on .practitioners__grid
+       itself, per initReveal()'s documented contract in site.js: the
+       container is what gets observed, and each .practitioner-card, as a
+       direct child, is handed .in in turn with an incrementing delay by
+       that same function. Agent S keys the clip-path photo unwrap off
+       ".practitioner-card.in". Individual cards carry no data-reveal of
+       their own, since a child with its own observer could reveal ahead
+       of the parent's cascade and defeat the stagger.
+       .practitioner-card__photo is a real <img>, so it needs object-fit:
+       cover, object-position: center, width: 100%, height: 100%, display:
+       block, to fill practitioner-card__frame without distortion. -->
+  <section id="practitioners" class="section practitioners tone-cream">
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">02</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">The practitioners</h2>
+
+      <div class="practitioners__grid" data-reveal data-stagger="80">
+
+        <article class="practitioner-card practitioner-card--deborah">
+          <div class="practitioner-card__frame">
+            <img class="practitioner-card__photo" data-parallax src="assets/team-deborah.jpg" alt="Deborah Williston, co-owner and registered massage therapist" width="800" height="800" loading="lazy" decoding="async">
+          </div>
+          <div class="practitioner-card__body">
+            <h3 class="practitioner-card__name">Deborah Williston</h3>
+            <p class="practitioner-card__title">Co-owner, Registered Massage Therapist</p>
+            <p class="practitioner-card__desc">Massage therapy, hot stone, prenatal.</p>
+            <blockquote class="practitioner-card__quote">
+              <p>"I have been going to Deb for many years. I have recommended her to everyone I know. She is amazing, Best massage therapist EVER!"</p>
+              <cite>Dawn Branco</cite>
+            </blockquote>
+          </div>
+        </article>
+
+        <article class="practitioner-card practitioner-card--laurette">
+          <div class="practitioner-card__frame">
+            <img class="practitioner-card__photo" data-parallax src="assets/team-laurette.jpg" alt="Laurette Lachance" width="800" height="800" loading="lazy" decoding="async">
+          </div>
+          <div class="practitioner-card__body">
+            <h3 class="practitioner-card__name">Laurette Lachance</h3>
+            <!-- Title unconfirmed. DESIGN-PACKAGE.md section 8.2 flags
+                 Laurette's RMT designation as unconfirmed by Deborah and
+                 instructs shipping this card without a guessed title. The
+                 bracket stays visible rather than being invented, and
+                 rather than left blank, so the card keeps its proportions
+                 matching its siblings while still shipping no guess. -->
+            <p class="practitioner-card__title">[Title to confirm]</p>
+            <p class="practitioner-card__desc">[Services to confirm]</p>
+            <blockquote class="practitioner-card__quote">
+              <p>"She was professional, attentive, and made sure the pressure was perfect throughout the entire massage. I walked in feeling completely knotted up and left feeling like a brand-new person."</p>
+              <cite>Erin Gostick</cite>
+            </blockquote>
+          </div>
+        </article>
+
+        <article class="practitioner-card practitioner-card--naira">
+          <div class="practitioner-card__frame">
+            <img class="practitioner-card__photo" data-parallax src="assets/team-naira.jpg" alt="Naira Fawzi, registered reflexologist" width="800" height="800" loading="lazy" decoding="async">
+          </div>
+          <div class="practitioner-card__body">
+            <h3 class="practitioner-card__name">Naira Fawzi</h3>
+            <p class="practitioner-card__title">Registered Reflexologist, RRPr/AAHP</p>
+            <p class="practitioner-card__desc">Reflexology and all natural facials.</p>
+            <blockquote class="practitioner-card__quote">
+              <p>"I go for reflexology with Naira, I just love this service, the best reflexology treatment I have had!"</p>
+              <cite>Lynn Whitley</cite>
+            </blockquote>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 03. Treatments. Grouped bodywork, reflexology, facials, per
+       DESIGN-PACKAGE.md section 8.3. Descriptions verbatim from section 12,
+       prices verbatim from section 13. Unpriced treatments say exactly
+       "Price on enquiry" and never invent a number. This was the single
+       worst-served section on the prior build, eleven text-only rows with
+       zero imagery; it now leads with images on the rows that carry a
+       matching asset, alternating side via data-side, with plain upgraded
+       rows filling out the rest of each group so the list still reads
+       correctly on any screen. Reflexology has no dedicated still in the
+       asset library; still-linen.jpg is reused here at a different crop as
+       a calm, on-brand fallback rather than misrepresenting the treatment
+       with a hot-stone image. The one interactive moment, press and hold
+       the hot stone, sits inside Bodywork after Hot Stones, now staged
+       against still-heat.jpg with still-falling.jpg layered behind it for
+       a whisper of motion.
+
+       Espresso band. massage-1.jpg, a real photograph of a massage in
+       progress, now runs as the section's own opener image directly under
+       the heading, per DIRECTION-V3.md naming this section one of the
+       three high-visibility slots for the client's own treatment-room
+       photography. Because that photo already anchors the section, the
+       Massage Therapy row itself ships as a plain row rather than
+       repeating it.
+
+       Each .treatments__group carries data-reveal plus data-stagger="70"
+       so its rows cascade in one after another, per initReveal()'s
+       documented contract in site.js. Individual rows and the
+       stone-interaction block carry no data-reveal of their own: as
+       direct children of the group, the group's own cascade already
+       hands each of them .in in turn, and a child with its own observer
+       could otherwise reveal ahead of that cascade. -->
+  <section id="treatments" class="section treatments tone-espresso">
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">03</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">Treatments</h2>
+
+      <figure class="treatments__opener" data-reveal>
+        <img data-parallax src="assets/massage-1.jpg" alt="A massage therapy session in progress at The Healing Bench" width="1920" height="1280" loading="lazy" decoding="async">
+      </figure>
+
+      <div class="treatments__group" data-reveal data-stagger="70">
+        <div class="treatments__group-head">
+          <h3 class="treatments__group-name">Bodywork</h3>
+          <p class="treatments__group-count">4 treatments</p>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Massage Therapy</p>
+          <p class="treatment-row__price">From $40</p>
+          <p class="treatment-row__desc">Therapeutic massage designed to restore balance, relieve tension, and support your overall well-being. Whether you're seeking stress relief, pain management, or a quiet moment of self-care, our experienced therapists tailor each session to meet your individual needs.</p>
+        </div>
+
+        <div class="treatment-row treatment-row--media" data-side="left">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-spine.jpg" alt="Heated stones laid along the spine during a hot stone massage" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Hot Stones</p>
+            <p class="treatment-row__price">From $125</p>
+            <p class="treatment-row__desc">Experience the soothing power of heated stones combined with expert therapeutic touch. Our hot stone massage promotes deep relaxation, eases muscle stiffness, and boosts circulation, leaving you feeling grounded, balanced, and restored. Warm stones are gently placed and massaged across the body to melt away stress and tension at the deepest level. Treat yourself to this luxurious, healing experience.</p>
+          </div>
+        </div>
+
+        <!-- The one interactive moment: press and hold a stone to feel it
+             warm. Markup per BUILD-CONTRACT-V2.md, driven by Agent J's
+             site.js, styled by Agent S's styles.css. The cairn mark stands
+             in for the stone itself. --heat is written onto #heatStone as
+             a CSS custom property by Agent J; data-state on #heatReveal
+             moves from idle through the reveal sequence. -->
+        <div class="stone-interaction">
+          <div class="stone-interaction__media" aria-hidden="true">
+            <img class="stone-interaction__bg" data-parallax src="assets/still-heat.jpg" alt="" width="1080" height="1920" loading="lazy" decoding="async">
+            <img class="stone-interaction__ambient" src="assets/still-falling.jpg" alt="" width="1080" height="1920" loading="lazy" decoding="async">
+          </div>
+          <button class="stone" id="heatStone" aria-describedby="heatStoneHint" aria-label="Press and hold to feel the hot stone warm">
+            <svg class="stone__mark" aria-hidden="true"><use href="#cairn"/></svg>
+            <span class="stone__halo" aria-hidden="true"></span>
+          </button>
+          <p id="heatStoneHint">Press and hold</p>
+          <div class="heat-reveal" id="heatReveal" data-state="idle" aria-live="polite">
+            <p class="heat-reveal__item">Hot Stones, 45 min, $125</p>
+            <p class="heat-reveal__item">Hot Stones, 75 min, $145</p>
+            <a class="heat-reveal__item btn btn--primary" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the hot stone treatment</a>
+          </div>
+        </div>
+
+        <div class="treatment-row treatment-row--media" data-side="right">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-stones.jpg" alt="Three smooth stones at rest, warmed and ready for treatment" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Prenatal Massage</p>
+            <p class="treatment-row__price">From $40</p>
+            <p class="treatment-row__desc">Our prenatal massage is designed to provide safe, soothing relief for expectant mothers. Gentle, targeted techniques help ease back pain, reduce swelling, improve circulation, and promote overall relaxation. Whether you're in your first trimester or nearing delivery, our trained therapists offer compassionate care and support your changing body needs.</p>
+          </div>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Indian Head Massage</p>
+          <p class="treatment-row__price">$95</p>
+          <p class="treatment-row__desc">Restore balance and relieve tension with our Indian Head Massage. Rooted in traditional Ayurvedic techniques, this soothing treatment focuses on the upper back, shoulders, neck, scalp and face to ease stress, improve circulation, reduce headaches and promote deep relaxation. Gentle rhythmic strokes, pressure-point work and scalp massage release built-up tension and encourage mental clarity and better sleep. Perfect for busy professionals, anyone with tech-related neck and shoulder strain, or anyone seeking a calming, restorative reset.</p>
+        </div>
+      </div>
+
+      <div class="treatments__group" data-reveal data-stagger="70">
+        <div class="treatments__group-head">
+          <h3 class="treatments__group-name">Reflexology</h3>
+          <p class="treatments__group-count">1 treatment</p>
+        </div>
+
+        <!-- No reflexology-specific still exists in the asset library.
+             still-linen.jpg is reused here, calm and non-specific, rather
+             than reusing a hot-stone image that would misrepresent the
+             treatment. Flagging as a genuine gap for a future shoot. -->
+        <div class="treatment-row treatment-row--media" data-side="left">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-linen.jpg" alt="Soft folded linen in warm light" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Reflexology</p>
+            <p class="treatment-row__price">From $80</p>
+            <p class="treatment-row__desc">Experience deep relaxation and whole-body balance through the ancient art of reflexology. This gentle, therapeutic treatment focuses on specific pressure points that correspond to different organs and systems in the body. By stimulating these reflex areas, reflexology helps to release tension, improve circulation, and support your body's natural healing processes. Whether you're seeking stress relief, improved sleep, or overall well-being, reflexology offers a soothing, restorative experience that leaves you feeling grounded, refreshed, and renewed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="treatments__group" data-reveal data-stagger="70">
+        <div class="treatments__group-head">
+          <h3 class="treatments__group-name">Facials, all natural</h3>
+          <p class="treatments__group-count">5 treatments</p>
+        </div>
+
+        <div class="treatment-row treatment-row--media" data-side="right">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-steam.jpg" alt="Steam rising in warm light, part of the natural facial process" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Natural Lift Facial</p>
+            <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+            <p class="treatment-row__desc">A Natural Lift Facial offers a holistic non-invasive approach designed to enhance skin's appearance for a more youthful, lifted look without chemicals. This facial combines specialized massage techniques with fingers, galvanic device for deep cleaning, gua sha for skin lifting, and LED red or green light and Radio Frequency for collagen boosting, brightening and tightening and toning skin while helping natural products absorption. Pressure point massage for head, neck and decollet&eacute; for ultimate relaxation. Key features of this natural lift treatment are lymphatic drainage, acupressure points, skin toning, cleansing and exfoliating with steam, and using natural organic products that leaves you with a rejuvenated skin.</p>
+          </div>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Clearing and Detoxing Natural Facial (for teens and adults)</p>
+          <p class="treatment-row__price">From $80</p>
+          <p class="treatment-row__desc">A Clearing and Detoxing Facial is a customized offering both for relief from breakouts and skin discoloration, helping pollution-exposed skin, acne, and pigmentation for any age. It is a specialized natural skincare treatment designed particularly focusing on acne, dull skin, discoloration, and congestion. We use steam for a deep cleanse and to unclog the pores, gentle exfoliation and extraction (if needed), a clearing mask, anti-inflammatory toner/s, hydrating and balancing moisturizers and finally soothing a calming serum using LED blue light for soothing inflammation and to reduce redness, with some guidance to a proper home skincare routine to maintain long-term skin health.</p>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Cupping and Drainage Facial</p>
+          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+          <p class="treatment-row__desc">Our targeted Decompression Cupping and Lymphatic Drainage Facial is designed to stimulate lymphatic flow, reduce fluid retention, and help circulation and detoxing. Through micro facial cupping techniques and specialized lymphatic drainage massage using organic botanical ingredients, it is perfect to improve skin elasticity and tone. Ideal for those experiencing facial swelling and puffiness, sluggish skin, sinus pressure, or dull skin tone. We combine the cupping treatment with a natural hydrating serum, and the lymphatic drainage massage with natural oil blends and moisturizers for maximum results. (LED not included)</p>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Hydration Boost Express Facial</p>
+          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+          <p class="treatment-row__desc">This express facial is for busier schedules and ideal before a special event or whenever your skin needs a quick refresh or a hydration boost as the weather changes. Applying the "Hot/Cold steam technique" and TWO natural nourishing masks in one treatment, this holistic facial helps revive your skin's softness and moisture, calms dryness and improves texture and elasticity. It is designed for dry, dehydrated, or environmentally stressed skin. (Does not include extractions or LED)</p>
+        </div>
+
+        <div class="treatment-row">
+          <p class="treatment-row__name">Sculpt and Decongest Express Facial</p>
+          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+          <p class="treatment-row__desc">Pressed for time but your skin needs some attention? This facial is a choice for a quick yet effective treatment for very dry or red skin condition or for calming acne. Combines deep cleansing using calming ingredients to reduce congestion and redness, tender exfoliation and targeted extractions. Natural ingredients like botanical clays, chamomile and natural acids supported with soothing serums give your skin visible freshness and encourage decongestion. (Does not include LED)</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 04. Fees. Real tables, cancellation note verbatim from
+       DESIGN-PACKAGE.md section 13. Cream band under DIRECTION-V3.md,
+       tabular, hairline rules, with tex-contour.jpg sitting behind the
+       whole section at whisper level so the numbers stay the only thing
+       competing for attention. That texture was art-directed for a dark
+       ground in v2; it stays in markup since the section still wants a
+       quiet material layer, but Agent S should tune its opacity and blend
+       mode for the cream ground, or hide it if it does not read cleanly
+       there. Panels wipe in on a clip-path via data-reveal plus
+       data-stagger="70" on .fees__grid itself, per initReveal()'s
+       documented contract in site.js: each .fees__panel is a direct
+       child and carries no data-reveal of its own, so the grid's own
+       cascade is what hands each panel .in in turn. -->
+  <section id="fees" class="section fees tone-cream">
+    <div class="fees__ground" aria-hidden="true">
+      <img src="assets/tex-contour.jpg" alt="" width="1920" height="1080" loading="lazy" decoding="async">
+    </div>
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">04</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">Fees</h2>
+
+      <p class="fees__note">All pricing includes HST. We require 24 hours notice for cancellations. A late cancellation or no-show is charged at 50% of the total cost of the service booked, and we cannot charge your insurance for this fee.</p>
+
+      <div class="fees__grid" data-reveal data-stagger="70">
+        <div class="fees__panel">
+          <table class="fees-table">
+            <caption>Massage Therapy (classic or prenatal)</caption>
+            <thead>
+              <tr>
+                <th scope="col">15 min</th>
+                <th scope="col">30 min</th>
+                <th scope="col">45 min</th>
+                <th scope="col">60 min</th>
+                <th scope="col">75 min</th>
+                <th scope="col">90 min</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>$40</td>
+                <td>$70</td>
+                <td>$85</td>
+                <td>$105</td>
+                <td>$125</td>
+                <td>$150</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="fees__panel">
+          <table class="fees-table">
+            <caption>Indian Head Massage</caption>
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>45 min</td><td>$95</td></tr>
+            </tbody>
+          </table>
+          <p class="fees__addon">15 minute add-on to a classic massage, $20, available soon.</p>
+        </div>
+
+        <div class="fees__panel">
+          <table class="fees-table">
+            <caption>Hot Stone</caption>
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>45 min</td><td>$125</td></tr>
+              <tr><td>75 min</td><td>$145</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="fees__panel">
+          <table class="fees-table">
+            <caption>Reflexology</caption>
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>50 min</td><td>$80</td></tr>
+              <tr><td>75 min</td><td>$100</td></tr>
+              <tr><td>35 min, children aged 8 to 12</td><td>$50</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="fees__panel">
+          <table class="fees-table">
+            <caption>Facials</caption>
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Express, 40 min</td><td>$80</td></tr>
+              <tr><td>60 min</td><td>$110</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="fees__note">Natural Lift, Cupping and Drainage, Hydration Boost Express and Sculpt and Decongest Express facials are priced on enquiry. Call <a href="tel:+19055638826">(905) 563-8826</a>.</p>
+    </div>
+  </section>
+
+  <!-- 05. Hours and finding us. Full week, address with unit number, real
+       tel: and mailto: links. Split layout kept under DIRECTION-V3.md:
+       hours left, a map-feel card right holding the address over
+       still-table.jpg. Warm tan band. room-2.jpg moved to the book section,
+       one of the three high-visibility slots the direction names for the
+       client's own treatment-room photography, so this section runs one
+       large image rather than two. Hours rise line by line: data-reveal
+       plus data-stagger="70" sit on .visit__hours itself, per
+       initReveal()'s documented contract in site.js, so the seven rows
+       cascade in turn rather than fading in as one block. -->
+  <section id="visit" class="section visit tone-tan">
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">05</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">Hours and finding us</h2>
+
+      <div class="visit__grid">
+        <div class="visit__hours" data-reveal data-stagger="70">
+          <div class="visit__hours-row is-open-late">
+            <span class="visit__hours-day">Monday</span>
+            <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row is-open-late">
+            <span class="visit__hours-day">Tuesday</span>
+            <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row is-open-late">
+            <span class="visit__hours-day">Wednesday</span>
+            <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row is-open-late">
+            <span class="visit__hours-day">Thursday</span>
+            <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row">
+            <span class="visit__hours-day">Friday</span>
+            <span class="visit__hours-time">9:00 a.m. to 6:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row is-open-late">
+            <span class="visit__hours-day">Saturday</span>
+            <span class="visit__hours-time">9:00 a.m. to 5:00 p.m.</span>
+          </div>
+          <div class="visit__hours-row">
+            <span class="visit__hours-day">Sunday</span>
+            <span class="visit__hours-time">Closed</span>
+          </div>
+        </div>
+
+        <div class="visit__media" data-reveal>
+          <img class="visit__image" data-parallax src="assets/still-table.jpg" alt="The treatment table set with warm light at The Healing Bench" width="1080" height="1920" loading="lazy" decoding="async">
+          <div class="visit__card">
+            <address class="visit__address-block">
+              4460 Ontario Street, Unit 2<br>
+              Beamsville, ON L3J 0A9
+            </address>
+            <p><a href="tel:+19055638826">(905) 563-8826</a></p>
+            <p><a href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06. What people say. DESIGN-PACKAGE.md section 8.6 asks for four
+       review pull quotes, but section 8.2 (the only source of real,
+       attributed reviews) supplies exactly three. Shipping a fourth would
+       mean inventing a review, which the copy gate forbids, so three real
+       quotes ship here. Espresso band. Self-driving depth-drift carousel
+       over a faint tex-linen.jpg ground, per REDESIGN-PLAN.md. Markup
+       matches the contract documented at the top of initCarousels() in
+       site.js exactly: data-carousel on the root, data-carousel-view on
+       the clipping viewport, data-carousel-track on the moving track,
+       data-carousel-prev/-next on two real buttons. data-stagger on the
+       track cascades the review cards in on entrance. -->
+  <section id="reviews" class="section reviews tone-espresso">
+    <div class="reviews__ground" aria-hidden="true">
+      <img src="assets/tex-linen.jpg" alt="" width="1920" height="1080" loading="lazy" decoding="async">
+    </div>
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">06</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">What people say</h2>
+
+      <p class="reviews__rating">4.8 out of 5, from 19 Google reviews</p>
+
+      <div class="reviews__carousel" data-carousel>
+        <div class="reviews__view" data-carousel-view tabindex="0" role="group" aria-label="Reviews, scrolls sideways">
+          <div class="reviews__track" data-carousel-track data-reveal data-stagger="70">
+            <div class="review-card">
+              <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
+              <blockquote class="review-card__quote">
+                <p>"I have been going to Deb for many years. I have recommended her to everyone I know. She is amazing, Best massage therapist EVER!"</p>
+              </blockquote>
+              <cite class="review-card__attrib">Dawn Branco</cite>
+            </div>
+            <div class="review-card">
+              <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
+              <blockquote class="review-card__quote">
+                <p>"She was professional, attentive, and made sure the pressure was perfect throughout the entire massage. I walked in feeling completely knotted up and left feeling like a brand-new person."</p>
+              </blockquote>
+              <cite class="review-card__attrib">Erin Gostick</cite>
+            </div>
+            <div class="review-card">
+              <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
+              <blockquote class="review-card__quote">
+                <p>"I go for reflexology with Naira, I just love this service, the best reflexology treatment I have had!"</p>
+              </blockquote>
+              <cite class="review-card__attrib">Lynn Whitley</cite>
+            </div>
+          </div>
+        </div>
+        <button class="reviews__arrow reviews__arrow--prev" data-carousel-prev aria-label="Previous review">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="reviews__arrow reviews__arrow--next" data-carousel-next aria-label="Next review">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07. FAQ. "Do you direct bill my insurance?" is left out entirely:
+       DESIGN-PACKAGE.md section 8.7 says its answer is unconfirmed and
+       explicitly instructs omitting the question rather than guessing or
+       even leaving a bracket. "I have never had a massage. What happens?"
+       keeps its bracket placeholder, since section 8.7 only marks that one
+       [ANSWER TO CONFIRM], with no omit instruction. Cream band under
+       DIRECTION-V3.md. Full-width accordion over a faint tex-steam.jpg
+       ground, per REDESIGN-PLAN.md; that texture was art-directed for a
+       dark ground in v2, so as with Fees, Agent S should tune its opacity
+       for the cream band or hide it if it does not read cleanly there. -->
+  <section id="faq" class="section faq tone-cream">
+    <div class="faq__ground" aria-hidden="true">
+      <img src="assets/tex-steam.jpg" alt="" width="1920" height="1080" loading="lazy" decoding="async">
+    </div>
+    <div class="container">
+      <div class="slabel" data-reveal>
+        <span class="slabel__n">07</span>
+        <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+        <span class="slabel__rule" aria-hidden="true"></span>
+      </div>
+      <h2 class="shead" data-split="words">Frequently asked questions</h2>
+
+      <div class="faq__list" data-reveal data-stagger="70">
+        <details class="faq-item">
+          <summary class="faq-item__q">What if I need to cancel?</summary>
+          <p class="faq-item__a">We need 24 hours notice. A late cancellation or no-show is charged at 50% of the service booked, and we cannot bill that to your insurance.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-item__q">Is the pricing all in?</summary>
+          <p class="faq-item__a">Yes. Every price includes HST.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-item__q">I have never had a massage. What happens?</summary>
+          <p class="faq-item__a">[ANSWER TO CONFIRM.]</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-item__q">Do you see children?</summary>
+          <p class="faq-item__a">Reflexology has a 35 minute treatment for children aged 8 to 12.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08. Book. The single funnel point, https, rel="noopener". Espresso
+       band with a full-bleed photograph behind it, per DIRECTION-V3.md,
+       which names this section one of the three high-visibility slots for
+       the client's own treatment-room photography: room-2.jpg replaces
+       the generated hero-ending film frame v2 used here. The CTA carries
+       data-magnetic, Agent J's actual hook for the magnetic button
+       behaviour in site.js (initMagnetic queries [data-magnetic], not an
+       id). id="bookCta" stays too as a stable analytics/CSS hook. -->
+  <section id="book" class="section book">
+    <div class="book__stage">
+      <img class="book__media" aria-hidden="true" alt="" src="assets/room-2.jpg" width="1920" height="1920" loading="lazy" decoding="async">
+      <div class="book__scrim" aria-hidden="true"></div>
+      <div class="container">
+        <div class="book__frame" data-reveal>
+          <div class="slabel">
+            <span class="slabel__n">08</span>
+            <svg class="slabel__glyph" aria-hidden="true"><use href="#cairn"/></svg>
+            <span class="slabel__rule" aria-hidden="true"></span>
+          </div>
+          <h2 class="book__title shead" data-split="words">Book an appointment</h2>
+          <p class="book__lede">Book with Deborah, Laurette or Naira</p>
+          <div class="book__actions">
+            <a class="btn btn--primary btn--magnetic" id="bookCta" data-magnetic href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
+          </div>
+          <div class="book__contact">
+            <a href="tel:+19055638826">(905) 563-8826</a>
+            <a href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer: address, hours, phone, email, copyright. No social icons: the
+     old site linked facebook.com/wix and instagram.com/wix, which are
+     unclaimed Wix template placeholders, not real profiles, so nothing
+     ships here in their place. Add real profile links when Deborah
+     supplies them. -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__grid" data-reveal>
+      <div class="site-footer__brand">The Healing Bench</div>
+
+      <div class="site-footer__col">
+        <h3>Visit</h3>
+        <address>
+          4460 Ontario Street, Unit 2<br>
+          Beamsville, ON L3J 0A9
+        </address>
+        <ul>
+          <li>Open until seven, four nights a week</li>
+          <li>Saturdays too</li>
+          <li><a href="#visit">Full hours</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <h3>Contact</h3>
+        <ul>
+          <li><a href="tel:+19055638826">(905) 563-8826</a></li>
+          <li><a href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>&copy; 2026 The Healing Bench</p>
+    </div>
+  </div>
+</footer>
+
+<script src="scrollcraft.js" defer></script>
+<script src="film-engine.js" defer></script>
+<script src="site.js" defer></script>
+</body>
+</html>

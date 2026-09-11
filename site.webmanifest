@@ -1,0 +1,8 @@
+{
+  "name": "The Healing Bench",
+  "short_name": "Healing Bench",
+  "theme_color": "#17120E",
+  "background_color": "#17120E",
+  "display": "browser",
+  "start_url": "/"
+}

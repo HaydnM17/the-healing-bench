@@ -1664,27 +1664,18 @@ strong, b {
   filter: drop-shadow(0 0 4px rgba(247, 241, 232, .35));
 }
 
+/* The spine is gone on phones, not just thinner. At 2px against the left
+   edge it read as a scroll bar rather than as a progress indicator, and it
+   was taking room the content wanted. It is also the only fixed,
+   full-height mix-blend-mode element on the page, so it is the one piece
+   of compositor work that could not be skipped on any scroll frame of the
+   whole visit; removing it on the devices least able to afford that is
+   the right trade twice over. Section progress is still legible on a
+   phone from the nav's current-section highlight. */
 @media (max-width: 720px) {
   .spine {
-    left: 0;
-    width: 2px;
-    padding-block: var(--space-lg);
+    display: none;
   }
-
-  .spine__rule {
-    top: var(--space-lg);
-    bottom: var(--space-lg);
-    width: 2px;
-  }
-
-  .spine__node { width: 5px; height: 5px; }
-
-  /* No reserved body gutter on phone: the spine is fixed, pointer-
-     events:none and reads by mix-blend-mode against whatever is behind
-     it (section 10), so it never needs page content to step aside for
-     it. A body padding-left here previously pushed the entire page,
-     including the full-bleed hero, 6px off the true left edge — a real,
-     measured gap, not a capture artifact. */
 }
 
 /* mix-blend-mode:difference lets one spine read correctly against both

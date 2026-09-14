@@ -297,31 +297,51 @@
   <!-- 03. Treatments. Grouped bodywork, reflexology, facials, per
        DESIGN-PACKAGE.md section 8.3. Descriptions verbatim from section 12,
        prices verbatim from section 13. Unpriced treatments say exactly
-       "Price on enquiry" and never invent a number. This was the single
-       worst-served section on the prior build, eleven text-only rows with
-       zero imagery; it now leads with images on the rows that carry a
-       matching asset, alternating side via data-side, with plain upgraded
-       rows filling out the rest of each group so the list still reads
-       correctly on any screen. Reflexology has no dedicated still in the
-       asset library; still-linen.jpg is reused here at a different crop as
-       a calm, on-brand fallback rather than misrepresenting the treatment
-       with a hot-stone image. The one interactive moment, press and hold
-       the hot stone, sits inside Bodywork after Hot Stones, now staged
-       against still-heat.jpg with still-falling.jpg layered behind it for
-       a whisper of motion.
+       "Price on enquiry" and never invent a number.
 
-       Espresso band. massage-1.jpg, a real photograph of a massage in
-       progress, now runs as the section's own opener image directly under
-       the heading, per DIRECTION-V3.md naming this section one of the
-       three high-visibility slots for the client's own treatment-room
-       photography. Because that photo already anchors the section, the
-       Massage Therapy row itself ships as a plain row rather than
-       repeating it.
+       Booking: every one of the ten rows below now carries its own
+       .treatment-row__cta, individually labelled for that treatment (for
+       example "Book a hot stone massage"), pointing at
+       https://thehealingbench.clinicsense.com/book/ with rel="noopener".
+       ClinicSense's support for per-service deep links is unconfirmed, so
+       all ten share the same destination until that is checked; the point
+       is that a visitor can act right where they are reading instead of
+       scrolling back to the header or hero.
 
-       Each .treatments__group carries data-reveal plus data-stagger="70"
-       so its rows cascade in one after another, per initReveal()'s
-       documented contract in site.js. Individual rows and the
-       stone-interaction block carry no data-reveal of their own: as
+       Attribution: a "With [name]" line appears only where a practitioner
+       card states the service as fact. Deborah's card names "Massage
+       therapy, hot stone, prenatal", so those three rows read "With
+       Deborah". Naira's card names "Reflexology and all natural facials",
+       so Reflexology and all five facial rows read "With Naira". Indian
+       Head Massage carries no card claim at all, so it carries no "With"
+       line rather than a guess. Laurette's card still has
+       "[Services to confirm]", so nothing is ever attributed to her here.
+
+       Imagery: this was the single worst-served section on the prior
+       build, four of ten rows carrying an image. Nine of ten now carry
+       one, alternating side via data-side; Massage Therapy alone stays a
+       plain row, since massage-1.jpg already runs as this section's own
+       opener image directly under the heading and repeating it on the
+       first row would be redundant rather than additive. No
+       reflexology-specific or facial-specific photograph exists in the
+       asset library, so those five rows (plus Indian Head Massage, which
+       likewise has no matching photograph) reuse the site's generic
+       stills and textures: still-linen.jpg (already used in #intro),
+       still-falling.jpg (already used as the stone-interaction's ambient
+       layer), and tex-steam.jpg / tex-contour.jpg / tex-linen.jpg
+       (already used as the Reviews, Fees and FAQ ground textures), plus
+       still-table.jpg (already used in #visit). Each carries honest alt
+       text describing what the image actually shows, warmth, steam,
+       texture, linen, the treatment table, never a claim that it depicts
+       the specific treatment beside it. The one interactive moment, press
+       and hold the hot stone, sits inside Bodywork after Hot Stones,
+       staged against still-heat.jpg with still-falling.jpg layered behind
+       it for a whisper of motion.
+
+       Espresso band. Each .treatments__group carries data-reveal plus
+       data-stagger="70" so its rows cascade in one after another, per
+       initReveal()'s documented contract in site.js. Individual rows and
+       the stone-interaction block carry no data-reveal of their own: as
        direct children of the group, the group's own cascade already
        hands each of them .in in turn, and a child with its own observer
        could otherwise reveal ahead of that cascade. -->
@@ -347,7 +367,9 @@
         <div class="treatment-row">
           <p class="treatment-row__name">Massage Therapy</p>
           <p class="treatment-row__price">From $40</p>
+          <p class="treatment-row__with">With Deborah</p>
           <p class="treatment-row__desc">Therapeutic massage designed to restore balance, relieve tension, and support your overall well-being. Whether you're seeking stress relief, pain management, or a quiet moment of self-care, our experienced therapists tailor each session to meet your individual needs.</p>
+          <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book massage therapy</a></p>
         </div>
 
         <div class="treatment-row treatment-row--media" data-side="left">
@@ -357,7 +379,9 @@
           <div class="treatment-row__body">
             <p class="treatment-row__name">Hot Stones</p>
             <p class="treatment-row__price">From $125</p>
+            <p class="treatment-row__with">With Deborah</p>
             <p class="treatment-row__desc">Experience the soothing power of heated stones combined with expert therapeutic touch. Our hot stone massage promotes deep relaxation, eases muscle stiffness, and boosts circulation, leaving you feeling grounded, balanced, and restored. Warm stones are gently placed and massaged across the body to melt away stress and tension at the deepest level. Treat yourself to this luxurious, healing experience.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book a hot stone massage</a></p>
           </div>
         </div>
 
@@ -391,14 +415,28 @@
           <div class="treatment-row__body">
             <p class="treatment-row__name">Prenatal Massage</p>
             <p class="treatment-row__price">From $40</p>
+            <p class="treatment-row__with">With Deborah</p>
             <p class="treatment-row__desc">Our prenatal massage is designed to provide safe, soothing relief for expectant mothers. Gentle, targeted techniques help ease back pain, reduce swelling, improve circulation, and promote overall relaxation. Whether you're in your first trimester or nearing delivery, our trained therapists offer compassionate care and support your changing body needs.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book a prenatal massage</a></p>
           </div>
         </div>
 
-        <div class="treatment-row">
-          <p class="treatment-row__name">Indian Head Massage</p>
-          <p class="treatment-row__price">$95</p>
-          <p class="treatment-row__desc">Restore balance and relieve tension with our Indian Head Massage. Rooted in traditional Ayurvedic techniques, this soothing treatment focuses on the upper back, shoulders, neck, scalp and face to ease stress, improve circulation, reduce headaches and promote deep relaxation. Gentle rhythmic strokes, pressure-point work and scalp massage release built-up tension and encourage mental clarity and better sleep. Perfect for busy professionals, anyone with tech-related neck and shoulder strain, or anyone seeking a calming, restorative reset.</p>
+        <!-- No Indian Head Massage photograph exists in the asset library,
+             and no practitioner card claims this treatment (Deborah's card
+             names massage therapy, hot stone and prenatal only; Naira's
+             names reflexology and the facials), so this row carries a
+             generic room image, honestly captioned as ambient light rather
+             than as a depiction of the treatment, and no "With" line. -->
+        <div class="treatment-row treatment-row--media" data-side="left">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-falling.jpg" alt="Soft light falling across the treatment space at The Healing Bench" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Indian Head Massage</p>
+            <p class="treatment-row__price">$95</p>
+            <p class="treatment-row__desc">Restore balance and relieve tension with our Indian Head Massage. Rooted in traditional Ayurvedic techniques, this soothing treatment focuses on the upper back, shoulders, neck, scalp and face to ease stress, improve circulation, reduce headaches and promote deep relaxation. Gentle rhythmic strokes, pressure-point work and scalp massage release built-up tension and encourage mental clarity and better sleep. Perfect for busy professionals, anyone with tech-related neck and shoulder strain, or anyone seeking a calming, restorative reset.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an Indian head massage</a></p>
+          </div>
         </div>
       </div>
 
@@ -419,11 +457,21 @@
           <div class="treatment-row__body">
             <p class="treatment-row__name">Reflexology</p>
             <p class="treatment-row__price">From $80</p>
+            <p class="treatment-row__with">With Naira</p>
             <p class="treatment-row__desc">Experience deep relaxation and whole-body balance through the ancient art of reflexology. This gentle, therapeutic treatment focuses on specific pressure points that correspond to different organs and systems in the body. By stimulating these reflex areas, reflexology helps to release tension, improve circulation, and support your body's natural healing processes. Whether you're seeking stress relief, improved sleep, or overall well-being, reflexology offers a soothing, restorative experience that leaves you feeling grounded, refreshed, and renewed.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book reflexology</a></p>
           </div>
         </div>
       </div>
 
+      <!-- No facial-specific photography exists in the asset library
+           either: the four rows below reuse the site's generic texture
+           stills (steam, contour, linen) and the treatment-table
+           photograph already used in #visit, each honestly captioned as
+           ambient warmth or texture rather than a depiction of the
+           facial itself. All five facials in this group are attributed
+           to Naira, since her practitioner card states, verbatim,
+           "Reflexology and all natural facials." -->
       <div class="treatments__group" data-reveal data-stagger="70">
         <div class="treatments__group-head">
           <h3 class="treatments__group-name">Facials, all natural</h3>
@@ -437,32 +485,62 @@
           <div class="treatment-row__body">
             <p class="treatment-row__name">Natural Lift Facial</p>
             <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+            <p class="treatment-row__with">With Naira</p>
             <p class="treatment-row__desc">A Natural Lift Facial offers a holistic non-invasive approach designed to enhance skin's appearance for a more youthful, lifted look without chemicals. This facial combines specialized massage techniques with fingers, galvanic device for deep cleaning, gua sha for skin lifting, and LED red or green light and Radio Frequency for collagen boosting, brightening and tightening and toning skin while helping natural products absorption. Pressure point massage for head, neck and decollet&eacute; for ultimate relaxation. Key features of this natural lift treatment are lymphatic drainage, acupressure points, skin toning, cleansing and exfoliating with steam, and using natural organic products that leaves you with a rejuvenated skin.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the Natural Lift Facial</a></p>
           </div>
         </div>
 
-        <div class="treatment-row">
-          <p class="treatment-row__name">Clearing and Detoxing Natural Facial (for teens and adults)</p>
-          <p class="treatment-row__price">From $80</p>
-          <p class="treatment-row__desc">A Clearing and Detoxing Facial is a customized offering both for relief from breakouts and skin discoloration, helping pollution-exposed skin, acne, and pigmentation for any age. It is a specialized natural skincare treatment designed particularly focusing on acne, dull skin, discoloration, and congestion. We use steam for a deep cleanse and to unclog the pores, gentle exfoliation and extraction (if needed), a clearing mask, anti-inflammatory toner/s, hydrating and balancing moisturizers and finally soothing a calming serum using LED blue light for soothing inflammation and to reduce redness, with some guidance to a proper home skincare routine to maintain long-term skin health.</p>
+        <div class="treatment-row treatment-row--media" data-side="left">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/tex-steam.jpg" alt="Warm steam rising in soft light, part of the natural facial process" width="1920" height="1080" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Clearing and Detoxing Natural Facial (for teens and adults)</p>
+            <p class="treatment-row__price">From $80</p>
+            <p class="treatment-row__with">With Naira</p>
+            <p class="treatment-row__desc">A Clearing and Detoxing Facial is a customized offering both for relief from breakouts and skin discoloration, helping pollution-exposed skin, acne, and pigmentation for any age. It is a specialized natural skincare treatment designed particularly focusing on acne, dull skin, discoloration, and congestion. We use steam for a deep cleanse and to unclog the pores, gentle exfoliation and extraction (if needed), a clearing mask, anti-inflammatory toner/s, hydrating and balancing moisturizers and finally soothing a calming serum using LED blue light for soothing inflammation and to reduce redness, with some guidance to a proper home skincare routine to maintain long-term skin health.</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the Clearing and Detoxing Facial</a></p>
+          </div>
         </div>
 
-        <div class="treatment-row">
-          <p class="treatment-row__name">Cupping and Drainage Facial</p>
-          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
-          <p class="treatment-row__desc">Our targeted Decompression Cupping and Lymphatic Drainage Facial is designed to stimulate lymphatic flow, reduce fluid retention, and help circulation and detoxing. Through micro facial cupping techniques and specialized lymphatic drainage massage using organic botanical ingredients, it is perfect to improve skin elasticity and tone. Ideal for those experiencing facial swelling and puffiness, sluggish skin, sinus pressure, or dull skin tone. We combine the cupping treatment with a natural hydrating serum, and the lymphatic drainage massage with natural oil blends and moisturizers for maximum results. (LED not included)</p>
+        <div class="treatment-row treatment-row--media" data-side="right">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/tex-contour.jpg" alt="Warm light across a soft textured surface at The Healing Bench" width="1920" height="1080" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Cupping and Drainage Facial</p>
+            <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+            <p class="treatment-row__with">With Naira</p>
+            <p class="treatment-row__desc">Our targeted Decompression Cupping and Lymphatic Drainage Facial is designed to stimulate lymphatic flow, reduce fluid retention, and help circulation and detoxing. Through micro facial cupping techniques and specialized lymphatic drainage massage using organic botanical ingredients, it is perfect to improve skin elasticity and tone. Ideal for those experiencing facial swelling and puffiness, sluggish skin, sinus pressure, or dull skin tone. We combine the cupping treatment with a natural hydrating serum, and the lymphatic drainage massage with natural oil blends and moisturizers for maximum results. (LED not included)</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the Cupping and Drainage Facial</a></p>
+          </div>
         </div>
 
-        <div class="treatment-row">
-          <p class="treatment-row__name">Hydration Boost Express Facial</p>
-          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
-          <p class="treatment-row__desc">This express facial is for busier schedules and ideal before a special event or whenever your skin needs a quick refresh or a hydration boost as the weather changes. Applying the "Hot/Cold steam technique" and TWO natural nourishing masks in one treatment, this holistic facial helps revive your skin's softness and moisture, calms dryness and improves texture and elasticity. It is designed for dry, dehydrated, or environmentally stressed skin. (Does not include extractions or LED)</p>
+        <div class="treatment-row treatment-row--media" data-side="left">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/tex-linen.jpg" alt="Warm linen texture in soft light" width="1920" height="1080" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Hydration Boost Express Facial</p>
+            <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+            <p class="treatment-row__with">With Naira</p>
+            <p class="treatment-row__desc">This express facial is for busier schedules and ideal before a special event or whenever your skin needs a quick refresh or a hydration boost as the weather changes. Applying the "Hot/Cold steam technique" and TWO natural nourishing masks in one treatment, this holistic facial helps revive your skin's softness and moisture, calms dryness and improves texture and elasticity. It is designed for dry, dehydrated, or environmentally stressed skin. (Does not include extractions or LED)</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the Hydration Boost Express Facial</a></p>
+          </div>
         </div>
 
-        <div class="treatment-row">
-          <p class="treatment-row__name">Sculpt and Decongest Express Facial</p>
-          <p class="treatment-row__price is-enquiry">Price on enquiry</p>
-          <p class="treatment-row__desc">Pressed for time but your skin needs some attention? This facial is a choice for a quick yet effective treatment for very dry or red skin condition or for calming acne. Combines deep cleansing using calming ingredients to reduce congestion and redness, tender exfoliation and targeted extractions. Natural ingredients like botanical clays, chamomile and natural acids supported with soothing serums give your skin visible freshness and encourage decongestion. (Does not include LED)</p>
+        <div class="treatment-row treatment-row--media" data-side="right">
+          <figure class="treatment-row__media">
+            <img data-parallax src="assets/still-table.jpg" alt="The treatment table set with warm light at The Healing Bench" width="1080" height="1920" loading="lazy" decoding="async">
+          </figure>
+          <div class="treatment-row__body">
+            <p class="treatment-row__name">Sculpt and Decongest Express Facial</p>
+            <p class="treatment-row__price is-enquiry">Price on enquiry</p>
+            <p class="treatment-row__with">With Naira</p>
+            <p class="treatment-row__desc">Pressed for time but your skin needs some attention? This facial is a choice for a quick yet effective treatment for very dry or red skin condition or for calming acne. Combines deep cleansing using calming ingredients to reduce congestion and redness, tender exfoliation and targeted extractions. Natural ingredients like botanical clays, chamomile and natural acids supported with soothing serums give your skin visible freshness and encourage decongestion. (Does not include LED)</p>
+            <p class="treatment-row__cta"><a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the Sculpt and Decongest Express Facial</a></p>
+          </div>
         </div>
       </div>
 
@@ -690,23 +768,23 @@
             <div class="review-card">
               <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
               <blockquote class="review-card__quote">
-                <p>"I have been going to Deb for many years. I have recommended her to everyone I know. She is amazing, Best massage therapist EVER!"</p>
+                <p>"Deborah's hands are magic! Had a wonderful massage. Very experienced! The space is calming and welcoming! Highly recommend!"</p>
               </blockquote>
-              <cite class="review-card__attrib">Dawn Branco</cite>
+              <cite class="review-card__attrib">Megan Paterson</cite>
             </div>
             <div class="review-card">
               <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
               <blockquote class="review-card__quote">
-                <p>"She was professional, attentive, and made sure the pressure was perfect throughout the entire massage. I walked in feeling completely knotted up and left feeling like a brand-new person."</p>
+                <p>"Laurette is great! Always an amazing massage. Professional, attentive, and great techniques to work out tension areas."</p>
               </blockquote>
-              <cite class="review-card__attrib">Erin Gostick</cite>
+              <cite class="review-card__attrib">Sue Latt</cite>
             </div>
             <div class="review-card">
               <span class="review-card__mark" aria-hidden="true">&ldquo;</span>
               <blockquote class="review-card__quote">
-                <p>"I go for reflexology with Naira, I just love this service, the best reflexology treatment I have had!"</p>
+                <p>"I got a facial from Naira today and it was amazing. I highly recommend. She uses all natural products that are great for your skin and has so much knowledge on what your skin needs!"</p>
               </blockquote>
-              <cite class="review-card__attrib">Lynn Whitley</cite>
+              <cite class="review-card__attrib">Jasmine Phillips</cite>
             </div>
           </div>
         </div>
@@ -716,6 +794,17 @@
         <button class="reviews__arrow reviews__arrow--next" data-carousel-next aria-label="Next review">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
+      </div>
+
+      <!-- Second call to action: a visitor who just read three five-star
+           quotes is at a decision point and previously had nowhere to go
+           until the header or the final Book section. btn--ghost here
+           (outline, not filled) so it reads differently from the solid
+           btn--primary in #book below, even though both sit on the same
+           espresso ground. -->
+      <div class="reviews__cta" data-reveal>
+        <p class="reviews__cta-lede">See why people keep coming back</p>
+        <a class="btn btn--ghost btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
       </div>
     </div>
   </section>
@@ -760,17 +849,49 @@
           <p class="faq-item__a">Reflexology has a 35 minute treatment for children aged 8 to 12.</p>
         </details>
       </div>
+
+      <!-- Second call to action: a visitor who just had the cancellation
+           and pricing questions answered is at a decision point too.
+           btn--primary here (solid) on the cream ground, so it reads as
+           a distinct treatment from the ghost button after Reviews and
+           from the same btn--primary used in #book, which sits on the
+           opposite (dark) ground. -->
+      <div class="faq__cta" data-reveal>
+        <p class="faq__cta-lede">Ready to book your visit?</p>
+        <a class="btn btn--primary btn--sm" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
+      </div>
     </div>
   </section>
 
-  <!-- 08. Book. The single funnel point, https, rel="noopener". Espresso
-       band with a full-bleed photograph behind it, per DIRECTION-V3.md,
-       which names this section one of the three high-visibility slots for
-       the client's own treatment-room photography: room-2.jpg replaces
-       the generated hero-ending film frame v2 used here. The CTA carries
-       data-magnetic, Agent J's actual hook for the magnetic button
-       behaviour in site.js (initMagnetic queries [data-magnetic], not an
-       id). id="bookCta" stays too as a stable analytics/CSS hook. -->
+  <!-- 08. Book. Rebuilt as a real closing section rather than a second
+       hero. Before this change, #book shared its heading pattern, single
+       centred column and photographic-ground treatment with #hero and
+       carried nothing a visitor actually needs at the point of booking:
+       no hours, no address, no cancellation policy, no sense of what
+       happens next. It now adds a .book__details block, absent from
+       #hero entirely, carrying the practical facts a visitor wants right
+       before they commit: hours (verbatim from DESIGN-PACKAGE.md section
+       14, already shown once in #visit; repeated here so a visitor who
+       scrolls straight to Book without passing #visit still sees them),
+       the address with its unit number, "what to expect" (the FAQ
+       question "I have never had a massage. What happens?" together with
+       its unresolved DESIGN-PACKAGE.md section 8.7 answer, whose
+       [ANSWER TO CONFIRM.] bracket ships exactly as written rather than
+       guessed), and the cancellation policy (verbatim from the FAQ answer
+       above, which itself matches DESIGN-PACKAGE.md section 8.7).
+       .book__details-* are new classes with no rules in styles.css yet;
+       see HANDOFF-BOOKING.md for the requested layout and the bone/
+       bone-soft colour tokens they need against this section's dark
+       photograph, the same tokens .book__lede and .book__contact already
+       use.
+
+       Espresso band with a full-bleed photograph behind it, per
+       DIRECTION-V3.md, which names this section one of the three
+       high-visibility slots for the client's own treatment-room
+       photography: room-2.jpg. The CTA carries data-magnetic, Agent J's
+       actual hook for the magnetic button behaviour in site.js
+       (initMagnetic queries [data-magnetic], not an id). id="bookCta"
+       stays too as a stable analytics/CSS hook. -->
   <section id="book" class="section book">
     <div class="book__stage">
       <img class="book__media" aria-hidden="true" alt="" src="assets/room-2.jpg" width="1920" height="1920" loading="lazy" decoding="async">
@@ -784,6 +905,34 @@
           </div>
           <h2 class="book__title shead" data-split="words">Book an appointment</h2>
           <p class="book__lede">Book with Deborah, Laurette or Naira</p>
+
+          <div class="book__details">
+            <div class="book__details-col">
+              <h3 class="book__details-head">Hours</h3>
+              <div class="book__hours">
+                <div class="book__hours-row"><span>Monday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Tuesday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Wednesday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Thursday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Friday</span><span>9:00 a.m. to 6:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Saturday</span><span>9:00 a.m. to 5:00 p.m.</span></div>
+                <div class="book__hours-row"><span>Sunday</span><span>Closed</span></div>
+              </div>
+            </div>
+            <div class="book__details-col">
+              <h3 class="book__details-head">Find us</h3>
+              <address class="book__address">4460 Ontario Street, Unit 2<br>Beamsville, ON L3J 0A9</address>
+            </div>
+            <div class="book__details-col">
+              <h3 class="book__details-head">What to expect</h3>
+              <p class="book__details-text">[ANSWER TO CONFIRM.]</p>
+            </div>
+            <div class="book__details-col">
+              <h3 class="book__details-head">Cancellation policy</h3>
+              <p class="book__details-text">We need 24 hours notice. A late cancellation or no-show is charged at 50% of the service booked, and we cannot bill that to your insurance.</p>
+            </div>
+          </div>
+
           <div class="book__actions">
             <a class="btn btn--primary btn--magnetic" id="bookCta" data-magnetic href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
           </div>
@@ -836,7 +985,9 @@
   </div>
 </footer>
 
-<script src="scrollcraft.js" defer></script>
+<!-- scrollcraft.js removed: 58.5KB that loaded on every view and was never invoked,
+     confirmed by a grep finding zero data-sc-* attributes anywhere in this file. -->
+
 <script src="film-engine.js" defer></script>
 <script src="site.js" defer></script>
 </body>

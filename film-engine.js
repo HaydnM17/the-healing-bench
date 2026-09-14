@@ -145,14 +145,34 @@
   }
 
   /* ---------------------------------------------------------------------
-     heroProgress: 0 to 1 through the pinned hero's scroll range.
+     measureHero: the hero's offsetHeight and getBoundingClientRect, taken
+     together as one snapshot. tick() takes this reading exactly once per
+     frame, at the top, and threads the result through heroProgress,
+     computeHeroOut, computeHeroLate and computeHeroFade below, so a frame
+     that needs all four never re-queries layout for each one. Every call
+     site outside tick() (site.js's heroProgress() with no arguments,
+     onScroll, enableScrub, the IntersectionObserver callback) still wants
+     a fresh read, so the measurement parameter on each function below is
+     optional: omit it and the function measures for itself, exactly as
+     it always did.
   --------------------------------------------------------------------- */
 
-  function heroProgress() {
-    var total = hero.offsetHeight - window.innerHeight;
+  function measureHero() {
+    return { offsetHeight: hero.offsetHeight, rect: hero.getBoundingClientRect() };
+  }
+
+  /* ---------------------------------------------------------------------
+     heroProgress: 0 to 1 through the pinned hero's scroll range. Part of
+     the public API (window.filmEngine.heroProgress), called from site.js
+     with no arguments, so `m` must stay optional and default to a fresh
+     measurement.
+  --------------------------------------------------------------------- */
+
+  function heroProgress(m) {
+    if (!m) m = measureHero();
+    var total = m.offsetHeight - window.innerHeight;
     if (total <= 0) return 1;
-    var rect = hero.getBoundingClientRect();
-    return clamp(-rect.top / total, 0, 1);
+    return clamp(-m.rect.top / total, 0, 1);
   }
 
   /* ---------------------------------------------------------------------
@@ -165,17 +185,17 @@
 
   var lastHeroOut = -1;
 
-  function computeHeroOut() {
-    var rect = hero.getBoundingClientRect();
+  function computeHeroOut(m) {
+    var rect = m ? m.rect : hero.getBoundingClientRect();
     var scrolled = Math.max(0, -rect.top);
     var span = window.innerHeight * HERO_OUT_VH;
     if (span <= 0) return 1;
     return clamp(scrolled / span, 0, 1);
   }
 
-  function writeHeroOut() {
+  function writeHeroOut(m) {
     if (!stage) return;
-    var out = computeHeroOut();
+    var out = computeHeroOut(m);
     if (Math.abs(out - lastHeroOut) >= DELTA_GATE) {
       stage.style.setProperty('--heroOut', String(out));
       lastHeroOut = out;
@@ -218,29 +238,29 @@
   var FADE_IN = 0.82;
   var lastHeroFade = -1;
 
-  function computeHeroLate() {
+  function computeHeroLate(m) {
     var span = LATE_FULL - LATE_IN;
     if (span <= 0) return 1;
-    return clamp((heroProgress() - LATE_IN) / span, 0, 1);
+    return clamp((heroProgress(m) - LATE_IN) / span, 0, 1);
   }
 
-  function computeHeroFade() {
+  function computeHeroFade(m) {
     var span = 1 - FADE_IN;
     if (span <= 0) return 0;
-    return clamp((heroProgress() - FADE_IN) / span, 0, 1);
+    return clamp((heroProgress(m) - FADE_IN) / span, 0, 1);
   }
 
-  function writeHeroLate() {
+  function writeHeroLate(m) {
     if (!stage) return;
 
-    var late = computeHeroLate();
+    var late = computeHeroLate(m);
     if (Math.abs(late - lastHeroLate) >= DELTA_GATE) {
       stage.style.setProperty('--heroLate', String(late));
       stage.classList.toggle('is-late', late > 0.02);
       lastHeroLate = late;
     }
 
-    var fade = computeHeroFade();
+    var fade = computeHeroFade(m);
     if (Math.abs(fade - lastHeroFade) >= DELTA_GATE) {
       stage.style.setProperty('--heroFade', String(fade));
       lastHeroFade = fade;

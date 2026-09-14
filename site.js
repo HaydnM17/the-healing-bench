@@ -1126,10 +1126,19 @@
 
     for (var i = 0; i < items.length; i++) {
       (function (details) {
+        var summary = details.querySelector('summary');
         var content = details.querySelector('.faq-item__a');
-        if (!content) return;
+        if (!summary || !content) return;
 
-        details.addEventListener('click', function (e) {
+        // Bound to the <summary> only, not the whole <details>. A click
+        // anywhere in an open answer bubbles up through <details> too, so
+        // binding there re-triggered this handler on every text selection
+        // or copy inside the answer and collapsed the accordion out from
+        // under the reader. Scoping to <summary> means only a real summary
+        // click (pointer, or Enter/Space activation, which the browser
+        // fires as a click on the summary itself) ever reaches this
+        // handler, while the measured height animation below is untouched.
+        summary.addEventListener('click', function (e) {
           if (reduced()) return; // native instant toggle, no JS animation
           var opening = !details.open;
           e.preventDefault();

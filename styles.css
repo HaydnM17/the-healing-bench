@@ -2069,13 +2069,19 @@ strong, b {
    which is a separate property, so the two compose rather than overwrite
    one another. */
 [data-spotlight] > * {
-  opacity: .52;
-  scale: .985;
-  transition: opacity .55s var(--ease-out), scale .55s var(--ease-out);
+  opacity: .5;
+  /* translate, not transform. .about__copy carries both data-reveal and
+     data-spotlight, and the reveal already owns transform: translateY on
+     these same children; writing transform here would overwrite it. The
+     standalone translate and scale properties compose with it instead. */
+  translate: 0 34px;
+  scale: .975;
+  transition: opacity .6s var(--ease-out), translate .7s var(--ease-out), scale .7s var(--ease-out);
 }
 
 [data-spotlight] > *.is-lit {
   opacity: 1;
+  translate: 0 0;
   scale: 1;
 }
 
@@ -2083,7 +2089,15 @@ strong, b {
    travel than the body copy under it: it is the one that should feel like
    it steps forward. */
 [data-spotlight] > *:first-child {
-  scale: .97;
+  /* The display-serif lede gets the most travel: it is the line that
+     should feel like it steps forward out of the band. */
+  translate: 0 46px;
+  scale: .955;
+}
+
+[data-spotlight] > *:first-child.is-lit {
+  translate: 0 0;
+  scale: 1;
 }
 
 .about__media {
@@ -3523,6 +3537,7 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
 
   [data-spotlight] > * {
     opacity: 1;
+    translate: 0 0;
     scale: 1;
   }
 
@@ -3654,6 +3669,11 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
   border: 0;
   color: var(--bone);
   cursor: pointer;
+  /* Translucent at rest: these sit over photography and over every band
+     on the page, and a solid chevron read as a control bolted on top
+     rather than as a quiet suggestion. They come up to full on hover and
+     on focus, so the affordance is still there when it is wanted. */
+  opacity: .5;
   transition: transform .25s var(--ease-out), opacity .35s var(--ease-out);
 }
 
@@ -3679,7 +3699,7 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
 
 .jump-up svg { transform: rotate(180deg); }
 
-.jump-btn:hover, .jump-btn:focus-visible { opacity: .75; }
+.jump-btn:hover, .jump-btn:focus-visible { opacity: 1; }
 .jump-up:hover { transform: translateY(-3px); }
 .jump-down:hover { transform: translateY(3px); }
 

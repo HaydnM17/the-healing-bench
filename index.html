@@ -170,14 +170,15 @@
        scroll progress through the pinned region and fails silently
        (no scrub, no console error) if it is absent. The header brand's
        href points at "#hero" directly rather than a separate "#top"
-       anchor. #heroRing is the streamed blob loader's progress ring,
-       restored here per BUILD-CONTRACT.md; Agent F writes its
-       stroke-dashoffset through the --ld custom property while the film
-       downloads. Agent F wires the poster and video backgrounds through
-       CSS/JS using the hero-poster / hero-scrub asset naming convention,
-       so no raster <img> tags live inside the stage. Agent F also writes
-       --heroOut (0 to 1) onto #heroStage over 0.66 of one viewport height;
-       Agent S uses it to translate and fade #heroCrest and #heroCaption
+       anchor. #heroRing is the frame loader's progress ring, restored
+       here per BUILD-CONTRACT.md; Agent F writes its stroke-dashoffset
+       through the --ld custom property as the frames arrive. Agent F
+       wires the poster through CSS and JS, and paints the film itself
+       into the #heroFilm canvas from the WebP sequences under
+       assets/frames/, so no raster <img> tags live inside the stage.
+       Agent F also writes --heroOut (0 to 1) onto #heroStage over 0.66 of
+       one viewport height; Agent S uses it to translate and fade
+       #heroCrest and #heroCaption
        out on the first scroll. This is the one h1 on the page.
 
        Per DIRECTION-V3.md, room-1.jpg (a real photograph of the practice's

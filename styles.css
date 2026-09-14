@@ -2159,56 +2159,126 @@ strong, b {
    which rule set which, so this animation and the parallax scroll-
    transform ride the same element without either clobbering the other.
 
-   Coverage math, since the two now stack: [data-parallax] moves the
-   image +/-10% of its own height (12A) and this animation adds another
-   +/-3% vertically at its most extreme stop (22%, below), in the same
-   axis, so the worst case — both at their extreme in the same direction
-   at the same instant, which scroll position and animation phase are
-   free to coincide on at any time — is 13% off-centre, not 10%. A
-   translate of amplitude A% needs scale >= 1 + 2A/100 to keep the
-   image's own scaled-up edge from ever clearing the frame (12A's own
-   formula); at A=13 that floor is 1.26. [data-parallax]'s old scale
-   (1.25) no longer clears it, so 12A's rule now reads scale(1.32) — a
-   wider margin over its floor than 12A's original five points, erring
-   toward more rather than trimming close to the line. The horizontal
-   drift here (+/-1.5%, no scroll-parallax counterpart to stack against)
-   sits far inside that same margin on the other axis. The animation's
-   own gentle scale breathing (up to 1.02, multiplying on top of 1.32)
-   only adds further margin, so it is left out of the arithmetic above;
-   the worst case is taken at the animation's own resting scale of 1.
+   REVISION — "too jumpy, too choppy, doesn't look smooth enough at
+   all." The original 0/22/48/74/100 version had two compounding bugs,
+   not one:
 
-   Three periods sharing no common factor (26s, 33s, 29s), each already
-   out of phase via a negative animation-delay, so the three photographs
-   never drift in and out together — the same de-sync technique 12B
-   uses for the practitioner bubbles (7.2s/8.6s/6.4s there), just with
-   duration doing more of the separating here instead of delay alone.
-   20-40s a cycle, per the brief: slow enough that no one can catch it
-   moving by staring, only notice it is different after looking away.
+   1. Four independent eases per lap. `animation: ... ease-in-out` with
+      no per-keyframe override applies that same ease-in-out to EACH
+      segment (0->22, 22->48, 48->74, 74->100) separately, and
+      ease-in-out decelerates to zero velocity at the end of every
+      segment it is given. That is four full stop-and-restart events
+      per cycle, not one smooth sweep — the motion visibly paused and
+      re-launched itself every few seconds.
+
+   2. Sharp reversals landing on top of those stops. Plotting the old
+      translate values as vectors between stops: 0->22% moved
+      (-1.5%, -3%); 22->48% then moved (+2.7%, +2.4%) — the cosine
+      between those two is -0.93, i.e. a ~158 degree reversal, almost
+      doubling straight back. 48->74% turned a milder ~62 degrees, then
+      74->100% reversed again by ~157 degrees. So two of the four
+      stops were near-total direction reversals, and both landed
+      exactly on an eased-to-zero keyframe boundary: the image
+      genuinely hit a wall and bounced, twice a lap. The scale value
+      (1 -> 1.012 -> 1.02 -> 1.008 -> 1) rode the same four uneven
+      stops on the same ease-in-out, so the zoom pulsed out of step
+      with the position changes too — a second, unrelated rhythm
+      beating against the first.
+
+   Fix: replace the four-stop zig-zag with an actual orbit, and split
+   the zoom onto its own independent, longer cycle.
+
+   `ambientDrift` (translate only) now traces an ellipse — 8 stops at
+   an even 12.5% apart, one every 45 degrees of angle (cos/sin at
+   1.5% horizontal, 3% vertical, matching the old maximum excursions
+   exactly so the coverage math below does not move). `animation:
+   ambientDrift Ns linear infinite` — linear, not ease-in-out, is the
+   point: with the stops evenly spaced in time AND evenly spaced in
+   angle, linear timing gives constant angular progress around the
+   loop. An orbit never has to decelerate to zero and turn back the
+   way the old path did, because it never reverses — every step keeps
+   turning the same way by the same 45 degrees, so there is no
+   segment-boundary stop and no corner sharper than that 45 degrees.
+   That is what actually reads as "drifting" instead of "lurching."
+
+   `ambientZoom` (scale only) is now a fully separate animation with
+   its own keyframes, its own duration, and its own delay — a single
+   slow pulse, scale 1 -> 1.02 -> 1, ease-in-out. One rise and one
+   fall per lap is exactly the "zooming in, moving around, zooming
+   out" the owner described, and because it is a second `animation-
+   name` in the comma-separated list (not a second property in the
+   same @keyframes as before), it no longer shares stops with the
+   translate orbit at all — nothing to beat against. Its own duration
+   is deliberately not a small integer multiple of the translate
+   duration it rides alongside (e.g. 41s against 26s, not 52s against
+   26s), so the two do not realign into a repeating combined pattern
+   either.
+
+   Coverage math, since translate and the [data-parallax] scroll
+   transform still stack on the same element: [data-parallax] moves
+   the image +/-10% of its own height (12A) and ambientDrift's ellipse
+   adds another +/-3% on that same vertical axis at its own extreme
+   (the 25%/75% stops below), so the worst case — both at their
+   extreme in the same direction at the same instant, which scroll
+   position and orbit phase are free to coincide on at any time — is
+   still 13% off-centre, unchanged from the previous version because
+   the new ellipse's vertical amplitude (3%) matches the old path's
+   vertical maximum exactly. A translate of amplitude A% needs
+   scale >= 1 + 2A/100 to keep the image's own scaled-up edge from
+   ever clearing the frame (12A's own formula); at A=13 that floor is
+   1.26, and [data-parallax] already reads scale(1.32) — untouched by
+   this revision, and still clearing the floor by the same margin as
+   before. The horizontal orbit amplitude (+/-1.5%, no scroll-parallax
+   counterpart to stack against) needs only 1.03 and sits far inside
+   that margin. ambientZoom's own scale (1 -> 1.02) multiplies on top
+   of the 1.32, so it only ever adds further margin above the frame
+   edge, never subtracts from it — the worst case is correctly taken
+   at ambientZoom's own resting value of 1, same reasoning as before,
+   just now against a scale that lives in its own keyframes.
+
+   Translate durations unchanged (26s, 33s, 29s: no common factor,
+   already out of phase via a negative animation-delay, the same
+   de-sync technique 12B uses for the practitioner bubbles). Zoom
+   durations are new, longer, and each other's own no-common-factor
+   set too (41s, 47s, 43s), with their own independent negative delays
+   — two staggered rhythms per image instead of one, both slow. 20-47s
+   a cycle: slow enough that no one can catch it moving by staring,
+   only notice it is different after looking away.
    -------------------------------------------------------------------------- */
 
 @keyframes ambientDrift {
-  0%   { translate: 0 0; scale: 1; }
-  22%  { translate: -1.5% -3%; scale: 1.012; }
-  48%  { translate: 1.2% -.6%; scale: 1.02; }
-  74%  { translate: .4% 2.6%; scale: 1.008; }
-  100% { translate: 0 0; scale: 1; }
+  0%    { translate: 1.5% 0; }
+  12.5% { translate: 1.06% 2.12%; }
+  25%   { translate: 0% 3%; }
+  37.5% { translate: -1.06% 2.12%; }
+  50%   { translate: -1.5% 0; }
+  62.5% { translate: -1.06% -2.12%; }
+  75%   { translate: 0% -3%; }
+  87.5% { translate: 1.06% -2.12%; }
+  100%  { translate: 1.5% 0; }
+}
+
+@keyframes ambientZoom {
+  0%   { scale: 1; }
+  50%  { scale: 1.02; }
+  100% { scale: 1; }
 }
 
 .about__image {
-  animation: ambientDrift 26s ease-in-out infinite;
-  animation-delay: -11s;
+  animation: ambientDrift 26s linear infinite, ambientZoom 41s ease-in-out infinite;
+  animation-delay: -11s, -17s;
   will-change: translate, scale;
 }
 
 .treatments__opener img {
-  animation: ambientDrift 33s ease-in-out infinite;
-  animation-delay: -18s;
+  animation: ambientDrift 33s linear infinite, ambientZoom 47s ease-in-out infinite;
+  animation-delay: -18s, -21s;
   will-change: translate, scale;
 }
 
 .visit__image {
-  animation: ambientDrift 29s ease-in-out infinite;
-  animation-delay: -6s;
+  animation: ambientDrift 29s linear infinite, ambientZoom 43s ease-in-out infinite;
+  animation-delay: -6s, -9s;
   will-change: translate, scale;
 }
 
@@ -3890,11 +3960,12 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     opacity: 1;
   }
 
-  /* Ambient drift (12D) stops outright. Its own keyframes already
-     return to identity at 0%/100%, so the blanket .01ms collapse above
-     would leave these at rest regardless, but pinning translate/scale
-     back explicitly, the same way [data-spotlight] does above, keeps
-     the intent named rather than incidental. */
+  /* Ambient drift (12D) stops outright. ambientZoom's own keyframes
+     already return scale to identity (1) at 0%/100%, but ambientDrift's
+     orbit does not pass through translate:0 0 at its own loop point (it
+     is a closed ellipse, not a there-and-back path — see 12D), so this
+     explicit pin is what actually puts the image at rest, the same way
+     [data-spotlight] pins back explicitly above. */
   .about__image,
   .treatments__opener img,
   .visit__image {

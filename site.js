@@ -360,6 +360,57 @@
       });
     }
 
+    /* Land on the section's HEADING, not on its box.
+
+       scrollIntoView honours scroll-margin-top, so the section's top edge
+       was arriving a comfortable 24px under the fixed header, exactly as
+       intended. The trouble is what comes next: .section carries its own
+       padding-block of up to 132px, so the heading itself was landing
+       about 200px down the screen with nothing but empty band above it,
+       and every nav link read as not having scrolled far enough.
+
+       Measuring from the heading instead makes the landing identical for
+       every section regardless of how much padding that band happens to
+       carry at the current viewport height. Sections with no heading (the
+       hero) fall back to their own box, which correctly means the top of
+       the page. */
+    var LAND_GAP = 26; // px of air between the header's underside and the heading
+
+    function headerHeight() {
+      var h = doc.querySelector('.site-header');
+      return h ? h.getBoundingClientRect().height : 78;
+    }
+
+    // .slabel is display:none in six of the eight sections, and a
+    // display:none element reports a zero rect, which would have sent
+    // every one of those links to the top of the page. Take the first
+    // candidate that actually has a box.
+    function landingAnchor(target) {
+      var candidates = target.querySelectorAll('.slabel, .shead, h2');
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i].getBoundingClientRect().height > 0) return candidates[i];
+      }
+      return null;
+    }
+
+    function scrollToSection(target) {
+      var anchor = landingAnchor(target);
+      var y;
+      if (anchor) {
+        y = anchor.getBoundingClientRect().top + (window.scrollY || 0) - headerHeight() - LAND_GAP;
+      } else {
+        y = target.getBoundingClientRect().top + (window.scrollY || 0);
+      }
+      y = Math.max(0, y);
+      if (typeof window.scrollTo === 'function') {
+        try {
+          window.scrollTo({ top: y, behavior: reduced() ? 'auto' : 'smooth' });
+          return;
+        } catch (err) { /* older browsers reject the options object */ }
+      }
+      window.scrollTo(0, y);
+    }
+
     var links = Array.prototype.slice.call(doc.querySelectorAll('a[href^="#"]'));
     for (var i = 0; i < links.length; i++) {
       (function (a) {
@@ -369,7 +420,7 @@
           var target = doc.getElementById(hash);
           if (!target) return;
           e.preventDefault();
-          target.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+          scrollToSection(target);
           if (open) closeMenu();
           var hadTabIndex = target.hasAttribute('tabindex');
           if (!hadTabIndex) target.setAttribute('tabindex', '-1');
@@ -772,11 +823,22 @@
           view.scrollLeft = pos;
         }
 
-        function paint() {
+        // paint() is called from the drift frame AND from the view's own
+        // scroll event, and wrap() writes view.scrollLeft, which fires that
+        // scroll event in turn. Without this guard every cell was being
+        // measured and restyled twice for the same position, every frame,
+        // for as long as the section was on screen: nine cells, two layout
+        // reads and four style writes each, doubled.
+        var lastPainted = null;
+
+        function paint(force) {
           if (reduced()) return;
           var span = view.clientWidth;
           if (!span) return;
-          var mid = view.scrollLeft + span / 2;
+          var at = view.scrollLeft;
+          if (force !== true && at === lastPainted) return;
+          lastPainted = at;
+          var mid = at + span / 2;
           for (var i = 0; i < cells.length; i++) {
             var cell = cells[i];
             var off = cell.offsetLeft + cell.offsetWidth / 2 - mid;
@@ -787,7 +849,6 @@
             cell.style.transformOrigin = (50 - t * 50).toFixed(1) + '% 50%';
             cell.style.transform = 'scale(' + scale.toFixed(3) + ')';
             cell.style.opacity = fade.toFixed(3);
-            cell.classList.toggle('is-focus', d < 0.14);
           }
         }
 
@@ -862,13 +923,41 @@
           else if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }
         });
 
-        view.addEventListener('scroll', paint, { passive: true });
-        strip.addEventListener('pointerenter', function () { hold('hover', true); });
-        strip.addEventListener('pointerleave', function () { hold('hover', false); });
+        // Scroll drives the paint, and also re-wraps the loop once the
+        // scrolling settles. wrap() used to be reachable ONLY from the drift
+        // frame, so the moment the drift was not running the strip stopped
+        // being infinite and became a plain nine-card row with two hard
+        // ends. That is what made the last review unreachable. Wrapping is
+        // deferred to a short quiet period rather than done inline, because
+        // writing scrollLeft in the middle of a live drag or a smooth
+        // scrollTo fights whatever is doing the scrolling.
+        var wrapTimer = null;
+        view.addEventListener('scroll', function () {
+          paint();
+          if (wrapTimer) clearTimeout(wrapTimer);
+          wrapTimer = setTimeout(function () {
+            if (held.press || held.step) return;
+            pos = null;
+            wrap();
+          }, 140);
+        }, { passive: true });
+
+        // No hover pause. A strip that stops the moment the pointer crosses
+        // it reads as broken rather than considerate, and the arrows, the
+        // arrow keys and a drag are all still there for anyone who wants to
+        // take control. Keyboard focus still pauses it (below), which is
+        // what actually matters: someone tabbing through the cards needs
+        // them to hold still.
         strip.addEventListener('focusin', function () { hold('hover', true); });
         strip.addEventListener('focusout', function () { hold('hover', false); });
+
+        // press is released by pointercancel as well as pointerup. Without
+        // the cancel, one interrupted swipe (a system back-gesture, a
+        // notification, a second finger) leaves press stuck true and the
+        // drift never restarts for the rest of the session.
         view.addEventListener('pointerdown', function () { hold('press', true); });
         window.addEventListener('pointerup', function () { hold('press', false); }, { passive: true });
+        window.addEventListener('pointercancel', function () { hold('press', false); }, { passive: true });
         pauseListeners.push(function (paused) { hold('hidden', paused); });
 
         function settle() {
@@ -1641,11 +1730,127 @@
   }
 
   /* -----------------------------------------------------------------------
+     MECHANISM 12. THE PARAGRAPH SPOTLIGHT, on [data-spotlight] children.
+
+     As the reader arrives at each paragraph it comes forward and the others
+     sit back. Driven by an IntersectionObserver with a narrow band across
+     the middle of the viewport rather than by a scroll handler, so it costs
+     nothing per frame: the band is a rootMargin that discards the top and
+     bottom of the screen, leaving a strip about a fifth of the way up from
+     centre, and a paragraph is lit exactly while it is crossing that strip.
+
+     Only ever adds and removes one class. The movement itself is CSS, and
+     is transform and opacity only, so nothing here can cause a layout.
+
+     No IntersectionObserver, or reduced motion: every child is lit and
+     stays lit, which is the correct resting state, not a degraded one.
+  ----------------------------------------------------------------------- */
+
+  function initSpotlight() {
+    var groups = Array.prototype.slice.call(doc.querySelectorAll('[data-spotlight]'));
+    if (!groups.length) return { pin: noop, unpin: noop };
+
+    var all = [];
+    for (var g = 0; g < groups.length; g++) {
+      all = all.concat(Array.prototype.slice.call(groups[g].children));
+    }
+    if (!all.length) return { pin: noop, unpin: noop };
+
+    function litAll(on) {
+      for (var i = 0; i < all.length; i++) all[i].classList.toggle('is-lit', on);
+    }
+
+    if (!('IntersectionObserver' in window) || reduced()) {
+      litAll(true);
+      return { pin: function () { litAll(true); }, unpin: function () { litAll(true); } };
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        entries[i].target.classList.toggle('is-lit', entries[i].isIntersecting);
+      }
+    }, {
+      // Keep only a band across the middle third, biased slightly above
+      // centre, which is where the eye actually sits while reading.
+      rootMargin: '-38% 0px -42% 0px',
+      threshold: 0
+    });
+
+    for (var j = 0; j < all.length; j++) io.observe(all[j]);
+
+    return {
+      // Reduced motion pins every paragraph lit and stops the observer
+      // deciding anything; unpin hands the decision back.
+      pin: function () {
+        for (var k = 0; k < all.length; k++) io.unobserve(all[k]);
+        litAll(true);
+      },
+      unpin: function () {
+        litAll(false);
+        for (var m = 0; m < all.length; m++) io.observe(all[m]);
+      }
+    };
+  }
+
+  /* -----------------------------------------------------------------------
+     MECHANISM 11. THE MEASURED HEADER HEIGHT.
+
+     --header-h is what every section's scroll-margin-top is built from, so
+     it decides where an anchor jump lands. It was two hardcoded guesses in
+     styles.css, 78px and 84px at 880, and a guess goes stale the moment
+     anything in the header changes size: a longer nav, different link
+     padding, a larger type scale, or a visitor's own larger root font. When
+     it is short, every nav link lands its heading tucked up under the fixed
+     bar.
+
+     So it is measured instead. The CSS values stay as the pre-JS fallback
+     and are still correct for a visitor with scripting off; this simply
+     replaces them with the truth once the header has actually been laid
+     out. Re-measured on resize, and after fonts load, since a font swap
+     changes the header's height by a pixel or two.
+  ----------------------------------------------------------------------- */
+
+  function initHeaderHeight() {
+    var header = doc.querySelector('.site-header');
+    if (!header) return;
+
+    var last = -1;
+
+    function measure() {
+      var h = Math.round(header.getBoundingClientRect().height);
+      if (h <= 0 || h === last) return;
+      last = h;
+      doc.documentElement.style.setProperty('--header-h', h + 'px');
+    }
+
+    measure();
+
+    var t = null;
+    window.addEventListener('resize', function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(measure, 120);
+    }, { passive: true });
+
+    // The header's height moves when the display face swaps in for the
+    // fallback, which lands after this first runs.
+    if (doc.fonts && doc.fonts.ready && typeof doc.fonts.ready.then === 'function') {
+      doc.fonts.ready.then(measure).catch(noop);
+    }
+
+    // The mobile nav panel opening changes the header's box on some
+    // layouts, so re-measure once it settles rather than leaving a stale
+    // value behind a closed menu.
+    var toggle = doc.getElementById('navToggle');
+    if (toggle) toggle.addEventListener('click', function () { setTimeout(measure, 260); });
+  }
+
+  /* -----------------------------------------------------------------------
      BOOT AND REDUCED-MOTION GOVERNANCE, LIVE AND IN BOTH DIRECTIONS.
   ----------------------------------------------------------------------- */
 
   function boot() {
     initVisibility();
+    initHeaderHeight();
 
     var spine = initSpine();
     initNav();
@@ -1659,8 +1864,9 @@
     var steam = initSteam();
     initFaqAccordion();
     initHours();
+    var spotlight = initSpotlight();
 
-    var pinnable = [spine, reveal, wordSplit, parallax, carousels, magnetic, progress, heat, steam];
+    var pinnable = [spine, reveal, wordSplit, parallax, carousels, magnetic, progress, heat, steam, spotlight];
 
     function pinToFinalStates() {
       for (var i = 0; i < pinnable.length; i++) pinnable[i].pin();

@@ -518,12 +518,12 @@ strong, b {
 .section {
   position: relative;
   padding-block: clamp(64px, 11vh, 132px);
-  scroll-margin-top: calc(var(--header-h) + var(--space-sm));
+  scroll-margin-top: calc(var(--header-h) + var(--space-md));
 }
 
 #main,
 #hero {
-  scroll-margin-top: calc(var(--header-h) + var(--space-sm));
+  scroll-margin-top: calc(var(--header-h) + var(--space-md));
 }
 
 /* --------------------------------------------------------------------------
@@ -1155,7 +1155,15 @@ strong, b {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transform: translateZ(0);
+  /* Pushes in as the hero fades out. --heroFade runs 0 to 1 across the
+     last stretch of the section (film-engine.js), so the picture is
+     still closing in on the table at the moment the blackout takes it,
+     rather than sitting frozen while it dims. Kept to 4.5%: this is a
+     last breath inwards, not a zoom, and anything more read as a lurch
+     over the short stretch of scroll it has to happen in. translateZ(0) is kept in
+     the same transform so the element stays on its own layer. */
+  transform: translateZ(0) scale(calc(1 + var(--heroFade, 0) * .045));
+  transform-origin: 50% 42%;
   transition: opacity .8s var(--ease-out);
 }
 
@@ -1170,6 +1178,13 @@ strong, b {
 .hero__stage.video-ready .hero__poster { opacity: 0; }
 .hero__stage.video-failed .hero__video { display: none; }
 .hero__stage.video-failed .hero__poster { opacity: 1; }
+
+/* The poster takes the same push so a visitor on any of the static-hero
+   gates gets the same closing move rather than a dead frame. */
+.hero__poster {
+  transform: scale(calc(1 + var(--heroFade, 0) * .045));
+  transform-origin: 50% 42%;
+}
 
 /* Lower right of the stage, small and quiet: it was sitting dead centre
    over the kicker and the crest, reading as a bug rather than a loading
@@ -2039,6 +2054,35 @@ strong, b {
   font-weight: 400;
 }
 
+/* The paragraph spotlight. site.js lights exactly the paragraph crossing a
+   band across the middle of the viewport; the rest sit back. Transform and
+   opacity only, and the unlit state is deliberately mild: this is meant to
+   guide the eye down the column, not to make the other paragraphs hard to
+   read for anyone who wants to skim ahead.
+
+   No transition on the [data-reveal] entrance transform: .about__copy
+   carries both data-reveal and data-spotlight, and the reveal already owns
+   translateY on these same children. The spotlight uses `scale` instead,
+   which is a separate property, so the two compose rather than overwrite
+   one another. */
+[data-spotlight] > * {
+  opacity: .52;
+  scale: .985;
+  transition: opacity .55s var(--ease-out), scale .55s var(--ease-out);
+}
+
+[data-spotlight] > *.is-lit {
+  opacity: 1;
+  scale: 1;
+}
+
+/* The first paragraph is the display-serif lede, so it gets a little more
+   travel than the body copy under it: it is the one that should feel like
+   it steps forward. */
+[data-spotlight] > *:first-child {
+  scale: .97;
+}
+
 .about__media {
   position: relative;
   overflow: hidden;
@@ -2719,6 +2763,23 @@ strong, b {
   text-align: center;
 }
 
+/* Matches the hero panel's rating treatment so the two read as the same
+   claim stated twice, not two different ones. */
+.reviews__rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4em;
+}
+
+.reviews__star {
+  width: .95em;
+  height: .95em;
+  margin-top: .04em;
+  flex: none;
+  color: var(--bone);
+}
+
 /* Second call to action, closing the section under the carousel. Matches
    .reviews__rating's centred rhythm above it. */
 .reviews__cta {
@@ -2739,10 +2800,23 @@ strong, b {
    viewport with items cut off rather than a continuous strip drifting
    past. Transparent at the very edge, opaque by 8%, so a card is never
    abruptly guillotined. */
+/* overflow-x is auto, not hidden. With hidden, the strip could not be
+   swiped or trackpad-scrolled at all: the only way through it was the two
+   arrow buttons and the drift, which is why the third review was so hard
+   to reach. The bar itself is hidden in every engine; the scrolling is
+   what is wanted, not the chrome. */
 [data-carousel-view] {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+[data-carousel-view]::-webkit-scrollbar {
+  display: none;
 }
 
 [data-carousel-track] {
@@ -3442,6 +3516,11 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
   [data-stagger] > * {
     opacity: 1;
     transform: none;
+  }
+
+  [data-spotlight] > * {
+    opacity: 1;
+    scale: 1;
   }
 
   [data-split='words'] .mask > span {

@@ -1167,12 +1167,15 @@ strong, b {
   transition: opacity .8s var(--ease-out);
 }
 
-/* Grade the film down: it is AI-generated and does not survive close
-   inspection, so it is held back and a scrim plus real content carries
-   the frame instead. */
-.hero__video, .hero__poster {
-  filter: saturate(.78) contrast(1.02) brightness(.92);
-}
+/* The grade that used to live here, saturate(.78) contrast(1.02)
+   brightness(.92), is now baked into the film and the posters themselves.
+
+   A CSS filter on a <video> forces the browser off the cheap hardware
+   video path and onto per-frame shader compositing of every decoded
+   frame. On a phone, paid continuously while the visitor scrubs through
+   the whole hero, that is one of the most expensive things the page was
+   doing, and it showed as a low frame rate in the smoke. The look is
+   identical; it just costs nothing now. */
 
 .hero__stage.video-ready .hero__video { opacity: 1; }
 .hero__stage.video-ready .hero__poster { opacity: 0; }
@@ -3604,4 +3607,93 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     --ink-soft: #3D3128;
     --bone-soft: #DCD2C4;
   }
+}
+
+/* --------------------------------------------------------------------------
+   22. SECTION JUMP ARROWS
+   One press a section. Up sits at the top of the screen, down at the foot,
+   so each points off the edge it takes you towards. Bare chevrons, no disc
+   and no border: this page already has two kinds of pill button and a third
+   would read as a third call to action rather than as a direction.
+
+   The colour problem these have that the nav pill does not: they are fixed
+   over a page that alternates espresso, tan and cream, so no single ink
+   reads on everything underneath them. mix-blend-mode: difference inverts
+   the chevron against whatever is behind it, which is the same trick the
+   spine used and for the same reason. These are 64x38, so the compositing
+   cost that made the spine worth removing on phones does not apply.
+
+   @supports carries the fallback: a bone chevron with a dark rim, which is
+   legible on the dark bands and merely quiet on the light ones.
+   -------------------------------------------------------------------------- */
+
+.jump {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--header-h) + 14px) 0
+           calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Pushed to the foot whether or not the up arrow is there to share the
+   column. space-between would send it to the top the moment it was alone. */
+.jump-down { margin-top: auto; }
+
+.jump-btn {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 38px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--bone);
+  cursor: pointer;
+  transition: transform .25s var(--ease-out), opacity .35s var(--ease-out);
+}
+
+/* .jump-btn sets a display, which outranks the one the hidden attribute
+   carries. Without this the script hides nothing. */
+.jump-btn[hidden] { display: none; }
+
+.jump-btn svg {
+  display: block;
+  width: 42px;
+  height: auto;
+  filter: drop-shadow(0 0 2px rgba(14, 11, 8, .55))
+          drop-shadow(0 1px 5px rgba(14, 11, 8, .35));
+}
+
+@supports (mix-blend-mode: difference) {
+  .jump-btn svg {
+    mix-blend-mode: difference;
+    filter: none;
+    color: #FFFFFF;
+  }
+}
+
+.jump-up svg { transform: rotate(180deg); }
+
+.jump-btn:hover, .jump-btn:focus-visible { opacity: .75; }
+.jump-up:hover { transform: translateY(-3px); }
+.jump-down:hover { transform: translateY(3px); }
+
+/* The down arrow breathes while it is the only thing asking to be pressed,
+   which is the whole time the hero is on screen. It stops as soon as the
+   reader has started moving, so it is an invitation rather than a nag. */
+@keyframes jumpNudge {
+  0%, 72%, 100% { transform: translateY(0); }
+  84%           { transform: translateY(5px); }
+}
+
+.jump-down.is-inviting { animation: jumpNudge 3.4s var(--ease-out) infinite; }
+.jump-down.is-inviting:hover { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .jump-down.is-inviting { animation: none; }
 }

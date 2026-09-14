@@ -95,6 +95,12 @@
   <symbol id="star" viewBox="0 0 24 24">
     <path fill="currentColor" d="M12 1.6l3.09 6.26 6.91 1-5 4.87 1.18 6.87L12 17.35l-6.18 3.25L7 13.73l-5-4.87 6.91-1z"/>
   </symbol>
+  <!-- The jump-arrow chevron: wide, shallow, two strokes and no shaft, so it
+       reads as a direction rather than as another button competing with the
+       booking pills. -->
+  <symbol id="chev" viewBox="0 0 30 9">
+    <path d="M1.4 1.4 15 7.6 28.6 1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
 </svg>
 
 <a class="skip-link" href="#main">Skip to content</a>
@@ -1012,6 +1018,23 @@
   </section>
 
 </main>
+
+<!-- Section jump arrows. One press a section, using the same landing
+     measurement as the nav links (site.js, landingY) so a press from either
+     control puts you in exactly the same place.
+
+     Both start hidden and are shown by site.js only when there is somewhere
+     to go. The down arrow additionally waits for the hero film to finish
+     playing its opening: an arrow inviting you past the hero while the hero
+     is still making its one move is an arrow arguing with the page. -->
+<div class="jump" aria-hidden="false">
+  <button class="jump-btn jump-up" id="jump-up" type="button" aria-label="Previous section" hidden>
+    <svg viewBox="0 0 30 9" aria-hidden="true" focusable="false"><use href="#chev"/></svg>
+  </button>
+  <button class="jump-btn jump-down" id="jump-down" type="button" aria-label="Next section" hidden>
+    <svg viewBox="0 0 30 9" aria-hidden="true" focusable="false"><use href="#chev"/></svg>
+  </button>
+</div>
 
 <!-- Footer: address, hours, phone, email, copyright. No social icons: the
      old site linked facebook.com/wix and instagram.com/wix, which are

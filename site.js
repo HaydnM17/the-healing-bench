@@ -92,6 +92,65 @@
   // The eight below-fold sections, in document order. Nav links point at
   // these; the spine carries one node per id.
   var SECTION_IDS = ['intro', 'practitioners', 'treatments', 'fees', 'visit', 'reviews', 'faq', 'book'];
+  /* -----------------------------------------------------------------------
+     WHERE A SECTION LANDS. Shared by the nav links (mechanism, initNav) and
+     the jump arrows (mechanism 13), so the two can never disagree about
+     where a press puts you.
+
+     Measured from the section's HEADING, not from its box. scroll-margin-top
+     does put a section's top edge a comfortable distance under the fixed
+     header, but .section then adds up to 132px of its own padding before the
+     heading appears, so the heading was arriving about 200px down the screen
+     with a band of empty colour above it. Measuring from the heading makes
+     the landing identical for every section regardless of how much padding
+     that band happens to carry at the current viewport height.
+  ----------------------------------------------------------------------- */
+
+  var LAND_GAP = 26; // px of air between the header's underside and the heading
+
+  function headerHeight() {
+    var h = doc.querySelector('.site-header');
+    return h ? h.getBoundingClientRect().height : 78;
+  }
+
+  // .slabel is display:none in six of the eight sections, and a display:none
+  // element reports a zero rect, which would send every one of those to the
+  // top of the page. Take the first candidate that actually has a box.
+  function landingAnchor(target) {
+    var candidates = target.querySelectorAll('.slabel, .shead, h2');
+    for (var i = 0; i < candidates.length; i++) {
+      if (candidates[i].getBoundingClientRect().height > 0) return candidates[i];
+    }
+    return null;
+  }
+
+  // The absolute scroll-Y that lands this section. The hero has no heading,
+  // so it correctly resolves to the top of the page.
+  function landingY(target) {
+    var anchor = landingAnchor(target);
+    var y;
+    if (anchor) {
+      y = anchor.getBoundingClientRect().top + (window.scrollY || 0) - headerHeight() - LAND_GAP;
+    } else {
+      y = target.getBoundingClientRect().top + (window.scrollY || 0);
+    }
+    return Math.max(0, y);
+  }
+
+  function scrollToY(y) {
+    if (typeof window.scrollTo === 'function') {
+      try {
+        window.scrollTo({ top: y, behavior: reduced() ? 'auto' : 'smooth' });
+        return;
+      } catch (err) { /* older browsers reject the options object */ }
+    }
+    window.scrollTo(0, y);
+  }
+
+  function scrollToSection(target) {
+    scrollToY(landingY(target));
+  }
+
 
   // Shared "is the tab hidden" flag, read by every rAF-driven feature below
   // so their loops rest instead of animating an invisible tab.
@@ -360,56 +419,6 @@
       });
     }
 
-    /* Land on the section's HEADING, not on its box.
-
-       scrollIntoView honours scroll-margin-top, so the section's top edge
-       was arriving a comfortable 24px under the fixed header, exactly as
-       intended. The trouble is what comes next: .section carries its own
-       padding-block of up to 132px, so the heading itself was landing
-       about 200px down the screen with nothing but empty band above it,
-       and every nav link read as not having scrolled far enough.
-
-       Measuring from the heading instead makes the landing identical for
-       every section regardless of how much padding that band happens to
-       carry at the current viewport height. Sections with no heading (the
-       hero) fall back to their own box, which correctly means the top of
-       the page. */
-    var LAND_GAP = 26; // px of air between the header's underside and the heading
-
-    function headerHeight() {
-      var h = doc.querySelector('.site-header');
-      return h ? h.getBoundingClientRect().height : 78;
-    }
-
-    // .slabel is display:none in six of the eight sections, and a
-    // display:none element reports a zero rect, which would have sent
-    // every one of those links to the top of the page. Take the first
-    // candidate that actually has a box.
-    function landingAnchor(target) {
-      var candidates = target.querySelectorAll('.slabel, .shead, h2');
-      for (var i = 0; i < candidates.length; i++) {
-        if (candidates[i].getBoundingClientRect().height > 0) return candidates[i];
-      }
-      return null;
-    }
-
-    function scrollToSection(target) {
-      var anchor = landingAnchor(target);
-      var y;
-      if (anchor) {
-        y = anchor.getBoundingClientRect().top + (window.scrollY || 0) - headerHeight() - LAND_GAP;
-      } else {
-        y = target.getBoundingClientRect().top + (window.scrollY || 0);
-      }
-      y = Math.max(0, y);
-      if (typeof window.scrollTo === 'function') {
-        try {
-          window.scrollTo({ top: y, behavior: reduced() ? 'auto' : 'smooth' });
-          return;
-        } catch (err) { /* older browsers reject the options object */ }
-      }
-      window.scrollTo(0, y);
-    }
 
     var links = Array.prototype.slice.call(doc.querySelectorAll('a[href^="#"]'));
     for (var i = 0; i < links.length; i++) {
@@ -1845,6 +1854,127 @@
   }
 
   /* -----------------------------------------------------------------------
+     MECHANISM 13. THE SECTION JUMP ARROWS.
+
+     One press a section, using landingY() above, so a press from an arrow
+     and a press from a nav link put you in exactly the same place.
+
+     Stops are measured on demand rather than cached: a cache goes stale
+     behind every image that finishes loading, and this page lazy-loads
+     nineteen of them.
+
+     An arrow with nowhere left to go is hidden outright rather than dimmed.
+     Never show a control that does nothing when pressed.
+
+     The down arrow has one extra condition, which is the point of it here:
+     it stays hidden until the hero film has finished playing its opening
+     and come to rest. film-engine.js latches that and says so with a
+     film:held event and a .film-held class on the stage. Offering a way
+     past the hero while the hero is still making its one move would be the
+     page arguing with itself. Every path that ends the hold signals it,
+     including reduced motion, the static-hero gates, a first scroll, and a
+     nine second timeout if the film never loads at all, so the arrow can
+     never be stranded hidden.
+  ----------------------------------------------------------------------- */
+
+  function initJumpArrows() {
+    var up = doc.getElementById('jump-up');
+    var down = doc.getElementById('jump-down');
+    if (!up || !down) return;
+
+    var sections = Array.prototype.slice.call(doc.querySelectorAll('main > section'));
+    if (!sections.length) return;
+
+    var root = doc.scrollingElement || doc.documentElement;
+
+    /* A landed section sits a pixel or so either side of its own stop, and a
+       fractional device pixel ratio widens that. Anything inside this counts
+       as already there, so the arrow offers the next stop along rather than
+       nudging back onto the section already being read. */
+    var EPS = 8;
+
+    /* clientHeight, not innerHeight: the latter counts the scrollbar gutter,
+       and the difference is enough that a stop clamped with it lands past
+       the real foot of the page, leaving the down arrow lit over a press
+       that cannot move anything. */
+    function maxScroll() {
+      return Math.max(0, root.scrollHeight - root.clientHeight);
+    }
+
+    function stops() {
+      var out = [];
+      var max = maxScroll();
+      for (var i = 0; i < sections.length; i++) {
+        out.push(Math.min(landingY(sections[i]), max));
+      }
+      return out;
+    }
+
+    // The nearest stop past y in the given direction, or null for none.
+    function beyond(list, y, dir) {
+      var found = null;
+      for (var i = 0; i < list.length; i++) {
+        if (dir > 0) {
+          if (list[i] > y + EPS) { found = list[i]; break; }
+        } else if (list[i] < y - EPS) {
+          found = list[i];
+        }
+      }
+      return found;
+    }
+
+    function step(dir) {
+      var to = beyond(stops(), window.scrollY || 0, dir);
+      if (to === null) return;
+      scrollToY(to);
+    }
+
+    up.addEventListener('click', function () { step(-1); });
+    down.addEventListener('click', function () { step(1); });
+
+    function filmHeld() {
+      if (doc.querySelector('.hero__stage.film-held')) return true;
+      return !!(window.filmEngine && typeof window.filmEngine.isHeld === 'function' &&
+                window.filmEngine.isHeld());
+    }
+
+    // Only written on the change: setting hidden to what it already is
+    // still costs a style invalidation, and this runs on every scroll tick.
+    function reveal(el, gone) { if (el.hidden !== gone) el.hidden = gone; }
+
+    var rafId = null;
+
+    function sync() {
+      rafId = null;
+      var list = stops();
+      var y = window.scrollY || 0;
+      var atBottom = y >= maxScroll() - EPS;
+
+      reveal(up, beyond(list, y, -1) === null);
+      reveal(down, !filmHeld() || atBottom || beyond(list, y, 1) === null);
+
+      // The nudge is only an invitation while the reader has not moved yet.
+      var inviting = !down.hidden && y < 40;
+      if (down.classList.contains('is-inviting') !== inviting) {
+        down.classList.toggle('is-inviting', inviting);
+      }
+    }
+
+    function kick() { if (rafId === null) rafId = requestAnimationFrame(sync); }
+
+    window.addEventListener('scroll', kick, { passive: true });
+    window.addEventListener('resize', kick, { passive: true });
+    window.addEventListener('load', kick);
+    doc.addEventListener('film:held', kick);
+    if (doc.fonts && doc.fonts.ready && typeof doc.fonts.ready.then === 'function') {
+      doc.fonts.ready.then(kick).catch(noop);
+    }
+    reduceMotionMQ.addEventListener('change', kick);
+
+    sync();
+  }
+
+  /* -----------------------------------------------------------------------
      BOOT AND REDUCED-MOTION GOVERNANCE, LIVE AND IN BOTH DIRECTIONS.
   ----------------------------------------------------------------------- */
 
@@ -1865,6 +1995,7 @@
     initFaqAccordion();
     initHours();
     var spotlight = initSpotlight();
+    initJumpArrows();
 
     var pinnable = [spine, reveal, wordSplit, parallax, carousels, magnetic, progress, heat, steam, spotlight];
 

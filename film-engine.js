@@ -59,8 +59,8 @@
   //
   //   portrait  9.625s   drift 5.0 -> 0.52   arrive 9.0 -> 0.935
   //   wide      7.625s   drift 4.3 -> 0.56   arrive 7.0 -> 0.918
-  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:806904, driftMax:0.52, endMax:0.935 };
-  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:760661, driftMax:0.56, endMax:0.918 };
+  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:584570, driftMax:0.52, endMax:0.935 };
+  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:771987, driftMax:0.56, endMax:0.918 };
 
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
@@ -309,6 +309,45 @@
       !prefersReducedMotion() && !!video.duration && isFinite(video.duration);
   }
 
+  /* ---------------------------------------------------------------------
+     "The film has come to rest." Latched once, never cleared.
+
+     The opening plays itself for five or six seconds and then stops on the
+     frame before the camera descends, waiting for a scroll. That stop is
+     the moment the page is finished introducing itself, and site.js's jump
+     arrows wait for it before offering the down arrow: an arrow inviting
+     you past the hero while the hero is still playing its one move is an
+     arrow arguing with the page.
+
+     Signalled by a class on the stage and by a one-shot event, so a
+     listener that arrives late can still ask via isHeld().
+
+     Every path that ends the hold signals it, not just the happy one: the
+     drift finishing, a visitor scrolling before it does, reduced motion,
+     a gate falling back to the static poster, and a timeout in case the
+     film never loads at all. Nothing should be able to leave the arrow
+     hidden forever.
+  --------------------------------------------------------------------- */
+
+  var held = false;
+
+  function signalHeld() {
+    if (held) return;
+    held = true;
+    if (stage) stage.classList.add('film-held');
+    try {
+      document.dispatchEvent(new CustomEvent('film:held'));
+    } catch (e) {
+      // No CustomEvent constructor: the class above is the fallback path.
+    }
+  }
+
+  function isHeld() { return held; }
+
+  // The film is a courtesy, not a gate. If it never loads, never decodes,
+  // or the browser refuses it outright, the arrow still arrives.
+  setTimeout(signalHeld, 9000);
+
   function tick(now) {
     var dt = Math.min(100, now - (lastTick || now));
     lastTick = now;
@@ -333,6 +372,9 @@
     } else {
       rafId = null;
       lastTick = 0;
+      // Converged and no longer drifting: the opening has played itself out
+      // and the film is sitting still, waiting for a scroll.
+      signalHeld();
     }
   }
 
@@ -341,6 +383,8 @@
   // resets false again: the idle drift is a once-per-pageview courtesy.
   function onScroll() {
     hasScrolled = true;
+    // A scroll ends the hold whether or not it had finished on its own.
+    signalHeld();
     syncTarget();
   }
 
@@ -724,6 +768,8 @@
     if (off) {
       if (MQLS[4].matches) pinToFinalStates();
       disableScrub();
+      // A static hero has no opening to wait through.
+      signalHeld();
     } else {
       enableScrub();
     }
@@ -743,6 +789,7 @@
     heroProgress: heroProgress,
     pinToFinalStates: pinToFinalStates,
     unpinFinalStates: unpinFinalStates,
-    isScrubOn: isScrubOn
+    isScrubOn: isScrubOn,
+    isHeld: isHeld
   };
 })();

@@ -84,10 +84,12 @@
   var WATCHDOG_MS = 20000;        // stream stall abort, re-armed on every chunk
   var POSTER_SAFETY_MS = 4000;    // start the blob fetch even if the poster hangs
   var RING_THROTTLE_MS = 100;     // ring redraw throttle
-  // Idle auto-play speed, relative to real-time playback. At 0.12 the opening
-  // took 13 real seconds to cross and read as a still frame. 0.75 plays it
-  // clearly, covering the whole opening beat in five or six seconds.
-  var DRIFT_RATE = 0.75;
+  // Idle auto-play speed, relative to real-time playback. 1 is the film's own
+  // speed, which is what it is graded and paced for. It was 0.12 at one point,
+  // which took 13 real seconds to cross the opening and read as a still frame,
+  // then 0.75, which still read as slightly slowed. There is no reason for the
+  // hold to play at anything other than the speed it was shot at.
+  var DRIFT_RATE = 1;
   // The cap now lives on each film variant as driftMax, because the two films
   // are paced differently. See the VIDEO_PORTRAIT and VIDEO_WIDE definitions.
   function driftMax() {

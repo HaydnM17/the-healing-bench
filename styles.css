@@ -382,19 +382,56 @@ p, .lede, .prose {
   text-wrap: balance;
 }
 
-/* Hyphenation on running copy only, scoped to guard the two-column fee
-   panels at 360-480px, where a compound word or a parenthetical caption
-   is more likely to overflow a narrow column than break cleanly; never
-   on display type or labels, where a mid-word break reads as a defect
-   rather than a save. lang="en" on <html> gives the browser a
-   dictionary to hyphenate from. */
-p, .faq-item__a, .fees-table caption {
+/* Hyphenation is now off by default and switched on only for the two
+   places that genuinely need it. It used to be on for every <p> on the
+   page, which is far too broad: <p> carries the long About copy, but it
+   also carries one-line practitioner descriptions, fact captions and
+   pull-quotes, and in those a mid-word break reads as a defect rather
+   than a save. A dash at the end of a line is only forgivable when the
+   reader is already deep in running copy.
+
+   What is left on: the fee-table captions, which sit in a two-column
+   panel that gets down to about 150px at 360px wide, and the FAQ answers,
+   which are the longest running copy on the page. lang="en" on <html>
+   gives the browser a dictionary to hyphenate from. */
+.faq-item__a, .fees-table caption {
   hyphens: auto;
   -webkit-hyphens: auto;
 }
 
-h1, h2, h3, h4, .shead, .kicker, .btn {
-  hyphens: none;
+h1, h2, h3, h4, .shead, .kicker, .btn,
+p, blockquote, address, li, cite, strong, span {
+  hyphens: manual;
+  -webkit-hyphens: manual;
+}
+
+/* Evening the lines out, which is the other half of the same complaint.
+   balance makes the browser even the length of every line in the block
+   instead of filling greedily and leaving a stub on the last one; it is
+   capped at a handful of lines by every engine that implements it, so it
+   is safe to hand it a block that turns out longer than expected, and it
+   simply stops applying. Everything here is short enough to qualify.
+
+   Running copy keeps `pretty` instead, set further up: it does not even
+   the lines, it only prevents a single word being stranded on the last
+   line, which is the right trade once a paragraph is long enough that
+   balancing would be ignored anyway. */
+.practitioner-card__title,
+.practitioner-card__desc,
+.practitioner-card__quote,
+.practitioner-card__quote p,
+.treatment-row__desc,
+.treatment-row__with,
+.book__details-text,
+.book__address,
+.hero__reveal-facts span,
+.hero__reveal-kicker,
+.review-card p,
+.reviews__cta-lede,
+.faq__cta-lede,
+.visit__hours-time,
+.site-footer__col li {
+  text-wrap: balance;
 }
 
 /* Text blocks measured in ch on the text element itself, never a container. */
@@ -1295,10 +1332,10 @@ strong, b {
   left: 50%;
   top: 50%;
   z-index: 3;
-  width: min(760px, 100% - var(--gutter) * 2);
+  width: min(1120px, 100% - var(--gutter) * 2);
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   text-align: center;
   transform: translate3d(-50%, -50%, 0);
   /* Not clickable until it is actually there. An invisible button at
@@ -1345,9 +1382,9 @@ strong, b {
 }
 
 .hero__reveal-kicker {
-  font-size: .75rem;
+  font-size: clamp(.8125rem, 1.9vw, 1rem);
   font-weight: 500;
-  letter-spacing: .28em;
+  letter-spacing: .34em;
   text-transform: uppercase;
   color: var(--bone-soft);
   text-shadow: 0 1px 12px rgba(0, 0, 0, .8);
@@ -1362,7 +1399,8 @@ strong, b {
 .hero__reveal-hollow {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 11vw, 6.5rem);
+  text-wrap: balance;
+  font-size: clamp(3.4rem, 15vw, 10.5rem);
   font-weight: 500;
   line-height: 1.02;
   letter-spacing: var(--ls-hero, -.01em);
@@ -1371,7 +1409,7 @@ strong, b {
 
 @supports (-webkit-text-stroke: 1px currentColor) {
   .hero__reveal-hollow {
-    -webkit-text-stroke: 1.25px var(--bone);
+    -webkit-text-stroke: 2px var(--bone);
     filter: drop-shadow(0 2px 18px rgba(0, 0, 0, .6));
     /* Hollow, then a faint fill washing in over the last quarter of the
        panel's arrival, so the line reads as drawing itself and then
@@ -1382,11 +1420,11 @@ strong, b {
       calc(clamp(0, calc((var(--heroLate, 0) - .72) / .28), 1) * .2));
   }
 
-  /* The stroke thins out at phone sizes if it stays at 1.25px against a
+  /* The stroke thins out at phone sizes if it stays at 2px against a
      much smaller glyph, so it comes down with the type. */
   @media (max-width: 720px) {
     .hero__reveal-hollow {
-      -webkit-text-stroke-width: 1px;
+      -webkit-text-stroke-width: 1.25px;
     }
   }
 }
@@ -1400,42 +1438,42 @@ strong, b {
 }
 
 .hero__reveal-facts {
-  margin: var(--space-xs) 0 0;
+  margin: var(--space-sm) 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: center;
-  gap: var(--space-sm) var(--space-lg);
+  gap: var(--space-md) var(--space-xl);
 }
 
 .hero__reveal-facts > li {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 96px;
-  max-width: 200px;
+  gap: 4px;
+  min-width: 118px;
+  max-width: 260px;
 }
 
 .hero__reveal-facts strong {
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 4.5vw, 1.9rem);
+  font-size: clamp(1.85rem, 6vw, 3rem);
   font-weight: 500;
   color: var(--bone);
   text-shadow: 0 2px 14px rgba(0, 0, 0, .55);
 }
 
 .hero__reveal-facts span {
-  font-size: .8125rem;
+  font-size: clamp(.875rem, 2vw, 1.0625rem);
   line-height: 1.35;
   color: var(--bone-soft);
   text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
 }
 
 .hero__reveal-actions {
-  margin-top: var(--space-xs);
+  margin-top: var(--space-sm);
 }
 
 /* --------------------------------------------------------------------------

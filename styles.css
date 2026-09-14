@@ -1762,12 +1762,25 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    11. THE HOLD INTERACTION
-   Press and hold the cairn to feel it warm. --heat runs 0 to 1. Retoned
-   off ember: the glow is warm bone/tan light, contrast doing the work a
-   chromatic accent used to. Agent M's actual markup replaces the drawn
-   stone body with the cairn mark itself (.stone__mark, an <svg><use
+   Press and hold the cairn to feel it warm. --heat runs 0 to 1. This is
+   now the one deliberate exception to DIRECTION-V3's "no chromatic
+   accent" rule, by the owner's explicit request: a heated stone reads
+   as red, not as a brighter neutral, so the glow now moves off --tan
+   toward an ember red (#C2451F, warm and orange-leaning rather than a
+   clean fire-engine red) as --heat climbs. It is mixed live off --heat
+   with a nested color-mix() rather than swapped to a flat red, so the
+   colour itself tracks temperature: at rest the mix resolves to plain
+   --tan (nothing visually changes until the visitor presses) and it
+   only reddens as --heat rises. The cairn glyph's own colour
+   (.stone__mark's `color`) is left at --bone throughout, not warmed:
+   the glyph reads as the cool object the heat radiates around rather
+   than as material that is itself heating, and staying bone keeps it
+   legible against its own reddening glow instead of the two colours
+   converging. Agent M's actual markup replaces the drawn stone body
+   with the cairn mark itself (.stone__mark, an <svg><use
    href="#cairn"/></svg>) as the button's one visual, plus its halo; the
-   button sits over the photographic backdrop styled in section 15. -------------------------------------------------------------------------- */
+   button sits over the photographic backdrop styled in section 15.
+   -------------------------------------------------------------------------- */
 
 .stone {
   position: relative;
@@ -1797,14 +1810,21 @@ strong, b {
   height: 52%;
   color: var(--bone);
   transition: color .18s linear, filter .18s linear;
-  filter: drop-shadow(0 0 calc(var(--heat, 0) * 10px) rgba(217, 198, 172, .8));
+  filter: drop-shadow(0 0 calc(var(--heat, 0) * 10px)
+    color-mix(in srgb,
+      color-mix(in srgb, #C2451F calc(var(--heat, 0) * 100%), var(--tan)) 80%,
+      transparent));
 }
 
 .stone__halo {
   position: absolute;
   inset: -32%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 198, 172, .4) 0%, transparent 70%);
+  background: radial-gradient(circle,
+    color-mix(in srgb,
+      color-mix(in srgb, #C2451F calc(var(--heat, 0) * 100%), var(--tan)) 40%,
+      transparent) 0%,
+    transparent 70%);
   opacity: var(--heat, 0);
   transform: scale(calc(.55 + var(--heat, 0) * .6));
   pointer-events: none;
@@ -1941,10 +1961,18 @@ strong, b {
    At A=10 that floor is 1.20; 1.25 keeps roughly the same five-point
    margin above the floor that 1.16 gave the old 1.12 floor at A=6, as a
    guard against object-fit rounding rather than cutting it exactly to
-   the line. */
+   the line.
+   That derivation covers this rule in isolation. 12D below adds a
+   second, continuously-running drift on these same three images'
+   `translate`/`scale` properties, which composes with this rule's
+   `transform` rather than replacing it — so the two now stack, and the
+   worst case is both at their extreme in the same direction at once:
+   13%, not 10%. See 12D for that arithmetic; it raises the floor to
+   1.26, which is why the scale below reads 1.32, not the 1.25 this
+   paragraph derives alone. */
 [data-parallax] {
   --p: .5;
-  transform: translate3d(0, calc((var(--p, .5) - .5) * -20%), 0) scale(1.25);
+  transform: translate3d(0, calc((var(--p, .5) - .5) * -20%), 0) scale(1.32);
 }
 
 /* --------------------------------------------------------------------------
@@ -2096,6 +2124,87 @@ strong, b {
 [data-magnetic] {
   transition: background-color .25s var(--ease-out), border-color .25s var(--ease-out),
               color .25s var(--ease-out), filter .25s var(--ease-out);
+}
+
+/* --------------------------------------------------------------------------
+   12D. AMBIENT DRIFT: THE LARGE FRAMED PHOTOGRAPHS
+   The owner's ask, twice now: the frame holds still, the photograph
+   inside it drifts a little on its own, even when the visitor is not
+   scrolling. [data-parallax] (12A) only moves on scroll, so a visitor
+   reading still is looking at a dead-still photo; this adds a slow,
+   continuous, restrained Ken Burns cycle on top of it.
+
+   Applied to .about__image, .treatments__opener img and .visit__image:
+   the three photographs that sit inside their own visible bordered
+   frame (border-radius + box-shadow on .about__media / .treatments__opener
+   / .visit__media). .book__media was considered and left out: .book__stage
+   is a full-bleed section background with no border-radius or shadow of
+   its own, so there is no "frame" for it to hold still against — the
+   owner's own words were about a photo sitting inside a border, not
+   about a section's whole backdrop.
+
+   [data-parallax] already owns `transform` on every one of these images
+   (translate3d + scale, 12A) — writing to `transform` here too would
+   replace it outright and freeze the scroll-linked drift mid-cycle.
+   `translate` and `scale` are separate standalone properties that
+   compose with `transform` rather than overwrite it (same technique as
+   .practitioner-card__frame's hover lift, 12B, and the [data-spotlight]
+   paragraphs, section 13): the browser always combines translate, then
+   rotate, then scale, then transform into one matrix regardless of
+   which rule set which, so this animation and the parallax scroll-
+   transform ride the same element without either clobbering the other.
+
+   Coverage math, since the two now stack: [data-parallax] moves the
+   image +/-10% of its own height (12A) and this animation adds another
+   +/-3% vertically at its most extreme stop (22%, below), in the same
+   axis, so the worst case — both at their extreme in the same direction
+   at the same instant, which scroll position and animation phase are
+   free to coincide on at any time — is 13% off-centre, not 10%. A
+   translate of amplitude A% needs scale >= 1 + 2A/100 to keep the
+   image's own scaled-up edge from ever clearing the frame (12A's own
+   formula); at A=13 that floor is 1.26. [data-parallax]'s old scale
+   (1.25) no longer clears it, so 12A's rule now reads scale(1.32) — a
+   wider margin over its floor than 12A's original five points, erring
+   toward more rather than trimming close to the line. The horizontal
+   drift here (+/-1.5%, no scroll-parallax counterpart to stack against)
+   sits far inside that same margin on the other axis. The animation's
+   own gentle scale breathing (up to 1.02, multiplying on top of 1.32)
+   only adds further margin, so it is left out of the arithmetic above;
+   the worst case is taken at the animation's own resting scale of 1.
+
+   Three periods sharing no common factor (26s, 33s, 29s), each already
+   out of phase via a negative animation-delay, so the three photographs
+   never drift in and out together — the same de-sync technique 12B
+   uses for the practitioner bubbles (7.2s/8.6s/6.4s there), just with
+   duration doing more of the separating here instead of delay alone.
+   20-40s a cycle, per the brief: slow enough that no one can catch it
+   moving by staring, only notice it is different after looking away.
+   -------------------------------------------------------------------------- */
+
+@keyframes ambientDrift {
+  0%   { translate: 0 0; scale: 1; }
+  22%  { translate: -1.5% -3%; scale: 1.012; }
+  48%  { translate: 1.2% -.6%; scale: 1.02; }
+  74%  { translate: .4% 2.6%; scale: 1.008; }
+  100% { translate: 0 0; scale: 1; }
+}
+
+.about__image {
+  animation: ambientDrift 26s ease-in-out infinite;
+  animation-delay: -11s;
+  will-change: translate, scale;
+}
+
+.treatments__opener img {
+  animation: ambientDrift 33s ease-in-out infinite;
+  animation-delay: -18s;
+  will-change: translate, scale;
+}
+
+.visit__image {
+  animation: ambientDrift 29s ease-in-out infinite;
+  animation-delay: -6s;
+  will-change: translate, scale;
 }
 
 /* --------------------------------------------------------------------------
@@ -3762,6 +3871,19 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
   [data-parallax] {
     transform: none;
     opacity: 1;
+  }
+
+  /* Ambient drift (12D) stops outright. Its own keyframes already
+     return to identity at 0%/100%, so the blanket .01ms collapse above
+     would leave these at rest regardless, but pinning translate/scale
+     back explicitly, the same way [data-spotlight] does above, keeps
+     the intent named rather than incidental. */
+  .about__image,
+  .treatments__opener img,
+  .visit__image {
+    animation: none;
+    translate: 0 0;
+    scale: 1;
   }
 
   .heat-reveal .heat-reveal__item {

@@ -59,16 +59,16 @@
   //
   //   portrait  9.625s   drift 5.0 -> 0.52   arrive 9.0 -> 0.935
   //   wide      7.625s   drift 4.3 -> 0.56   arrive 7.0 -> 0.918
-  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:584570, driftMax:0.52, endMax:0.935 };
-  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:771987, driftMax:0.56, endMax:0.918 };
+  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4?v=3', bytes:584570, driftMax:0.52, endMax:0.935 };
+  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4?v=3', bytes:771987, driftMax:0.56, endMax:0.918 };
 
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
   // ratio and never flashes a mismatched crop while the video streams in.
   // Not part of the mandated two-film constants above; an Agent F
   // addition that closes the same "wrong asset" gap for the still frame.
-  var POSTER_PORTRAIT = 'assets/hero-poster.jpg';
-  var POSTER_WIDE = 'assets/hero-wide-poster.jpg';
+  var POSTER_PORTRAIT = 'assets/hero-poster.jpg?v=3';
+  var POSTER_WIDE = 'assets/hero-wide-poster.jpg?v=3';
 
   // The footage is natively portrait, 720x1280, so a phone gets a no-crop
   // frame straight from the portrait file. True keeps the scrub on for

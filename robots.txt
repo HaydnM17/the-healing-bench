@@ -1,11 +1,19 @@
-# PREVIEW BUILD. Indexing is blocked on purpose while this is a preview
-# so it cannot compete with the client's live site in search results.
+# PREVIEW BUILD, NOT YET LAUNCHED. This is a speculative pitch site hosted on
+# GitHub Pages, not the client's real domain. Indexing is blocked on purpose
+# so this preview cannot rank in search and compete with (or be mistaken
+# for) the client's actual live site at thehealingbench.ca.
 #
-# BEFORE LAUNCH: delete the two lines below, uncomment the Allow and the
-# Sitemap line, and set the real absolute sitemap URL.
+# ACTIVE DIRECTIVE (keep this exact block until real launch):
 User-agent: *
 Disallow: /
-
+#
+# BEFORE LAUNCH, once this content is actually live at thehealingbench.ca:
+#   1. Delete the "User-agent: *" / "Disallow: /" pair above.
+#   2. Uncomment the three lines below (remove the leading "# ").
+#   3. The Sitemap line below already points at the real production
+#      sitemap URL, https://thehealingbench.ca/sitemap.xml - confirm it
+#      still matches whatever domain actually launches before uncommenting.
+#
 # User-agent: *
 # Allow: /
-# Sitemap: [DEPLOY STEP: absolute URL, e.g. https://thehealingbench.ca/sitemap.xml]
+# Sitemap: https://thehealingbench.ca/sitemap.xml

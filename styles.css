@@ -480,13 +480,17 @@ strong, b {
 /* --------------------------------------------------------------------------
    3A. WORD-MASK HEADING REVEAL, data-split="words"
    Every h2 carries data-split="words" per the motion contract. Agent J
-   wraps each word in a .mask span at runtime and adds .in to the heading
-   itself once it enters view; the full string stays in the DOM for
-   screen readers via the heading's own text plus (if J chooses) an
-   aria-label duplicate. Purely additive: an unsplit heading with no .mask
-   children renders exactly as a plain heading, so this never depends on
-   the split actually having run. Transform and opacity only. */
-[data-split='words'] .mask {
+   wraps each word in a .word-mask span at runtime (site.js's
+   splitWords()), each one wrapping a .word-mask__inner span, and adds
+   .in to the heading itself once it enters view; the full string stays
+   in the DOM for screen readers via the heading's own text plus (if J
+   chooses) an aria-label duplicate. Purely additive: an unsplit heading
+   with no .word-mask children renders exactly as a plain heading, so
+   this never depends on the split actually having run. Transform and
+   opacity only. (These selectors previously read .mask / .mask > span,
+   which never matched site.js's actual word-mask / word-mask__inner
+   classes, so the reveal never ran -- fixed here.) */
+[data-split='words'] .word-mask {
   display: inline-block;
   overflow: hidden;
   vertical-align: bottom;
@@ -494,14 +498,14 @@ strong, b {
   margin-block: -.08em;
 }
 
-[data-split='words'] .mask > span {
+[data-split='words'] .word-mask__inner {
   display: inline-block;
   transform: translateY(110%);
   transition: transform .8s var(--ease-out);
 }
 
-[data-split='words'].in .mask > span,
-[data-reveal].in [data-split='words'] .mask > span {
+[data-split='words'].in .word-mask__inner,
+[data-reveal].in [data-split='words'] .word-mask__inner {
   transform: none;
 }
 
@@ -719,6 +723,17 @@ strong, b {
   pointer-events: auto;
 }
 
+/* Contrast fix: the wordmark used to rely on text-shadow alone, which
+   measured ~1.98:1 over the cream section band and ~2.67:1 over tan,
+   both well under the 4.5:1 floor, because .site-header is fixed and
+   its own background (a gradient that is fully transparent by the
+   bottom of the bar) does nothing once a light band scrolls underneath.
+   Same backing-chip recipe as .chip and .hero__caption .kicker below,
+   but at a higher fill opacity than either: .chip's own .55 alpha and
+   .hero__caption .kicker's .48 alpha are tuned for sitting over the
+   hero photograph, and both fall short of 4.5:1 once composited over
+   cream (measured ~4.13:1 and ~3.51:1 respectively) -- not enough
+   headroom for a header that also has to cross tan and cream bands. */
 .brand {
   display: inline-flex;
   align-items: center;
@@ -730,6 +745,12 @@ strong, b {
   color: var(--bone);
   text-decoration: none;
   text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  padding: .4em .85em .4em .6em;
+  border-radius: var(--radius-pill);
+  background: rgba(14, 11, 8, .7);
+  border: 1px solid rgba(247, 241, 232, .2);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 /* One line, always: the wordmark was wrapping to three stacked lines
@@ -762,6 +783,13 @@ strong, b {
   gap: 2px;
 }
 
+/* Contrast fix: this used to sit at rgba(247, 241, 232, .78), measured
+   ~3.9:1 against the pill's fill, under the 4.5:1 floor. Raised to
+   fully opaque bone -- the resting/hover/current distinction still
+   reads fine through the background-only change below (hover and
+   is-current already used opaque bone here, so this just matches
+   them), and the pill's own fill opacity is raised alongside this so
+   the text stays >=4.5:1 even where the fill runs lightest. */
 .nav a {
   position: relative;
   padding: 9px clamp(9px, 1.05vw, 14px);
@@ -769,7 +797,7 @@ strong, b {
   font: 500 clamp(.75rem, .92vw, .8125rem)/1 var(--font-body);
   letter-spacing: .05em;
   text-transform: uppercase;
-  color: rgba(247, 241, 232, .78);
+  color: var(--bone);
   text-decoration: none;
   transition: color .2s var(--ease-out), background-color .2s var(--ease-out), scale .15s var(--ease-out);
 }
@@ -801,9 +829,17 @@ strong, b {
     padding: 6px 6px;
     border-radius: var(--radius-pill);
     isolation: isolate;
+    /* Fill raised from 62% to 75%: at 62% the nav link text above (now
+       opaque bone) still dropped to ~4.13:1 against the pill once
+       composited over the cream band, and to ~4.28:1 at the pill's own
+       top edge where the highlight layer above lightens the fill
+       further. 75% clears 4.5:1 over cream with margin at every point
+       in the pill, including that lightened top edge and the hover/
+       current overlays, which only ever darken further via
+       color-mix or lighten the same way. */
     background:
       linear-gradient(180deg, rgba(247, 241, 232, .09), rgba(247, 241, 232, .02)),
-      color-mix(in srgb, var(--espresso) 62%, transparent);
+      color-mix(in srgb, var(--espresso) 75%, transparent);
     box-shadow: 0 14px 34px rgba(14, 11, 8, .38), inset 0 1px 0 rgba(247, 241, 232, .12);
     backdrop-filter: blur(16px) saturate(135%);
     -webkit-backdrop-filter: blur(16px) saturate(135%);
@@ -851,6 +887,11 @@ strong, b {
    .nav as the panel (aria-controls resolves the id on it), .is-open added
    to both. Also honoured on the legacy .nav__list class name in case that
    is what ships, so the mobile panel opens correctly either way. */
+/* Contrast fix: the .35 fill measured ~2.33:1 for the Menu label/icon
+   over the cream band, under the 4.5:1 floor. Raised to .68, which
+   composited over cream still lands well clear of the floor (see the
+   header contrast note above .brand); over the darker tan/espresso
+   backdrops the fill only reads darker still. */
 .nav__toggle {
   display: inline-flex;
   position: relative;
@@ -860,7 +901,7 @@ strong, b {
   padding: 0 var(--space-md) 0 calc(var(--space-sm) + 26px);
   border: 1px solid rgba(247, 241, 232, .3);
   border-radius: var(--radius-pill);
-  background: rgba(23, 18, 14, .35);
+  background: rgba(23, 18, 14, .68);
   color: var(--bone);
   font-family: var(--font-body);
   font-size: .75rem;
@@ -1889,8 +1930,9 @@ strong, b {
 
 @keyframes bubbleFloat {
   0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  30%  { transform: translate3d(4px, -10px, 0) rotate(.7deg); }
-  62%  { transform: translate3d(-4px, -4px, 0) rotate(-.6deg); }
+  26%  { transform: translate3d(8px, -19px, 0) rotate(1.3deg); }
+  52%  { transform: translate3d(-3px, -9px, 0) rotate(-.5deg); }
+  74%  { transform: translate3d(-8px, -15px, 0) rotate(-1.2deg); }
   100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 
@@ -1899,9 +1941,9 @@ strong, b {
    would read as a notification badge. */
 @keyframes bubbleRipple {
   0%   { transform: scale(1); opacity: 0; }
-  12%  { opacity: .5; }
-  58%  { transform: scale(1.22); opacity: 0; }
-  100% { transform: scale(1.22); opacity: 0; }
+  10%  { opacity: .6; }
+  60%  { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
 }
 
 .practitioner-card__frame {
@@ -1924,18 +1966,18 @@ strong, b {
     0 0 0 1px rgba(199, 175, 142, .55),
     0 0 30px 2px rgba(199, 175, 142, .38);
   scale: 1;
-  animation: bubbleFloat 7.2s ease-in-out infinite;
+  animation: bubbleFloat 6.4s ease-in-out infinite;
   transition: scale .45s var(--ease-out), box-shadow .45s var(--ease-out);
   will-change: transform;
 }
 
 .practitioner-card--laurette .practitioner-card__frame {
-  animation-duration: 8.6s;
+  animation-duration: 7.9s;
   animation-delay: -3.4s;
 }
 
 .practitioner-card--naira .practitioner-card__frame {
-  animation-duration: 6.4s;
+  animation-duration: 5.6s;
   animation-delay: -1.9s;
 }
 
@@ -3541,7 +3583,7 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     scale: 1;
   }
 
-  [data-split='words'] .mask > span {
+  [data-split='words'] .word-mask__inner {
     transform: none;
   }
 

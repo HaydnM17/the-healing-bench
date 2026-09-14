@@ -794,7 +794,7 @@
         var originals = Array.prototype.slice.call(track.children);
         if (originals.length < 2) return; // nothing meaningful to loop
 
-        for (var copies = 0; copies < 2; copies++) {
+        function appendSet() {
           for (var oi = 0; oi < originals.length; oi++) {
             var copy = originals[oi].cloneNode(true);
             copy.setAttribute('aria-hidden', 'true');
@@ -805,6 +805,35 @@
             }
             track.appendChild(copy);
           }
+        }
+
+        /* How many copies of the run the loop needs.
+
+           wrap() keeps the scroll position inside the band [setWidth,
+           setWidth * 2), and the element can only actually scroll as far as
+           scrollWidth - clientWidth. So the track has to be at least
+           setWidth * 2 + clientWidth wide or the band runs off the end: the
+           browser clamps scrollLeft, pos and the real scroll position stop
+           agreeing, and the loop dies. That is exactly what was happening
+           here. Three reviews at 31% each come to 1129px, the viewport is
+           1137px, and two spare sets left the track eight pixels short, so
+           the third review was never reachable.
+
+           Two spare sets is the old fixed guess. Here it keeps adding whole
+           sets until there is genuinely enough track, which holds at any
+           viewport width and for any number of reviews. The cap is there so
+           a pathological case (a viewport far wider than the content) cannot
+           clone forever. */
+        appendSet();
+        appendSet();
+
+        var MAX_SETS = 8;
+        var setCount = 3; // the originals plus the two above
+        while (setCount < MAX_SETS) {
+          var run = track.scrollWidth / setCount;
+          if (track.scrollWidth >= view.clientWidth + run * 2.25) break;
+          appendSet();
+          setCount++;
         }
 
         var cells = Array.prototype.slice.call(track.children);
@@ -927,6 +956,18 @@
 
         if (prevBtn) prevBtn.addEventListener('click', function () { step(-1); });
         if (nextBtn) nextBtn.addEventListener('click', function () { step(1); });
+
+        /* Click a card to bring it to the middle. Without this the only way
+           to reach a card you can see but is not centred was the arrows, and
+           on a strip where every card is visible at once that reads as the
+           cards being inert. A click that lands on a link inside the card is
+           left alone. */
+        track.addEventListener('click', function (e) {
+          if (e.target.closest && e.target.closest('a, button')) return;
+          var cell = e.target.closest ? e.target.closest('.review-card') : null;
+          if (!cell) return;
+          goTo(cell);
+        });
         view.addEventListener('keydown', function (e) {
           if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
           else if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }

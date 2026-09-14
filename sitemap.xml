@@ -4,8 +4,12 @@
      document itself. The anchors are not separate pages and get no entries of their own. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <!-- DEPLOY STEP: replace with the real absolute production URL before launch. -->
-    <loc>[DEPLOY STEP: absolute production URL, e.g. https://thehealingbench.ca/]</loc>
-    <lastmod>2026-09-11</lastmod>
+    <!-- Preview build: pointed at the live GitHub Pages URL, not the eventual
+         thehealingbench.ca domain (this is a speculative pitch, not launched
+         there yet). DEPLOY STEP: replace with the real production URL once
+         the site goes live at thehealingbench.ca, and update robots.txt to
+         match (see the note at the top of that file). -->
+    <loc>https://haydnm17.github.io/the-healing-bench/</loc>
+    <lastmod>2026-09-14</lastmod>
   </url>
 </urlset>

@@ -10,6 +10,14 @@
 <!-- Favicon: the cairn mark, three stacked stones, on the espresso ground. Matches the in-page sprite drawn in #cairn below, redrawn here as a standalone file since a favicon loads before body markup exists. Recoloured for DIRECTION-V3.md's warm spa palette: no chromatic accent, so the stones sit in cream on espresso rather than the retired ember tone. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2317120E'/%3E%3Cg transform='translate(13,6) scale(0.8)'%3E%3Cellipse cx='24' cy='52' rx='19' ry='9' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='33' rx='13.5' ry='7.5' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='17' rx='8.5' ry='6.5' fill='%23F4EBDD'/%3E%3C/g%3E%3C/svg%3E">
 
+<!-- site.webmanifest exists but nothing linked to it; wiring that up here.
+     DEPLOY STEP / outstanding: the manifest has no "icons" array, and there
+     are no raster icon files (PNG/ICO) in assets/ to point one at. Do not
+     invent icon filenames. Before launch, generate real raster icons (at
+     minimum 192x192 and 512x512 PNG, ideally also a maskable variant) from
+     the cairn mark above and add an icons array to site.webmanifest. -->
+<link rel="manifest" href="site.webmanifest">
+
 <!-- Fonts per DIRECTION-V3.md, warm spa editorial: Playfair Display for display, Jost for body, kickers and buttons. There is no mono face in this direction. Fraunces, Karla, IBM Plex Mono, Bricolage Grotesque and Space Mono are all retired. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +38,8 @@
 <meta property="og:image" content="https://haydnm17.github.io/the-healing-bench/assets/treatment-lengthwise.jpg">
 <meta name="twitter:card" content="summary_large_image">
 
-<!-- DEPLOY STEP: canonical needs the absolute production URL once the domain is live. -->
+<!-- Preview build: pointed at the live GitHub Pages URL, same reasoning as
+     og:url above. DEPLOY STEP: swap to the real domain once it goes live. -->
 <link rel="canonical" href="https://haydnm17.github.io/the-healing-bench/">
 
 <!--
@@ -44,6 +53,13 @@
   to visitors, in the visible hours table in #visit. No geo coordinates are
   included because none appear in section 14 and this build never invents
   a fact.
+
+  DEPLOY STEP: this schema is missing "geo" (a GeoCoordinates object with
+  latitude/longitude for 4460 Ontario Street, Unit 2, Beamsville, ON L3J
+  0A9), which Schema.org's LocalBusiness guidance recommends. Do not guess
+  these numbers. Before launch, look up the real coordinates from an actual
+  geocoder (e.g. Google Maps "what's here", or a geocoding API) and add:
+    "geo": { "@type": "GeoCoordinates", "latitude": 0, "longitude": 0 }
 -->
 <script type="application/ld+json">
 {
@@ -51,7 +67,7 @@
   "@type": ["MedicalClinic", "HealthAndBeautyBusiness"],
   "name": "The Healing Bench",
   "description": "Registered massage therapy, reflexology and natural facials in Beamsville, Ontario.",
-  "image": "[DEPLOY STEP: absolute URL to assets/hero-poster.jpg]",
+  "image": "https://haydnm17.github.io/the-healing-bench/assets/treatment-lengthwise.jpg",
   "telephone": "+1-905-563-8826",
   "email": "thehealingbench@hotmail.com",
   "priceRange": "$40-$150",
@@ -78,7 +94,7 @@
     "reviewCount": "19",
     "bestRating": "5"
   },
-  "url": "[DEPLOY STEP: absolute production URL]"
+  "url": "https://haydnm17.github.io/the-healing-bench/"
 }
 </script>
 
@@ -226,7 +242,7 @@
         <ul class="hero__reveal-facts">
           <li style="--d:.3"><strong class="hero__reveal-rating"><svg class="hero__reveal-star" aria-hidden="true"><use href="#star"/></svg>4.8</strong><span>out of 5 on Google</span></li>
           <li style="--d:.4"><strong>Three</strong><span>practitioners, booked by name</span></li>
-          <li style="--d:.5"><strong>Open till' 7</strong><span>Monday to Thursday, and open Saturdays</span></li>
+          <li style="--d:.5"><strong>Six days</strong><span>Monday to Saturday, evenings available</span></li>
         </ul>
         <div class="hero__reveal-actions" style="--d:.62">
           <a class="btn btn--primary btn--hero" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
@@ -320,14 +336,20 @@
           </div>
           <div class="practitioner-card__body">
             <h3 class="practitioner-card__name">Laurette Lachance</h3>
-            <!-- Title unconfirmed. DESIGN-PACKAGE.md section 8.2 flags
-                 Laurette's RMT designation as unconfirmed by Deborah and
-                 instructs shipping this card without a guessed title. The
-                 bracket stays visible rather than being invented, and
-                 rather than left blank, so the card keeps its proportions
-                 matching its siblings while still shipping no guess. -->
-            <p class="practitioner-card__title">[Title to confirm]</p>
-            <p class="practitioner-card__desc">[Services to confirm]</p>
+            <!-- Title and services unconfirmed. DESIGN-PACKAGE.md section 8.2
+                 flags Laurette's RMT designation as unconfirmed by Deborah,
+                 and no confirmed service list exists for her either, so this
+                 build never invents either one. The two placeholder
+                 paragraphs (title, services) that briefly shipped here as
+                 literal "[Title to confirm]" / "[Services to confirm]"
+                 bracket text have been removed rather than left visible on
+                 a live pitch page: an unfinished-looking bracket in front of
+                 a prospective client reads worse than the card simply
+                 running shorter than its siblings. Her card is name + quote
+                 only until Deborah confirms a title and services, at which
+                 point those two paragraphs should be restored with the real
+                 text, matching the pattern used by the Deborah and Naira
+                 cards above. -->
             <blockquote class="practitioner-card__quote">
               <p>"She was professional, attentive, and made sure the pressure was perfect throughout the entire massage. I walked in feeling completely knotted up and left feeling like a brand&#8209;new person."</p>
               <cite>Erin Gostick</cite>
@@ -374,8 +396,9 @@
        Deborah". Naira's card names "Reflexology and all natural facials",
        so Reflexology and all five facial rows read "With Naira". Indian
        Head Massage carries no card claim at all, so it carries no "With"
-       line rather than a guess. Laurette's card still has
-       "[Services to confirm]", so nothing is ever attributed to her here.
+       line rather than a guess. Laurette's card still has no confirmed
+       service list (see the comment on her card), so nothing is ever
+       attributed to her here.
 
        Imagery: this was the single worst-served section on the prior
        build, four of ten rows carrying an image. Nine of ten now carry
@@ -1001,7 +1024,7 @@
             <div class="book__block">
               <h3 class="book__details-head">Find us</h3>
               <address class="book__address">4460 Ontario Street, Unit 2<br>Beamsville, ON L3J 0A9</address>
-              <a class="book__reach book__reach--map" href="https://www.google.com/maps/search/?api=1&amp;query=4460+Ontario+Street+Unit+2+Beamsville+ON+L3J+0A9" target="_blank" rel="noopener">Get directions</a>
+              <a class="book__reach book__reach--map" href="https://www.google.com/maps/search/?api=1&amp;query=4460+Ontario+Street+Unit+2+Beamsville+ON+L3J+0A9" target="_blank" rel="noopener">Get directions<span class="visually-hidden"> (opens in a new tab)</span></a>
             </div>
             <div class="book__block">
               <h3 class="book__details-head">Reach us</h3>
@@ -1058,8 +1081,8 @@
           Beamsville, ON L3J 0A9
         </address>
         <ul>
-          <li>Open till 7, Monday to Thursday</li>
-          <li>Saturdays 9 to 5</li>
+          <li>Open Monday to Saturday</li>
+          <li>Evening appointments available</li>
           <li><a href="#visit">Full hours</a></li>
         </ul>
       </div>

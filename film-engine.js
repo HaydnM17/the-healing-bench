@@ -369,6 +369,16 @@
   setTimeout(signalHeld, 9000);
 
   function tick(now) {
+    // Single read per frame: the hero's rect and offsetHeight are measured
+    // exactly once here, at the top, before anything below writes any
+    // style. That one measurement is threaded through writeHeroOut() and
+    // writeHeroLate() (which hand it on to computeHeroOut, computeHeroLate
+    // and computeHeroFade) instead of each of those re-reading layout on
+    // its own, and the read happens before the --heroOut/--heroLate/
+    // --heroFade writes further down, so nothing in this frame can force a
+    // synchronous layout against a style this same frame already wrote.
+    var heroMeasurement = measureHero();
+
     var dt = Math.min(100, now - (lastTick || now));
     lastTick = now;
 
@@ -384,8 +394,8 @@
     if (video.duration && isFinite(video.duration)) {
       requestSeek(shown * video.duration);
     }
-    writeHeroOut();
-    writeHeroLate();
+    writeHeroOut(heroMeasurement);
+    writeHeroLate(heroMeasurement);
 
     if (!converged || drifting) {
       rafId = requestAnimationFrame(tick);

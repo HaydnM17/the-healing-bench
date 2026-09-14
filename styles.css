@@ -3333,6 +3333,18 @@ strong, b {
   color: var(--ink-soft);
 }
 
+/* The one question on the page that has no answer yet. It is kept rather
+   than removed because the owner wants the gap visible: it invites the
+   client to supply her own words, and her real FAQ questions with them.
+   But a raw "[ANSWER TO CONFIRM.]" bracket reads as a defect rather than
+   an invitation, so the blank is made to look deliberate instead. Quieter
+   than a real answer and set apart from one, without being an instruction
+   to the reader. */
+.faq-item__a--pending {
+  color: var(--ground-ink-soft, var(--ink-soft));
+  opacity: .72;
+}
+
 /* --------------------------------------------------------------------------
    20. SECTION: BOOK (espresso, full-bleed photograph, glass closing panel)
    room-2.jpg, the client's own warm treatment room, full-bleed behind

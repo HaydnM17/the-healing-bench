@@ -657,6 +657,21 @@
      no risk of this colliding with a transform another mechanism writes on
      the same element).
 
+     --p is NOT a plain linear map of scroll position any more. A raw 0-1
+     sweep across the whole journey (just entering at the bottom to fully
+     gone at the top) puts the two moments where the element is fully
+     visible but not yet clipped by either edge at raw = height / (vh +
+     height) and raw = vh / (vh + height) -- both of which sit close to 0.5
+     whenever the element is nearly as tall as the viewport. That is why the
+     drift used to be imperceptible: almost the whole 0-1 budget was spent
+     while the image was still partly off-screen, and the entire time it
+     was actually on screen and centred, --p barely moved. computeAndWrite
+     now remaps that raw sweep through a symmetric, clamped-linear curve
+     that widens the "fully visible" band out to roughly --p 0.15 through
+     0.85 (so most of the travel happens while someone can actually see it)
+     while still reaching exactly 0 and 1 at the true off-screen edges,
+     whatever the element's height happens to be relative to the viewport.
+
      No free-running loop: a scroll or resize event schedules at most one
      rAF frame, that frame does the read/write pass and does not
      reschedule itself, so the loop is inherently at rest until the next
@@ -684,7 +699,32 @@
       var rect = el.getBoundingClientRect();
       var vh = window.innerHeight || doc.documentElement.clientHeight;
       var span = vh + rect.height;
-      var p = span > 0 ? clamp((vh - rect.top) / span, 0, 1) : 0;
+      var raw = span > 0 ? clamp((vh - rect.top) / span, 0, 1) : 0;
+
+      // w is half the width, in raw units, of the band where the element is
+      // fully visible and not yet clipped by either viewport edge (see the
+      // comment above initParallax for the derivation). Remap raw through a
+      // symmetric clamped-linear curve built around that band: the band
+      // itself (raw in [0.5 - w, 0.5 + w]) is stretched out to output
+      // [0.15, 0.85], and the two partial-visibility tails on either side
+      // are compressed into [0, 0.15] and [0.85, 1]. Degenerate heights
+      // (an element as tall as, or taller than, the viewport, or vanishingly
+      // short) have no such band worth widening, so those fall back to the
+      // plain sweep instead of dividing by a near-zero span.
+      var w = span > 0 ? (vh - rect.height) / (2 * span) : 0;
+      var p;
+      if (w <= 0.001 || w >= 0.499) {
+        p = raw;
+      } else {
+        var delta = raw - 0.5;
+        var mag = Math.abs(delta);
+        var sign = delta < 0 ? -1 : 1;
+        p = mag <= w
+          ? 0.5 + sign * (mag * (0.35 / w))
+          : 0.5 + sign * (0.35 + (mag - w) * (0.15 / (0.5 - w)));
+      }
+      p = clamp(p, 0, 1);
+
       var rounded = Math.round(p * 500) / 500;
       if (Math.abs(rounded - lastValues[idx]) < 0.001) return; // delta gate
       lastValues[idx] = rounded;

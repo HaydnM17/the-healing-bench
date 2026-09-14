@@ -532,7 +532,31 @@
         for (var i = 0; i < targets.length; i++) markIn(targets[i]);
         return;
       }
-      if (!io) io = new IntersectionObserver(onIntersect, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      // threshold is a FRACTION OF THE TARGET'S OWN AREA, so it scales with
+      // element height rather than with how far the visitor has scrolled: a
+      // 0.12 threshold needs ~12% of the element inside the box before it
+      // fires, which is a handful of px for a short .slabel but hundreds of
+      // px of scrolling for something as tall as .treatments__group (it
+      // holds a whole cascading list of treatment rows). Same rule, wildly
+      // different real-world delay depending on what it's attached to --
+      // that's why Treatments read as broken ("blank when I get there")
+      // while short sections felt fine. threshold: 0 fires on the first
+      // sliver of intersection, so trigger timing no longer depends on
+      // element height at all.
+      //
+      // rootMargin used to be '0px 0px -8% 0px', shrinking the detection
+      // box 8% up from the viewport's bottom edge and delaying entry
+      // further on top of the threshold delay. Flipped to a small POSITIVE
+      // bottom margin instead: the box now extends past the fold, so an
+      // element starts its reveal shortly before it is scrolled into view
+      // and is already animating (often nearly finished, given the base
+      // .6s [data-reveal] transition) by the time it is actually on
+      // screen, instead of only starting once the visitor is already
+      // looking at it. 10% keeps that lead small on purpose -- big enough
+      // to beat the "arrives still blank" problem, not big enough that a
+      // short element (a lone .slabel or .about__copy) finishes its
+      // entrance off-screen before it is ever seen.
+      if (!io) io = new IntersectionObserver(onIntersect, { threshold: 0, rootMargin: '0px 0px 10% 0px' });
       for (var t = 0; t < targets.length; t++) io.observe(targets[t]);
     }
 

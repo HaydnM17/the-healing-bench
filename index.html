@@ -869,27 +869,27 @@
     </div>
   </section>
 
-  <!-- 08. Book. Rebuilt as a real closing section rather than a second
-       hero. Before this change, #book shared its heading pattern, single
-       centred column and photographic-ground treatment with #hero and
-       carried nothing a visitor actually needs at the point of booking:
-       no hours, no address, no cancellation policy, no sense of what
-       happens next. It now adds a .book__details block, absent from
-       #hero entirely, carrying the practical facts a visitor wants right
-       before they commit: hours (verbatim from DESIGN-PACKAGE.md section
-       14, already shown once in #visit; repeated here so a visitor who
-       scrolls straight to Book without passing #visit still sees them),
-       the address with its unit number, "what to expect" (the FAQ
-       question "I have never had a massage. What happens?" together with
-       its unresolved DESIGN-PACKAGE.md section 8.7 answer, whose
-       [ANSWER TO CONFIRM.] bracket ships exactly as written rather than
-       guessed), and the cancellation policy (verbatim from the FAQ answer
-       above, which itself matches DESIGN-PACKAGE.md section 8.7).
-       .book__details-* are new classes with no rules in styles.css yet;
-       see HANDOFF-BOOKING.md for the requested layout and the bone/
-       bone-soft colour tokens they need against this section's dark
-       photograph, the same tokens .book__lede and .book__contact already
-       use.
+  <!-- 08. Book. The real closing section rather than a second hero. It
+       once shared its heading pattern, single centred column and
+       photographic ground with #hero and carried nothing a visitor
+       actually needs at the point of booking. It now carries the
+       practical facts, and carries them inside one smoked-glass panel
+       instead of loose columns of text floating on the photograph, which
+       is what the first pass at this did and why it read as unfinished.
+
+       Left half: a live open/closed pill over the week's hours (verbatim
+       from DESIGN-PACKAGE.md section 14, already shown once in #visit and
+       repeated here so someone who scrolls straight to Book still sees
+       them). Right half: the address with its unit number and a
+       directions link, the phone and email, and the cancellation policy
+       (verbatim from the FAQ answer above, which itself matches
+       DESIGN-PACKAGE.md section 8.7).
+
+       "What to expect" is deliberately NOT here. Its answer is still
+       [ANSWER TO CONFIRM.] pending Deborah, and an unresolved bracket
+       sitting in the page's closing call to action is worse than the
+       question simply living in the FAQ, which is where it already is
+       and where the real answer will go.
 
        Espresso band with a full-bleed photograph behind it, per
        DIRECTION-V3.md, which names this section one of the three
@@ -911,41 +911,58 @@
           </div>
           <h2 class="book__title shead" data-split="words">Book an appointment</h2>
           <p class="book__lede">Book with Deborah, Laurette or Naira</p>
+        </div>
 
-          <div class="book__details">
-            <div class="book__details-col">
-              <h3 class="book__details-head">Hours</h3>
-              <div class="book__hours">
-                <div class="book__hours-row"><span>Monday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Tuesday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Wednesday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Thursday</span><span>10:00 a.m. to 7:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Friday</span><span>9:00 a.m. to 6:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Saturday</span><span>9:00 a.m. to 5:00 p.m.</span></div>
-                <div class="book__hours-row"><span>Sunday</span><span>Closed</span></div>
-              </div>
+        <!-- The closing panel. One smoked-glass object over the treatment-room
+             photograph rather than four columns of loose text, which is what
+             this was before and what made the section read as an afterthought.
+
+             data-hours drives initHours() in site.js. Every row carries its own
+             opening and closing time in minutes past midnight, so the live
+             status line is computed from the hours the visitor can actually
+             see; there is no second copy of the schedule in the JS to fall out
+             of step with this markup. data-day is the JS day index, Sunday 0.
+             Statutory holidays are NOT modelled, so the status line can be
+             wrong on Christmas Day and the like; the full week sits right
+             underneath it either way. -->
+        <div class="book__panel" data-reveal>
+          <div class="book__panel-main">
+            <p class="book__status" data-hours-status hidden>
+              <span class="book__status-dot" aria-hidden="true"></span>
+              <span class="book__status-text"></span>
+            </p>
+            <h3 class="book__details-head">Hours</h3>
+            <div class="book__hours" data-hours>
+              <div class="book__hours-row" data-day="1" data-open="600" data-close="1140"><span class="book__hours-day">Monday</span><span class="book__hours-time">10:00 a.m. to 7:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="2" data-open="600" data-close="1140"><span class="book__hours-day">Tuesday</span><span class="book__hours-time">10:00 a.m. to 7:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="3" data-open="600" data-close="1140"><span class="book__hours-day">Wednesday</span><span class="book__hours-time">10:00 a.m. to 7:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="4" data-open="600" data-close="1140"><span class="book__hours-day">Thursday</span><span class="book__hours-time">10:00 a.m. to 7:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="5" data-open="540" data-close="1080"><span class="book__hours-day">Friday</span><span class="book__hours-time">9:00 a.m. to 6:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="6" data-open="540" data-close="1020"><span class="book__hours-day">Saturday</span><span class="book__hours-time">9:00 a.m. to 5:00 p.m.</span></div>
+              <div class="book__hours-row" data-day="0" data-closed><span class="book__hours-day">Sunday</span><span class="book__hours-time">Closed</span></div>
             </div>
-            <div class="book__details-col">
+          </div>
+
+          <div class="book__panel-side">
+            <div class="book__block">
               <h3 class="book__details-head">Find us</h3>
               <address class="book__address">4460 Ontario Street, Unit 2<br>Beamsville, ON L3J 0A9</address>
+              <a class="book__reach book__reach--map" href="https://www.google.com/maps/search/?api=1&amp;query=4460+Ontario+Street+Unit+2+Beamsville+ON+L3J+0A9" target="_blank" rel="noopener">Get directions</a>
             </div>
-            <div class="book__details-col">
-              <h3 class="book__details-head">What to expect</h3>
-              <p class="book__details-text">[ANSWER TO CONFIRM.]</p>
+            <div class="book__block">
+              <h3 class="book__details-head">Reach us</h3>
+              <a class="book__reach" href="tel:+19055638826">(905) 563-8826</a>
+              <a class="book__reach" href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a>
             </div>
-            <div class="book__details-col">
+            <div class="book__block">
               <h3 class="book__details-head">Cancellation policy</h3>
               <p class="book__details-text">We need 24 hours notice. A late cancellation or no-show is charged at 50% of the service booked, and we cannot bill that to your insurance.</p>
             </div>
           </div>
+        </div>
 
-          <div class="book__actions">
-            <a class="btn btn--primary btn--magnetic" id="bookCta" data-magnetic href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
-          </div>
-          <div class="book__contact">
-            <a href="tel:+19055638826">(905) 563-8826</a>
-            <a href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a>
-          </div>
+        <div class="book__actions" data-reveal>
+          <a class="btn btn--primary btn--magnetic" id="bookCta" data-magnetic href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
         </div>
       </div>
     </div>

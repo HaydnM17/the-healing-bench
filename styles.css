@@ -1944,6 +1944,28 @@ strong, b {
   max-width: var(--measure);
 }
 
+/* The practitioner attribution line, sitting between the price and the
+   description. Deliberately quieter than both: it answers "who" for a
+   reader already scanning names from the bubbles above, and should not
+   compete with the treatment's own name or price. */
+.treatment-row__with {
+  font-family: var(--font-body);
+  font-size: .8125rem;
+  letter-spacing: .04em;
+  color: var(--bone-soft);
+}
+
+/* Per-treatment booking link. inline-flex so it sits at its own width
+   under the description rather than stretching the full column on the
+   --media rows, where the body is a grid track. */
+.treatment-row__cta {
+  margin-top: var(--space-sm);
+}
+
+.treatment-row__cta .btn {
+  display: inline-flex;
+}
+
 .treatment-row__price {
   font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
@@ -2376,6 +2398,18 @@ strong, b {
   text-align: center;
 }
 
+/* Second call to action, closing the section under the carousel. Matches
+   .reviews__rating's centred rhythm above it. */
+.reviews__cta {
+  margin-top: var(--space-xl);
+  text-align: center;
+}
+
+.reviews__cta-lede {
+  margin-bottom: var(--space-sm);
+  color: var(--bone-soft);
+}
+
 [data-carousel] {
   position: relative;
 }
@@ -2557,6 +2591,18 @@ strong, b {
   margin-inline: auto;
 }
 
+/* Same shape as .reviews__cta, on the cream band, so the lede takes the
+   ink pair rather than the bone pair. */
+.faq__cta {
+  margin-top: var(--space-xl);
+  text-align: center;
+}
+
+.faq__cta-lede {
+  margin-bottom: var(--space-sm);
+  color: var(--ink-soft);
+}
+
 /* Agent J measured this deliberately: the accordion animates the real
    height property, not max-height, because max-height animations either
    overshoot (a large fixed cap) or undershoot (a small one) whenever
@@ -2615,7 +2661,7 @@ strong, b {
 }
 
 /* --------------------------------------------------------------------------
-   20. SECTION: BOOK (espresso, full-bleed photograph, centred CTA)
+   20. SECTION: BOOK (espresso, full-bleed photograph, glass closing panel)
    room-2.jpg, the client's own warm treatment room, full-bleed behind
    the closing call to action, echoing the hero's grading so the page
    visually returns to where it started. Real elements per Agent M's
@@ -2623,7 +2669,18 @@ strong, b {
    (a real div, not a pseudo-element) and .container; normal DOM order
    already stacks scrim over photo and content over both, so no z-index
    is load-bearing here, only position for the two absolutely-placed
-   layers. -------------------------------------------------------------------------- */
+   layers.
+
+   The detail classes HANDOFF-BOOKING.md section 5 asked for are all
+   below. That handoff proposed four equal columns of text; this does
+   not, because four columns of loose type floating on a photograph is
+   what made this section read as an afterthought in the first place.
+   Instead everything lands inside one smoked-glass panel, the same
+   material as the floating nav pill, so the closing section is a single
+   designed object rather than the hero's layout repeated with more
+   words in it. The hours take the wide half, contact the narrow half,
+   and the two admin notes run full width across the foot of the panel.
+   -------------------------------------------------------------------------- */
 
 /* Full-bleed to the section's own edges: .section's usual padding-block
    would otherwise inset the photograph, so it moves onto .book__stage's
@@ -2647,20 +2704,24 @@ strong, b {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(.8) contrast(1.02) brightness(.7);
+  filter: saturate(.8) contrast(1.02) brightness(.82);
 }
 
+/* Lighter than it was. The panel supplies its own local contrast, so
+   the scrim no longer has to carry the whole burden of making type
+   readable, and at the old strength room-2 was so far down that the
+   glass had nothing to be glass in front of. */
 .book__scrim {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(14, 11, 8, .35) 0%, rgba(14, 11, 8, .7) 100%),
-    linear-gradient(to bottom, rgba(14, 11, 8, .35), rgba(14, 11, 8, .55));
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(14, 11, 8, .3) 0%, rgba(14, 11, 8, .72) 100%),
+    linear-gradient(to bottom, rgba(14, 11, 8, .34), rgba(14, 11, 8, .56));
 }
 
 .book__stage .container {
   position: relative;
-  padding-block: clamp(96px, 16vh, 176px);
+  padding-block: clamp(80px, 12vh, 140px);
 }
 
 .book__frame {
@@ -2684,30 +2745,284 @@ strong, b {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .4);
 }
 
-.book__actions {
+/* ---- The glass panel ---------------------------------------------------
+   Same recipe as the nav pill in section 7: a dual-gradient fill over a
+   part-transparent espresso, an ambient drop shadow, an inset top
+   highlight, blur plus saturate, and a masked-gradient hairline on
+   ::before that is brighter along the top edge than the bottom. Scaled
+   up from a 40px pill to a 1040px panel, so the radius, the blur and the
+   shadow all grow with it.
+   ---------------------------------------------------------------------- */
+
+.book__panel {
+  position: relative;
+  isolation: isolate;
+  max-width: 1040px;
+  margin: var(--space-lg) auto 0;
+  border-radius: 22px;
+  overflow: hidden;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 1fr;
+  background:
+    linear-gradient(180deg, rgba(247, 241, 232, .10), rgba(247, 241, 232, .025)),
+    color-mix(in srgb, var(--espresso) 56%, transparent);
+  box-shadow:
+    0 34px 80px rgba(14, 11, 8, .55),
+    inset 0 1px 0 rgba(247, 241, 232, .14);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+
+@media (min-width: 900px) {
+  .book__panel {
+    grid-template-columns: 1.25fr 1fr;
+  }
+}
+
+.book__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(160deg,
+    rgba(247, 241, 232, .3) 0%,
+    rgba(247, 241, 232, .12) 38%,
+    rgba(247, 241, 232, .03) 70%,
+    rgba(247, 241, 232, .12) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* A very slow highlight crossing the glass, roughly once a minute. Long
+   and faint on purpose: at this size anything quicker reads as a loading
+   shimmer rather than as light moving across a surface. */
+@keyframes panelSheen {
+  0%   { transform: translate3d(-60%, 0, 0); }
+  100% { transform: translate3d(160%, 0, 0); }
+}
+
+.book__panel::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: 0;
+  z-index: 1;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(100deg, rgba(247, 241, 232, 0), rgba(247, 241, 232, .055), rgba(247, 241, 232, 0));
+  animation: panelSheen 52s linear infinite;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .book__panel {
+    background: color-mix(in srgb, var(--espresso) 90%, transparent);
+  }
+}
+
+.book__panel-main,
+.book__panel-side {
+  position: relative;
+  z-index: 2;
+  padding: var(--space-lg) var(--space-md);
+}
+
+@media (min-width: 620px) {
+  .book__panel-main,
+  .book__panel-side {
+    padding: var(--space-lg);
+  }
+}
+
+/* The divider follows the layout: a horizontal rule while the panel is
+   stacked, a vertical one once the two halves sit side by side. */
+.book__panel-side {
+  border-top: 1px solid var(--line-dark);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 900px) {
+  .book__panel-side {
+    border-top: 0;
+    border-left: 1px solid var(--line-dark);
+  }
+}
+
+.book__details-head {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: .8125rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--bone);
+  margin-bottom: var(--space-xs);
+}
+
+.book__details-text,
+.book__address {
+  font-style: normal;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--bone-soft);
+}
+
+/* ---- Live status pill --------------------------------------------------
+   No chromatic accent, per DIRECTION-V3: open and closed are told apart
+   by lightness and by whether the dot breathes, never by a green light.
+   [hidden] until initHours() has decided, so a visitor with JS off never
+   sees an empty pill making a claim about nothing.
+   ---------------------------------------------------------------------- */
+
+@keyframes statusPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(247, 241, 232, .45); }
+  70%  { box-shadow: 0 0 0 8px rgba(247, 241, 232, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(247, 241, 232, 0); }
+}
+
+/* An explicit display:none for the hidden state. The UA sheet's
+   [hidden] rule is display:none at its own low specificity, and the
+   display:inline-flex below would simply beat it, leaving an empty pill
+   visible before initHours() has decided anything. */
+.book__status[hidden] {
+  display: none;
+}
+
+.book__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: var(--space-md);
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(247, 241, 232, .2);
+  background: rgba(247, 241, 232, .08);
+  font-size: .75rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--bone-soft);
+}
+
+.book__status-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--bone-soft);
+  opacity: .5;
+}
+
+.book__status.is-open {
+  color: var(--bone);
+  border-color: rgba(247, 241, 232, .34);
+}
+
+.book__status.is-open .book__status-dot {
+  background: var(--bone);
+  opacity: 1;
+  animation: statusPulse 2.8s ease-out infinite;
+}
+
+/* ---- Hours -------------------------------------------------------------
+   The rows run to the panel's padding edges rather than stopping at the
+   text, so today's highlight reads as a band across the panel instead of
+   a floating rectangle. Hence the negative margins and matching padding.
+   ---------------------------------------------------------------------- */
+
+.book__hours-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin-inline: calc(var(--space-md) * -1);
+  padding: .55em var(--space-md);
+  border-radius: 8px;
+  font-size: var(--fs-sm);
+  color: var(--bone-soft);
+  transition: background-color .4s var(--ease-out), color .4s var(--ease-out);
+}
+
+@media (min-width: 620px) {
+  .book__hours-row {
+    margin-inline: calc(var(--space-lg) * -1);
+    padding-inline: var(--space-lg);
+  }
+}
+
+.book__hours-row + .book__hours-row {
+  box-shadow: inset 0 1px 0 var(--line-dark);
+}
+
+.book__hours-day {
+  position: relative;
+}
+
+/* Today. A brighter row plus a marker sitting in the gutter the negative
+   margin opened up, so nothing shifts when the class lands. */
+.book__hours-row.is-today {
+  background: rgba(247, 241, 232, .09);
+  color: var(--bone);
+}
+
+.book__hours-row.is-today .book__hours-day::before {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--bone);
+}
+
+.book__hours-row.is-today .book__hours-time {
+  color: var(--bone);
+}
+
+/* ---- Contact -----------------------------------------------------------
+   Links stack rather than sitting inline, so each is a comfortable tap
+   target on a phone without any of them wrapping mid-address.
+   ---------------------------------------------------------------------- */
+
+.book__reach {
+  display: inline-block;
+  margin-top: var(--space-2xs);
+  font-size: var(--fs-sm);
+  color: var(--bone);
+  text-decoration: underline;
+  text-decoration-color: rgba(247, 241, 232, .35);
+  text-underline-offset: .2em;
+  transition: text-decoration-color .25s var(--ease-out);
+}
+
+.book__reach:hover {
+  text-decoration-color: rgba(247, 241, 232, .9);
+}
+
+.book__block .book__reach {
+  display: block;
+  width: fit-content;
+}
+
+.book__reach--map {
   margin-top: var(--space-xs);
+}
+
+.book__actions {
+  margin-top: var(--space-lg);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-}
-
-.book__contact {
-  margin-top: var(--space-sm);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-md);
-  font-size: var(--fs-sm);
-  color: var(--bone-soft);
-}
-
-.book__contact a {
-  color: var(--bone);
-  text-decoration: underline;
-  text-decoration-color: rgba(247, 241, 232, .4);
-  text-underline-offset: .15em;
 }
 
 /* --------------------------------------------------------------------------

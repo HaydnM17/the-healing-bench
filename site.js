@@ -9,17 +9,19 @@
   highlight, mobile toggle), tab visibility, live reduced-motion pinning,
   ambient steam particles and the spine scroll-progress fill.
 
-  Nine distinct mechanisms, mapped one per section so no two neighbours read
-  the same way (see the bottom of this file for the map):
+  Ten mechanisms, the first nine mapped one per section so no two neighbours
+  read the same way (see the bottom of this file for the map):
     1. word-mask heading reveal on every [data-split="words"] heading
     2. the section label rule drawing itself in, riding the reveal system
     3. per-child staggered entrances (the workhorse, most sections)
     4. scroll-linked parallax, writing --p on [data-parallax]
-    5. the practitioner photo clip-path unwrap, riding the reveal system
+    5. the practitioner bubbles, drifting on their own and opening with an
+       iris reveal that rides the reveal system
     6. the reviews depth-drift carousel, self-driving, draggable
     7. the magnetic book CTA
     8. the press-and-hold heat stone, carried over from v2 unchanged
     9. the spine nodes filling as sections pass, carried over from v2
+   10. live hours in the Book panel, marking today and reading open or closed
 
   Direction v3 dropped the single dark ground for alternating warm bands
   (espresso, tan, cream) and the ember accent. Nothing here writes a colour
@@ -1466,6 +1468,179 @@
   }
 
   /* -----------------------------------------------------------------------
+     MECHANISM 10. LIVE HOURS, in the Book panel.
+
+     Marks today's row and writes an open/closed line above the schedule.
+     Two things this is careful about:
+
+     1. It reads the schedule off the DOM (data-open / data-close, minutes
+        past midnight, data-closed for a dark day) rather than carrying its
+        own copy. There is exactly one schedule on the page, so the status
+        line can never contradict the hours printed directly beneath it.
+
+     2. It works in the clinic's timezone, not the visitor's. Someone
+        opening this from Vancouver at 5pm their time must be told the
+        clinic is closed, because in Beamsville it is 8pm. Intl with an
+        explicit timeZone is the only way to get that right; new Date()
+        alone would answer for wherever the reader happens to be.
+
+     Statutory holidays are not modelled, so this can be wrong on Christmas
+     Day. The full week sits underneath it regardless, and the status pill
+     stays hidden entirely if anything here fails.
+  ----------------------------------------------------------------------- */
+
+  var CLINIC_TZ = 'America/Toronto';
+
+  function initHours() {
+    var wrap = doc.querySelector('[data-hours]');
+    var status = doc.querySelector('[data-hours-status]');
+    if (!wrap) return;
+
+    var rows = [].slice.call(wrap.querySelectorAll('.book__hours-row'));
+    if (!rows.length) return;
+
+    var statusText = status ? status.querySelector('.book__status-text') : null;
+
+    // Day index -> its row, so the wrap-around search for the next open
+    // day below is a lookup rather than a scan.
+    var byDay = {};
+    for (var i = 0; i < rows.length; i++) {
+      var d = parseInt(rows[i].getAttribute('data-day'), 10);
+      if (!isNaN(d)) byDay[d] = rows[i];
+    }
+
+    // Reads the wall clock in Beamsville. Returns null if Intl cannot do
+    // timezones here, which is the signal to leave the pill hidden rather
+    // than fall back to the visitor's own clock and state something false.
+    function clinicNow() {
+      try {
+        var parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: CLINIC_TZ,
+          weekday: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).formatToParts(new Date());
+
+        var got = {};
+        for (var i = 0; i < parts.length; i++) got[parts[i].type] = parts[i].value;
+
+        var days = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+        var day = days[got.weekday];
+        var hour = parseInt(got.hour, 10);
+        var minute = parseInt(got.minute, 10);
+
+        // hour12:false yields 24 rather than 00 for midnight in some
+        // engines, which would put "24:10" ten minutes into tomorrow.
+        if (hour === 24) hour = 0;
+        if (day === undefined || isNaN(hour) || isNaN(minute)) return null;
+
+        return { day: day, minutes: hour * 60 + minute };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function label(row) {
+      var t = row.querySelector('.book__hours-time');
+      return t ? t.textContent.trim() : '';
+    }
+
+    // "10:00 a.m. to 7:00 p.m." -> "7:00 p.m.". The times are only ever
+    // written in that one shape, in this one block of markup.
+    function closingTime(row) {
+      var parts = label(row).split(' to ');
+      return parts.length === 2 ? parts[1] : '';
+    }
+
+    function openingTime(row) {
+      var parts = label(row).split(' to ');
+      return parts.length === 2 ? parts[0] : '';
+    }
+
+    function dayName(row) {
+      var d = row.querySelector('.book__hours-day');
+      return d ? d.textContent.trim() : '';
+    }
+
+    // Walks forward from today to the next day that is actually open.
+    function nextOpen(fromDay) {
+      for (var step = 1; step <= 7; step++) {
+        var row = byDay[(fromDay + step) % 7];
+        if (row && !row.hasAttribute('data-closed')) {
+          return { row: row, tomorrow: step === 1 };
+        }
+      }
+      return null;
+    }
+
+    function update() {
+      var now = clinicNow();
+      if (!now) return;
+
+      var today = byDay[now.day] || null;
+
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].classList.toggle('is-today', rows[i] === today);
+      }
+
+      if (!status || !statusText) return;
+
+      var open = null;
+      var close = null;
+      if (today && !today.hasAttribute('data-closed')) {
+        open = parseInt(today.getAttribute('data-open'), 10);
+        close = parseInt(today.getAttribute('data-close'), 10);
+      }
+
+      var isOpen = open !== null && !isNaN(open) && !isNaN(close) &&
+                   now.minutes >= open && now.minutes < close;
+
+      if (isOpen) {
+        statusText.textContent = 'Open now, until ' + closingTime(today);
+      } else if (open !== null && !isNaN(open) && now.minutes < open) {
+        // Closed, but opening again later on the same day.
+        statusText.textContent = 'Opens today at ' + openingTime(today);
+      } else {
+        var next = nextOpen(now.day);
+        if (next) {
+          statusText.textContent = 'Closed, opens ' +
+            (next.tomorrow ? 'tomorrow' : dayName(next.row)) +
+            ' at ' + openingTime(next.row);
+        } else {
+          statusText.textContent = 'Closed';
+        }
+      }
+
+      status.classList.toggle('is-open', isOpen);
+      status.hidden = false;
+    }
+
+    update();
+
+    // Once a minute is enough to catch the opening and closing boundaries
+    // while someone has the page open, and it rests with the tab. The
+    // interval is never torn down because the page has no teardown; it is
+    // one timer for the life of the document.
+    var timer = null;
+
+    function start() {
+      if (timer === null) timer = window.setInterval(update, 60000);
+    }
+
+    function stop() {
+      if (timer !== null) { window.clearInterval(timer); timer = null; }
+    }
+
+    pauseListeners.push(function (paused) {
+      if (paused) stop();
+      else { update(); start(); }
+    });
+
+    if (!tabPaused) start();
+  }
+
+  /* -----------------------------------------------------------------------
      BOOT AND REDUCED-MOTION GOVERNANCE, LIVE AND IN BOTH DIRECTIONS.
   ----------------------------------------------------------------------- */
 
@@ -1483,6 +1658,7 @@
     var heat = initHeat();
     var steam = initSteam();
     initFaqAccordion();
+    initHours();
 
     var pinnable = [spine, reveal, wordSplit, parallax, carousels, magnetic, progress, heat, steam];
 
@@ -1519,10 +1695,12 @@
 
     About (tan)          -> mechanism 3, per-child staggered entrance
                              (.intro__frame with data-reveal data-stagger)
-    Practitioners (cream)-> mechanism 5, clip-path photo unwrap, big moment
-                             two (.practitioners__grid data-reveal
+    Practitioners (cream)-> mechanism 5, the floating portrait bubbles, big
+                             moment two (.practitioners__grid data-reveal
                              data-stagger, each .practitioner-card gets .in
-                             in turn; Agent S keys the clip-path off that)
+                             in turn; the iris reveal keys off that, while
+                             the float itself is a standing CSS animation
+                             owing nothing to scroll position)
     Treatments (espresso) -> mechanism 3's accent-bar variant on each
                              .treatment-row, plus mechanism 8, the
                              press-and-hold heat stone, big moment three
@@ -1533,9 +1711,9 @@
                              carousel
     FAQ (cream)           -> mechanism 3, plain per-child staggered
                              entrance, plus the bonus measured accordion
-    Book (espresso)       -> mechanism 3's scale-and-fade entrance on
-                             .book__frame, plus mechanism 7, the magnetic
-                             CTA on the primary button
+    Book (espresso)       -> mechanism 10, the live hours panel, plus
+                             mechanism 7, the magnetic CTA on the primary
+                             button
 
   Mechanisms 1 (word-mask headings) and 2 (the section label rule draw) are
   connective tissue riding the reveal system across every section rather

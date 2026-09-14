@@ -64,6 +64,12 @@
   var POSTER_SAFETY_MS = 4000;    // start the blob fetch even if the poster hangs
   var RING_THROTTLE_MS = 100;     // ring redraw throttle
   var DRIFT_RATE = 0.12;          // idle auto-pan speed, relative to real-time playback
+  // How far the idle drift is allowed to advance before a real scroll happens.
+  // The film opens holding on the stones with steam curling, then cranes down.
+  // The drift is capped inside that opening hold so the hero is alive on arrival
+  // but the descent only ever begins when the visitor actually scrolls.
+  // 0.075 of a 21.04s film is roughly the first 1.6 seconds, the hold itself.
+  var DRIFT_MAX = 0.075;
   var HERO_OUT_VH = 0.66;         // --heroOut reaches 1 over this many viewport heights
 
   /* ---------------------------------------------------------------------
@@ -191,8 +197,11 @@
   var hasScrolled = false;
 
   function driftEligible() {
-    return !hasScrolled && heroOnScreen && !prefersReducedMotion() &&
-      !!video.duration && isFinite(video.duration);
+    // target < DRIFT_MAX matters: without it the loop keeps running forever at
+    // the cap, burning frames to add nothing. With it, the drift finishes the
+    // opening hold, converges, and the rAF chain goes idle until a real scroll.
+    return !hasScrolled && target < DRIFT_MAX && heroOnScreen &&
+      !prefersReducedMotion() && !!video.duration && isFinite(video.duration);
   }
 
   function tick(now) {
@@ -201,7 +210,7 @@
 
     var drifting = driftEligible();
     if (drifting) {
-      target = clamp(target + (DRIFT_RATE * dt / 1000) / video.duration, 0, 1);
+      target = clamp(target + (DRIFT_RATE * dt / 1000) / video.duration, 0, DRIFT_MAX);
     }
 
     shown += (target - shown) * (1 - Math.pow(1 - LERP_K, dt / 16.667));

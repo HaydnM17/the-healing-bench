@@ -1030,7 +1030,11 @@ strong, b {
 
 .hero {
   position: relative;
-  height: 1000vh;
+  /* The scroll distance the film is scrubbed across. Was 1000vh, which meant
+     ten screens of scrolling before any content. Cut to 280vh: the sticky
+     stage takes 100vh of that, so the film plays across 180vh, under two
+     screens. Roberts Renovations uses 210svh total for the same reason. */
+  height: 280vh;
   background: var(--espresso-deep);
 }
 

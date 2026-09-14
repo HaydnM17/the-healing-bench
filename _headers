@@ -4,12 +4,16 @@
 # page does not actually load.
 #
 # Content-Security-Policy, directive by directive:
-#   default-src 'self'        Fallback for any fetch type not named below. Same origin only.
-#   script-src 'self'         The three page scripts (scrollcraft.js, film-engine.js, site.js)
-#                              are same-origin files loaded with defer, nothing else executes.
-#                              The JSON-LD block in <head> is type="application/ld+json", a
-#                              data island the browser never runs as script, so it is not
-#                              subject to this directive and needs no 'unsafe-inline' for it.
+#   default-src 'self'         Fallback for any fetch type not named below. Same origin
+#                              only.
+#   script-src 'self'          The two page scripts (film-engine.js, site.js) are
+#                              same-origin files loaded with defer, nothing else
+#                              executes. scrollcraft.js is gone: removed as dead weight,
+#                              confirmed absent from index.html's own script tags. The
+#                              JSON-LD block in <head> is type="application/ld+json",
+#                              a data island the browser never runs as script, so it is
+#                              not subject to this directive and needs no 'unsafe-inline'
+#                              for it.
 #   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
 #                              'self' for styles.css. fonts.googleapis.com for the Google
 #                              Fonts stylesheet link in <head>. 'unsafe-inline' for the
@@ -21,15 +25,33 @@
 #   font-src https://fonts.gstatic.com
 #                              Google's font stylesheet points its woff2 files at this host.
 #                              There are no self-hosted font files to allow from 'self'.
-#   img-src 'self' data:      Every photo is same-origin under /assets. data: covers the
-#                              inline SVG favicon, which is a data: URI, not a file on disk.
-#   media-src 'self' blob:    The hero film and the scroll-triggered clips are fetched, then
-#                              handed to the <video> element as a blob: URL (see film-engine.js
-#                              loadVariantBlob and scrollcraft.js loadClip), never a plain file
-#                              path on the element itself.
-#   connect-src 'self'        The only fetch() calls in film-engine.js and scrollcraft.js
-#                              request the same-origin .mp4 files above. No analytics beacon,
-#                              no third-party API.
+#   img-src 'self' data:       Every photo is same-origin under /assets, including
+#                              the hero's WebP frame sequence in assets/frames/p/ and
+#                              assets/frames/w/, loaded as plain <img> tags or as new
+#                              Image() objects for canvas drawing, never fetched and
+#                              wrapped in a blob. data: covers the inline SVG favicon,
+#                              which is a data: URI, not a file on disk.
+#   media-src 'none'           There is no <video>, <audio> or <source> element anywhere
+#                              on the site (checked index.html and 404.html) and nothing
+#                              constructs one at runtime. The old pipeline that justified
+#                              'self' blob: here, fetch the mp4, assemble a Blob, hand a
+#                              blob: URL to a <video> element, is gone. The hero is now
+#                              a <canvas> that film-engine.js paints frame by frame from
+#                              ordinary same-origin WebP images (see img-src above), and a
+#                              canvas has no media-src surface of its own. Nothing on this
+#                              site can ever hit this directive, so it is closed outright.
+#   connect-src 'self'         Kept at 'self', though nothing currently calls it:
+#                              film-engine.js and site.js were both checked in full
+#                              for fetch(), XMLHttpRequest, WebSocket, EventSource and
+#                              sendBeacon, and neither has one. The hero frames load
+#                              as plain <img>/Image() requests (img-src), not the old
+#                              fetch()+Blob pipeline, so this directive has no live
+#                              consumer today. Left at 'self' rather than tightened to
+#                              'none' because it costs nothing here, 'self' already can't
+#                              reach anywhere default-src wouldn't also allow, and 'self'
+#                              is what a same-origin contact-form endpoint would need if
+#                              one is ever added, the way most of these builds eventually
+#                              get one.
 #   object-src 'none'         No <object>, <embed> or plugin content anywhere on the page.
 #   base-uri 'self'           Stops an injected <base> tag from rewriting relative URLs.
 #   form-action 'self'        No <form> exists on the page today; this only guards against
@@ -48,17 +70,28 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
 # DEPLOY STEP: the Strict-Transport-Security line above is safe to ship now but only actually
 # protects visitors once the custom domain shows a padlock (cloudflare-pages-launch, go-live
 # sequence). No edit needed here, just do not add the optional "preload" token before that.
 
-# This build keeps every image and the two hero/scroll films under /assets, so that is the
-# only long-cache rule this site needs. There is no local /fonts or /vendor directory here:
-# fonts load from Google's CDN and every script is a plain root-level file, both already
-# covered by the short default cache for HTML, CSS and JS that the kit deliberately leaves
-# alone (see templates/site/README.md).
+# This build keeps every image under /assets, so that is the only long-cache rule this site
+# needs. There is no local /fonts or /vendor directory here: fonts load from Google's CDN and
+# every script is a plain root-level file, both already covered by the short default cache for
+# HTML, CSS and JS that the kit deliberately leaves alone (see templates/site/README.md).
+#
+# CONFIRMED covers the hero frame sequences: the two mp4s this rule used to cache are gone
+# (replaced by assets/frames/p/f001.webp..f193.webp and assets/frames/w/f001.webp..f153.webp),
+# and this immutable rule applies to them the same as any other file under /assets.
+#
+# TRAP: because the cache is "immutable" for a year, a future re-render of the film must NOT
+# overwrite these same filenames in place (assets/frames/p/ and assets/frames/w/). A visitor
+# who already has f047.webp cached will keep being served that exact byte content for up to a
+# year even after the origin file changes underneath it, since immutable tells the browser to
+# never revalidate. Ship any re-render under a new directory (e.g. assets/frames/p2/,
+# assets/frames/w2/) and repoint film-engine.js's VIDEO_PORTRAIT.dir / VIDEO_WIDE.dir at it,
+# rather than replacing files in p/ or w/.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 

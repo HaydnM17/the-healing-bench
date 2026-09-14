@@ -191,8 +191,15 @@
   <section id="hero" class="hero">
     <div class="hero__stage" id="heroStage">
       <div class="hero__poster" id="heroPoster"></div>
-      <video class="hero__video" id="heroVideo" preload="none" muted playsinline
-             aria-hidden="true" tabindex="-1"></video>
+      <!-- The film is a canvas, not a video element. Scrubbing a <video>
+           means assigning currentTime every frame, and every assignment is
+           a seek: on a phone the decoder flushes and decodes forward from
+           the nearest keyframe, and the round trip is 30 to 100ms. That
+           caps the scrub at 10 to 30fps no matter how the file is encoded.
+           Drawing an already decoded image has no such round trip, so the
+           film ships as a WebP frame sequence and film-engine.js draws
+           frame N here. See assets/frames/. -->
+      <canvas class="hero__film" id="heroFilm" aria-hidden="true"></canvas>
       <div class="hero__scrim" aria-hidden="true"></div>
       <!-- The blackout. Rides --heroFade, which only starts once the reveal
            panel has been at rest for a while, so the last stretch of the

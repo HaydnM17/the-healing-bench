@@ -71,7 +71,7 @@ img {
   outline-offset: -1px;
 }
 
-.hero__video, .hero__poster, .book__media,
+.hero__film, .hero__poster, .book__media,
 .fees__ground img, .faq__ground img, .reviews__ground img {
   outline: none;
 }
@@ -1098,8 +1098,9 @@ strong, b {
 /* --------------------------------------------------------------------------
    9. HERO STAGE
    A full-bleed, low-lit treatment film (two source files, portrait and
-   landscape, chosen by Agent F's JS; both object-fit: cover, no
-   letterboxing) graded down so it supports rather than competes, since
+   landscape, chosen by Agent F's JS, which also cover-fits each frame
+   itself as it draws to the canvas — no letterboxing) graded down so it
+   supports rather than competes, since
    the footage is AI-generated and does not survive close inspection.
    Above centre: the cairn crest and a quiet wordmark. Below: a kicker, the
    page's one big serif headline, and one or two pill buttons. Agent F
@@ -1185,16 +1186,29 @@ strong, b {
   }
 }
 
-/* Both films use object-fit: cover at every width. The v1 contain-and-
-   feather letterbox system is removed entirely: a real landscape file
-   exists now, so the desktop over-zoom is solved by the asset, not by
+/* Both films are cover-fitted at every width, but object-fit: cover
+   cannot do that job any more: the element below is a <canvas>, which
+   has no intrinsic content for object-fit to act on, only a drawing
+   buffer that gets stretched to whatever box this rule gives it.
+   film-engine.js does the cover-fit itself instead — it sizes the
+   backing store to the stage in device pixels and draws each frame with
+   a computed cover rect — so this rule's only job is to make the canvas
+   fill the stage exactly. The v1 contain-and-feather letterbox system is
+   removed entirely: a real landscape file exists now, so the desktop
+   over-zoom is solved by the asset and the JS's cover-rect math, not by
    CSS. */
-.hero__video {
+.hero__film {
   position: absolute;
   inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* No object-fit here — see the comment above. background-color is a
+     guard against a transparent flash before the canvas's first frame
+     is drawn (the 2d context is created with alpha:false, which should
+     already force an opaque buffer, but this keeps the gap, if any, on
+     the site's own dark rather than default black or see-through). */
+  background-color: var(--espresso-deep);
   opacity: 0;
   /* Pushes in as the hero fades out. --heroFade runs 0 to 1 across the
      last stretch of the section (film-engine.js), so the picture is
@@ -1211,17 +1225,22 @@ strong, b {
 /* The grade that used to live here, saturate(.78) contrast(1.02)
    brightness(.92), is now baked into the film and the posters themselves.
 
-   A CSS filter on a <video> forces the browser off the cheap hardware
-   video path and onto per-frame shader compositing of every decoded
-   frame. On a phone, paid continuously while the visitor scrubs through
-   the whole hero, that is one of the most expensive things the page was
-   doing, and it showed as a low frame rate in the smoke. The look is
-   identical; it just costs nothing now. */
+   Back when this element was a <video>, a CSS filter forced the browser
+   off the cheap hardware video path and onto per-frame shader
+   compositing of every decoded frame. On a phone, paid continuously
+   while the visitor scrubbed through the whole hero, that was one of
+   the most expensive things the page was doing, and it showed as a low
+   frame rate in the smoke. The element is a <canvas> now, drawn frame
+   by frame by film-engine.js rather than decoded from a video stream,
+   but a CSS filter would still force the same per-frame shader
+   compositing on every one of those draws — so the reasoning still
+   holds and the grade stays baked into the assets rather than applied
+   here. The look is identical; it costs nothing either way. */
 
-.hero__stage.video-ready .hero__video { opacity: 1; }
-.hero__stage.video-ready .hero__poster { opacity: 0; }
-.hero__stage.video-failed .hero__video { display: none; }
-.hero__stage.video-failed .hero__poster { opacity: 1; }
+.hero__stage.film-ready .hero__film { opacity: 1; }
+.hero__stage.film-ready .hero__poster { opacity: 0; }
+.hero__stage.film-failed .hero__film { display: none; }
+.hero__stage.film-failed .hero__poster { opacity: 1; }
 
 /* The poster takes the same push so a visitor on any of the static-hero
    gates gets the same closing move rather than a dead frame. */
@@ -1233,7 +1252,7 @@ strong, b {
 /* Lower right of the stage, small and quiet: it was sitting dead centre
    over the kicker and the crest, reading as a bug rather than a loading
    indicator. It never shares space with the crest or caption text at
-   this corner, at any width, and .video-ready below still takes it to
+   this corner, at any width, and .film-ready below still takes it to
    full transparent once the stream is live. */
 .hero__ring {
   position: absolute;
@@ -1253,8 +1272,8 @@ strong, b {
   stroke-linecap: round;
 }
 
-.hero__stage.video-ready .hero__ring,
-.hero__stage.video-failed .hero__ring {
+.hero__stage.film-ready .hero__ring,
+.hero__stage.film-failed .hero__ring {
   opacity: 0;
 }
 
@@ -1637,13 +1656,13 @@ strong, b {
 }
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
-  .hero__video { display: none; }
+  .hero__film { display: none; }
   .hero__poster { opacity: 1; }
   .hero__ring { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__video { display: none; }
+  .hero__film { display: none; }
   .hero__poster { opacity: 1; }
 }
 

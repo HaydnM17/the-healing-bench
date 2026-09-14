@@ -12,13 +12,13 @@
     query and only that one is ever fetched, so a desktop never over-zooms
     a portrait-shot clip and a phone never downloads a landscape one.
   - An idle drift plays the film forward slowly on its own before the
-    visitor scrolls, through the same lerp and gated-seek path scroll
-    itself drives, so the hero is alive on arrival. It stops for good on
-    the first real scroll.
+    visitor scrolls, through the same lerp and draw path scroll itself
+    drives, so the hero is alive on arrival. It stops for good on the
+    first real scroll.
   - The five-band hero narration is gone. The hero is now a single
     composed crest plus caption block, owned by Agent M's markup and
     Agent S's CSS. This engine's only remaining DOM writes are the poster,
-    the video, the loading ring, and one custom property, --heroOut, that
+    the canvas, the loading ring, and one custom property, --heroOut, that
     Agent S reads to move the crest and caption out of the way as the
     visitor leaves the hero.
   - Only one rAF chain exists in this file: tick(). The v1 file had a
@@ -32,19 +32,32 @@
      Constants the integrator tunes after real measurements.
   --------------------------------------------------------------------- */
 
-  // The two films. Exactly one is ever fetched, chosen by FILM_Q below.
-  // Portrait: 720x1280, 21.041667s at 24fps, 505 frames, h264. Confirmed
-  // by Agent A. Wide: landscape, encoded separately; the integrator
-  // patches the byte size in once the encode reports it. The loader
-  // tolerates 0 here by falling back to the response's Content-Length,
-  // so leave it at 0 rather than guessing.
+  // The two films. Exactly one variant's frames are ever fetched, chosen
+  // by FILM_Q below. Portrait: shot at 720x1280, 21.041667s at 24fps (505
+  // frames), confirmed by Agent A, then trimmed and resampled down to the
+  // 193-frame WebP sequence described below. Wide: landscape, encoded
+  // separately at its own frame count and timing.
   // Both films are trimmed to end just after the camera reaches the table.
   // What came after that was a slow push further and further into the bed,
   // which is not a shot anyone wants to arrive at and sit on, and which the
-  // scrub can no longer reach anyway (see endMax below). Cutting it from the
-  // files rather than only from the mapping means a phone never downloads
-  // twelve seconds of footage it will never be shown: the portrait film went
-  // from 1,907,459 bytes to 806,904.
+  // scrub can no longer reach anyway (see endMax below).
+  //
+  // They ship as WebP frame sequences rather than as mp4s. Scrubbing a
+  // <video> means assigning currentTime every frame, and every assignment
+  // is a seek: the decoder flushes and decodes forward from the nearest
+  // keyframe, and on a phone that round trip is 30 to 100ms. Only one seek
+  // can be in flight at a time without making it worse, so the scrub is
+  // capped at 1000/latency frames a second, which is 10 to 30fps on a
+  // phone however the file is encoded. Smaller resolutions, denser
+  // keyframes and dropping the CSS filter all reduced the cost of a seek
+  // and none of them removed the round trip, because the round trip is the
+  // architecture. Drawing an already decoded image has no round trip at
+  // all, so a frame sequence runs at whatever rate the device can
+  // composite, which is 60fps on anything current.
+  //
+  // The cost is a wash. The portrait film was 584,570 bytes as an mp4 at
+  // 540x960; it is 985,000 as 193 WebP frames at a full 720x1280. Dark,
+  // soft, grainy footage compresses to about 5KB a frame.
   //
   //   driftMax  how far in the idle auto-play runs before it stops and waits
   //             for a scroll. Measured by extracting frames: the descent
@@ -55,16 +68,27 @@
   //   endMax    where scroll stops the film. The camera arrives at the table
   //             at about 9.0s (portrait) and 7.0s (wide). Past that it only
   //             creeps closer, so the scrub ends on the arrival frame and the
-  //             last sliver of each file is headroom, never played.
+  //             last sliver of each sequence is headroom, never shown.
+  //   seconds   the film's real running time, which the idle drift needs so
+  //             it can advance at DRIFT_RATE relative to real playback. A
+  //             video would have supplied this itself, via video.duration;
+  //             a frame sequence has no such property, so each variant has
+  //             to be told its own.
   //
-  //   portrait  9.625s   drift 5.0 -> 0.52   arrive 9.0 -> 0.935
-  //   wide      7.625s   drift 4.3 -> 0.56   arrive 7.0 -> 0.918
-  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4?v=3', bytes:584570, driftMax:0.52, endMax:0.935 };
-  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4?v=3', bytes:771987, driftMax:0.56, endMax:0.918 };
+  //   portrait  193 frames, 20fps, 9.65s   drift 5.0 -> 0.52   arrive 9.0 -> 0.935
+  //   wide      153 frames, 20fps, 7.65s   drift 4.3 -> 0.56   arrive 7.0 -> 0.918
+  var VIDEO_PORTRAIT = {
+    dir: 'assets/frames/p/', count: 193, seconds: 9.65,
+    driftMax: 0.52, endMax: 0.935
+  };
+  var VIDEO_WIDE = {
+    dir: 'assets/frames/w/', count: 153, seconds: 7.65,
+    driftMax: 0.56, endMax: 0.918
+  };
 
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
-  // ratio and never flashes a mismatched crop while the video streams in.
+  // ratio and never flashes a mismatched crop while the frames load in.
   // Not part of the mandated two-film constants above; an Agent F
   // addition that closes the same "wrong asset" gap for the still frame.
   var POSTER_PORTRAIT = 'assets/hero-poster.jpg?v=3';
@@ -81,8 +105,7 @@
   var LERP_K = 0.16;              // smoothing per 60fps frame, tune by feel
   var CONVERGE_EPS = 0.0005;      // lerp counts as settled below this distance
   var DELTA_GATE = 0.008;         // minimum change before any DOM write
-  var WATCHDOG_MS = 20000;        // stream stall abort, re-armed on every chunk
-  var POSTER_SAFETY_MS = 4000;    // start the blob fetch even if the poster hangs
+  var POSTER_SAFETY_MS = 4000;    // start the frame fetch even if the poster hangs
   var RING_THROTTLE_MS = 100;     // ring redraw throttle
   // Idle auto-play speed, relative to real-time playback. 1 is the film's own
   // speed, which is what it is graded and paced for. It was 0.12 at one point,
@@ -111,28 +134,34 @@
   var HERO_OUT_VH = 0.66;         // --heroOut reaches 1 over this many viewport heights
 
   /* ---------------------------------------------------------------------
-     Guard. If the hero video is not on this page, do nothing but still
-     hand Agent J's site.js a safe, inert copy of the public API.
+     Guard. If the hero film canvas is not on this page, do nothing but
+     still hand Agent J's site.js a safe, inert copy of the public API.
   --------------------------------------------------------------------- */
 
-  var video = document.getElementById('heroVideo');
+  var canvas = document.getElementById('heroFilm');
 
-  if (!video) {
+  if (!canvas || !canvas.getContext) {
     window.filmEngine = {
       heroProgress: function () { return 0; },
       pinToFinalStates: function () {},
       unpinFinalStates: function () {},
-      isScrubOn: function () { return false; }
+      isScrubOn: function () { return false; },
+      isHeld: function () { return true; }
     };
     return;
   }
+
+  // alpha:false lets the compositor skip per-pixel blending. The film is
+  // full-bleed and opaque, so there is never anything behind it to show
+  // through, and the scrim that grades it is a separate layer above.
+  var ctx = canvas.getContext('2d', { alpha: false });
 
   var stage = document.getElementById('heroStage');
   var posterEl = document.getElementById('heroPoster');
   var ring = document.getElementById('heroRing');
   var hero = document.getElementById('hero') ||
-    (video.closest && video.closest('.hero')) ||
-    stage || video;
+    (canvas.closest && canvas.closest('.hero')) ||
+    stage || canvas;
 
   /* ---------------------------------------------------------------------
      Small helpers.
@@ -177,7 +206,7 @@
 
   /* ---------------------------------------------------------------------
      --heroOut: 0 to 1 over HERO_OUT_VH viewport heights of real scroll,
-     independent of the video's own progress mapping. Agent S reads it on
+     independent of the film's own progress mapping. Agent S reads it on
      #heroStage to translate and fade #heroCrest and #heroCaption. Pure
      function of live scroll geometry, so it is fully reversible: scroll
      back up and the crest returns. Written delta-gated, every tick.
@@ -309,7 +338,7 @@
      real scroll happens, hasScrolled latches true forever and that nudge
      stops permanently, handing target over entirely to onScroll(). Either
      way the film's position is still only ever driven by the same lerp
-     and the same gated requestSeek() below, never by video.play().
+     and the same drawFrame() below, never by playing anything.
 
      Idle when converged and drift-ineligible; idle when the hero is off
      screen; never idle while drift is legitimately advancing.
@@ -326,7 +355,7 @@
     // the cap, burning frames to add nothing. With it, the drift finishes the
     // opening hold, converges, and the rAF chain goes idle until a real scroll.
     return !hasScrolled && target < driftMax() && heroOnScreen &&
-      !prefersReducedMotion() && !!video.duration && isFinite(video.duration);
+      !prefersReducedMotion() && filmReady;
   }
 
   /* ---------------------------------------------------------------------
@@ -384,16 +413,14 @@
 
     var drifting = driftEligible();
     if (drifting) {
-      target = clamp(target + (DRIFT_RATE * dt / 1000) / video.duration, 0, driftMax());
+      target = clamp(target + (DRIFT_RATE * dt / 1000) / filmSeconds, 0, driftMax());
     }
 
     shown += (target - shown) * (1 - Math.pow(1 - LERP_K, dt / 16.667));
     var converged = Math.abs(target - shown) < CONVERGE_EPS;
     if (converged) shown = target;
 
-    if (video.duration && isFinite(video.duration)) {
-      requestSeek(shown * video.duration);
-    }
+    drawFrame(shown);
     writeHeroOut(heroMeasurement);
     writeHeroLate(heroMeasurement);
 
@@ -458,86 +485,87 @@
   }
 
   /* ---------------------------------------------------------------------
-     Gated seeks, the deadlock-safe pattern. Coalesce to the newest
-     target, exactly one follow-up on seeked, reset on error.
+     The draw layer, which replaces the gated-seek machinery a <video>
+     needed.
 
-     Two belts against the gate sticking open forever: some browsers do
-     not fire seeked when the assigned value is not actually different
-     from currentTime (the common case is the very first seek on a fresh
-     pageview, requestSeek(0) against a freshly loaded video that already
-     reports currentTime 0). First, skip the assignment entirely when the
-     target is already within a tenth of a frame at 24fps. Second, a
-     short recovery timer force-clears the gate if neither seeked nor
-     error shows up at all, so the gate can never be opened only by an
-     event that might not arrive.
+     There is no gate here and nothing to deadlock, because there is no
+     asynchronous round trip to wait on: the frames are already decoded
+     Image objects and drawImage is synchronous. The only gate left is the
+     one that matters, which is not redrawing a frame already on screen.
   --------------------------------------------------------------------- */
 
-  var seekBusy = false;
-  var pendingTime = null;
-  var seekTimeoutId = null;
-  var SEEK_EPS = 0.004;
-  var SEEK_RECOVERY_MS = 400;
+  var frames = [];          // Image objects for the loaded variant, in order
+  var frameCount = 0;
+  var filmReady = false;
+  var filmFailed = false;
+  var lastDrawn = -1;
+  var filmSeconds = 10;     // replaced by the variant's own value on load
 
-  function clearSeekTimeout() {
-    if (seekTimeoutId !== null) {
-      clearTimeout(seekTimeoutId);
-      seekTimeoutId = null;
+  // The canvas backing store, sized to the stage in device pixels. Capped
+  // at 2x: a 3x phone would ask for a 1170x2532 surface to show footage
+  // that is 720x1280, which is a lot of fill rate for pixels the source
+  // cannot supply anyway.
+  function sizeCanvas() {
+    if (!stage) return;
+    var rect = stage.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.round(rect.width * dpr);
+    var h = Math.round(rect.height * dpr);
+    if (canvas.width === w && canvas.height === h) return;
+    canvas.width = w;
+    canvas.height = h;
+    lastDrawn = -1; // the surface was cleared, so the current frame must be redrawn
+  }
+
+  // object-fit: cover, done by hand. The film's aspect ratio rarely
+  // matches the viewport's, and letterboxing a full-bleed hero would show
+  // the stage's flat ground down the sides.
+  function paint(img) {
+    var cw = canvas.width;
+    var ch = canvas.height;
+    var iw = img.naturalWidth || img.width;
+    var ih = img.naturalHeight || img.height;
+    if (!cw || !ch || !iw || !ih) return;
+    var scale = Math.max(cw / iw, ch / ih);
+    var dw = iw * scale;
+    var dh = ih * scale;
+    ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+  }
+
+  // p is 0 to 1 through the film. Rounding to the nearest frame and
+  // skipping a redraw of the frame already on screen is what keeps this
+  // cheap: at 193 frames across the whole hero, most scroll ticks do not
+  // change which frame is current, and those cost nothing at all.
+  function drawFrame(p) {
+    if (!filmReady || frameCount === 0) return;
+    var idx = clamp(Math.round(p * (frameCount - 1)), 0, frameCount - 1);
+    if (idx === lastDrawn) return;
+    var img = frames[idx];
+    if (!img || !img.complete || !img.naturalWidth) return;
+    lastDrawn = idx;
+    paint(img);
+  }
+
+  function redraw() {
+    var idx = lastDrawn;
+    lastDrawn = -1;
+    if (idx >= 0 && frames[idx]) {
+      lastDrawn = idx;
+      paint(frames[idx]);
     }
   }
 
-  function seekRecover() {
-    seekTimeoutId = null;
-    seekBusy = false;
-    if (pendingTime !== null) {
-      var t = pendingTime;
-      pendingTime = null;
-      requestSeek(t);
-    }
-  }
-
-  function requestSeek(t) {
-    if (!video.duration || !isFinite(video.duration)) return;
-    if (seekBusy) { pendingTime = t; return; }
-    if (Math.abs(video.currentTime - t) < SEEK_EPS) {
-      // Already there. No seeked event is coming, so do not open the
-      // gate for one, but still drain anything that was queued.
-      if (pendingTime !== null) {
-        var next = pendingTime;
-        pendingTime = null;
-        requestSeek(next);
-      }
-      return;
-    }
-    seekBusy = true;
-    seekTimeoutId = setTimeout(seekRecover, SEEK_RECOVERY_MS);
-    try {
-      video.currentTime = t;
-    } catch (e) {
-      clearSeekTimeout();
-      seekBusy = false;
-    }
-  }
-
-  video.addEventListener('seeked', function () {
-    clearSeekTimeout();
-    seekBusy = false;
-    if (pendingTime !== null) {
-      var t = pendingTime;
-      pendingTime = null;
-      requestSeek(t);
-    }
-  });
-
-  var videoFailed = false;
-  video.addEventListener('error', function () {
-    clearSeekTimeout();
-    seekBusy = false;
-    pendingTime = null;
-    failVideo();
-  });
+  window.addEventListener('resize', function () {
+    sizeCanvas();
+    redraw();
+  }, { passive: true });
 
   /* ---------------------------------------------------------------------
-     Complete without the video.
+     Failure fallback. If the frame sequence cannot be trusted (too many
+     frames errored, see settle() below), failFilm() drops the hero back
+     to the plain poster and swaps the loading ring for a static chevron,
+     since a ring promises progress that is never going to arrive.
   --------------------------------------------------------------------- */
 
   function makeScrollChevron() {
@@ -570,14 +598,18 @@
     return el;
   }
 
-  function failVideo() {
-    if (videoFailed) return;
-    videoFailed = true;
+  function failFilm() {
+    if (filmFailed) return;
+    filmFailed = true;
+    filmReady = false;
     if (ring && ring.parentNode) {
       ring.parentNode.replaceChild(makeScrollChevron(), ring);
     }
-    video.style.display = 'none';
-    if (stage) stage.classList.add('video-failed');
+    canvas.style.display = 'none';
+    if (stage) stage.classList.add('film-failed');
+    // The hero is the poster now, and a poster has no opening to play
+    // through, so the jump arrows should not keep waiting on one.
+    signalHeld();
   }
 
   /* ---------------------------------------------------------------------
@@ -600,32 +632,29 @@
   }
 
   /* ---------------------------------------------------------------------
-     The streamed Blob loader with the loading ring, now swappable: a
-     load generation counter and an AbortController guard against a
-     superseded fetch's chunks, or a stale canplay, landing after a newer
-     swap has already started. Only ever one film is in flight at a time.
+     The frame loader, swappable: a load generation counter guards against
+     a superseded sequence's images landing after a newer swap has already
+     started. Only ever one sequence is in flight at a time. There is no
+     blob and no object URL to revoke, so no teardown is needed either.
   --------------------------------------------------------------------- */
 
   var heroInitialized = false;
   var firstFetchStarted = false;
   var loadedVariant = null;
   var loadGen = 0;
-  var currentCtrl = null;
-  var blobUrl = null;
-
-  // The blob URL for whichever film is currently loaded is only revoked
-  // on teardown or the moment a swap actually replaces it, never left
-  // dangling mid-session.
-  window.addEventListener('pagehide', function () {
-    if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
-      blobUrl = null;
-    }
-  });
 
   function initHeroOnce() {
     if (heroInitialized) return;
     heroInitialized = true;
+
+    // Size the backing store as soon as the engine engages, not only once
+    // the first variant's frames finish loading. The canvas stays at
+    // opacity 0 under the poster until film-ready (see styles.css), so
+    // this has no visible effect on its own; it just means settle()'s own
+    // sizeCanvas() call below has nothing to do on the common path where
+    // the stage hasn't resized in between, instead of doing the first
+    // layout read right as the film is trying to appear.
+    sizeCanvas();
 
     var posterUrl = posterUrlFor(currentVariant());
     if (posterEl) posterEl.style.backgroundImage = "url('" + posterUrl + "')";
@@ -646,101 +675,135 @@
   // Re-checks the live query and swaps the loaded film if it disagrees
   // with what is currently loaded. A no-op before the initial poster
   // race has even started (so it never jumps the poster ahead of the
-  // blob fetch on first load) and a no-op while scrub is gated off.
+  // frame fetch on first load) and a no-op while scrub is gated off.
   function maybeSwapVariant() {
     if (!firstFetchStarted || !scrubOn) return;
     swapToVariant(currentVariant());
   }
 
   function swapToVariant(variant) {
-    if (videoFailed) return;
+    if (filmFailed) return;
     if (variant === loadedVariant) return;
 
-    if (currentCtrl) { try { currentCtrl.abort(); } catch (e) {} currentCtrl = null; }
-    clearSeekTimeout();
-    seekBusy = false;
-    pendingTime = null;
-
     if (posterEl) posterEl.style.backgroundImage = "url('" + posterUrlFor(variant) + "')";
-    if (stage) stage.classList.remove('video-ready');
+    if (stage) stage.classList.remove('film-ready');
 
+    filmReady = false;
+    lastDrawn = -1;
     loadedVariant = variant;
-    var myGen = ++loadGen;
-    loadVariantBlob(variant, myGen).catch(function () {
-      if (myGen !== loadGen) return; // superseded by a later swap, not a real failure
-      failVideo();
-    });
+    loadVariantFrames(variant, ++loadGen);
   }
 
-  async function loadVariantBlob(variant, gen) {
-    var ctrl = new AbortController();
-    currentCtrl = ctrl;
-    var watchdog = setTimeout(function () { ctrl.abort(); }, WATCHDOG_MS);
+  /* ---------------------------------------------------------------------
+     Loading a frame sequence.
 
-    var res = await fetch(variant.src, { priority: 'low', signal: ctrl.signal });
-    if (gen !== loadGen) { clearTimeout(watchdog); return; }
-    if (!res.ok || !res.body) { clearTimeout(watchdog); throw new Error('hero video fetch failed'); }
+     Every frame is fetched as an ordinary <img>, which means the browser's
+     own image pipeline does the work: parallel connections, its own
+     priority queue, its own cache, and decoding off the main thread where
+     the platform supports it. There is no streaming reader and no blob,
+     because there is nothing to assemble; frame 12 is useful the moment it
+     lands whether or not frame 80 has.
 
-    // Content-Length, when present, is the live source of truth. The
-    // hardcoded byte size is only a fallback, and tolerates 0 (the wide
-    // film before the integrator patches its real size): with neither
-    // available the ring simply cannot show a fraction and waits for the
-    // stream to finish instead of dividing by zero.
-    var contentLength = Number(res.headers.get('Content-Length'));
-    var total = contentLength > 0 ? contentLength : (variant.bytes > 0 ? variant.bytes : 0);
+     The ring shows frames decoded rather than bytes received, which is the
+     honest measure here: a frame that has arrived but not decoded cannot
+     be drawn.
 
-    var reader = res.body.getReader();
-    var chunks = [];
-    var got = 0;
+     The film is only declared ready once every frame is in. A scrub can
+     jump to any position at any time, so a partially loaded sequence would
+     mean the film silently sticking on whichever frame happened to be the
+     last one loaded before the gap. The poster covers the wait.
+
+     decode() is awaited where available so the first draw of each frame is
+     not a decode stall on the main thread. Its rejection is not a failure:
+     some browsers reject decode() for an image that is perfectly usable,
+     so the onload path is what actually counts a frame in.
+  --------------------------------------------------------------------- */
+
+  function frameUrl(variant, i) {
+    var n = String(i + 1);
+    while (n.length < 3) n = '0' + n;
+    return variant.dir + 'f' + n + '.webp';
+  }
+
+  function loadVariantFrames(variant, gen) {
+    var imgs = new Array(variant.count);
+    var decoded = 0;
+    var errored = 0;
     var lastRing = 0;
 
-    for (;;) {
-      var result = await reader.read();
-      if (gen !== loadGen) {
-        clearTimeout(watchdog);
-        try { ctrl.abort(); } catch (e) {}
-        return;
-      }
-      if (result.done) break;
-      clearTimeout(watchdog);
-      watchdog = setTimeout(function () { ctrl.abort(); }, WATCHDOG_MS); // re-armed on every chunk
-      chunks.push(result.value);
-      got += result.value.length;
-      if (ring && total > 0) {
-        var frac = Math.min(1, got / total);
-        var now = performance.now();
-        if (now - lastRing > RING_THROTTLE_MS || frac === 1) {
-          lastRing = now;
-          ring.style.setProperty('--ld', String(Math.round(126 * (1 - frac))));
-        }
+    function tickRing() {
+      if (!ring) return;
+      var frac = Math.min(1, decoded / variant.count);
+      var now = performance.now();
+      if (now - lastRing > RING_THROTTLE_MS || frac === 1) {
+        lastRing = now;
+        ring.style.setProperty('--ld', String(Math.round(126 * (1 - frac))));
       }
     }
 
-    clearTimeout(watchdog);
-    if (gen !== loadGen) return;
-    if (ring) ring.style.setProperty('--ld', '0');
+    function settle() {
+      if (gen !== loadGen) return; // a newer swap took over while this was loading
+      if (decoded + errored < variant.count) return;
 
-    var newBlobUrl = URL.createObjectURL(new Blob(chunks));
-    if (gen !== loadGen) { URL.revokeObjectURL(newBlobUrl); return; }
+      // A handful of missing frames is survivable: the draw layer skips an
+      // image that never loaded and holds the previous one, which reads as
+      // a momentary stutter rather than a broken hero. Losing most of them
+      // is not, and falls back to the poster.
+      if (errored > variant.count * 0.1) {
+        failFilm();
+        return;
+      }
 
-    if (blobUrl) URL.revokeObjectURL(blobUrl); // the previous film, safe to drop now the new one is ready
-    blobUrl = newBlobUrl;
-    video.src = blobUrl;
-    video.load();
-    video.addEventListener('canplay', function () {
-      if (gen !== loadGen) return; // a newer swap already took over
-      // Only reseek the video to the current position. Leave shown and
-      // target alone so the lerp keeps owning them; forcing them here
-      // would discard whatever eased value the rAF loop had already
-      // reached and snap the crest/caption if the visitor scrolled
-      // during load.
+      frames = imgs;
+      frameCount = variant.count;
+      filmSeconds = variant.seconds || 10;
+      filmReady = true;
+      if (ring) ring.style.setProperty('--ld', '0');
+      if (stage) stage.classList.add('film-ready');
+
+      sizeCanvas();
+      lastDrawn = -1;
       // shown, not heroProgress(): the lerp owns the current position and
       // already reflects the scroll-to-film mapping, which heroProgress
       // alone does not.
-      requestSeek(shown * video.duration);
-      if (stage) stage.classList.add('video-ready');
+      drawFrame(shown);
       maybeStartDrift();
-    }, { once: true });
+    }
+
+    for (var i = 0; i < variant.count; i++) {
+      (function (index) {
+        var img = new Image();
+        img.decoding = 'async';
+        imgs[index] = img;
+
+        img.onload = function () {
+          if (gen !== loadGen) return;
+          // The frame counts as loaded here, on onload, not inside decode()'s
+          // own callbacks: decode()'s promise is a best-effort pre-warm so the
+          // first drawImage() of this frame is not itself a decode stall, but
+          // it is not guaranteed to settle at all in every browser, and gating
+          // the count on it would mean one hung decode() silently wedges the
+          // whole sequence below variant.count forever, with the poster never
+          // handing off. onload has already proven the frame is real and
+          // paintable, which is what settle() needs.
+          decoded++; tickRing(); settle();
+          if (typeof img.decode === 'function') {
+            img.decode().catch(function () {
+              // Some browsers reject decode() for an image that is perfectly
+              // usable; the frame was already counted above, so there is
+              // nothing left to do here.
+            });
+          }
+        };
+
+        img.onerror = function () {
+          if (gen !== loadGen) return;
+          errored++; tickRing(); settle();
+        };
+
+        img.src = frameUrl(variant, index);
+      })(i);
+    }
   }
 
   /* ---------------------------------------------------------------------

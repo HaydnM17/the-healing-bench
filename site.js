@@ -695,26 +695,55 @@
      no risk of this colliding with a transform another mechanism writes on
      the same element).
 
-     --p is NOT a plain linear map of scroll position any more. A raw 0-1
-     sweep across the whole journey (just entering at the bottom to fully
-     gone at the top) puts the two moments where the element is fully
-     visible but not yet clipped by either edge at raw = height / (vh +
-     height) and raw = vh / (vh + height) -- both of which sit close to 0.5
-     whenever the element is nearly as tall as the viewport. That is why the
-     drift used to be imperceptible: almost the whole 0-1 budget was spent
-     while the image was still partly off-screen, and the entire time it
-     was actually on screen and centred, --p barely moved. computeAndWrite
-     now remaps that raw sweep through a symmetric, clamped-linear curve
-     that widens the "fully visible" band out to roughly --p 0.15 through
-     0.85 (so most of the travel happens while someone can actually see it)
-     while still reaching exactly 0 and 1 at the true off-screen edges,
-     whatever the element's height happens to be relative to the viewport.
+     --p is NOT a plain linear map of scroll position. A raw 0-1 sweep
+     across the whole journey (just entering at the bottom to fully gone at
+     the top) puts the two moments where the element is fully visible but
+     not yet clipped by either edge at raw = height / (vh + height) and raw
+     = vh / (vh + height) -- both of which sit close to 0.5 whenever the
+     element is nearly as tall as the viewport. That is why the drift used
+     to be imperceptible: almost the whole 0-1 budget was spent while the
+     image was still partly off-screen, and the entire time it was actually
+     on screen and centred, --p barely moved. computeAndWrite remaps that
+     raw sweep so most of the travel happens while the element is genuinely
+     on screen, whatever its height happens to be relative to the viewport.
 
-     No free-running loop: a scroll or resize event schedules at most one
-     rAF frame, that frame does the read/write pass and does not
-     reschedule itself, so the loop is inherently at rest until the next
-     real scroll/resize event. An IntersectionObserver with a generous
-     margin keeps off-screen elements out of the per-frame pass entirely.
+     THE 2026-09 SMOOTHNESS PASS. The site owner reported the drift as
+     "too jumpy, too choppy, doesn't look smooth at all." Three suspects
+     were checked; two were real and are fixed below, one turned out to
+     already be fine (the rounding/delta-gate quantisation -- see the
+     arithmetic inside computeAndWrite, and do not re-open it without
+     redoing that arithmetic first).
+
+     1. THE REMAP HAD TWO CORNERS. It used to be piecewise-linear: a
+        flat-rate segment through the "fully visible" band, a shallower
+        flat-rate segment through each partial-visibility tail, meeting at
+        two hard corners where the rate of change jumped abruptly (roughly
+        2-3x, on this site's actual image sizes). A sudden mid-scroll speed
+        change reads as a stutter even though the position itself never
+        jumped or went backwards. Replaced with a single continuous curve
+        (computeAndWrite's h(t), below): a smooth, always-monotonic
+        rational easing that starts at the rate the old flat middle
+        segment ran at and eases off toward the true edges, instead of
+        switching rate outright. It lands close to, not exactly on, the
+        old 0.15/0.85 checkpoints -- see the code comment for why that
+        trade is the more robust one -- and reads as one continuous glide.
+
+     2. UPDATE CADENCE WAS TIED TO SCROLL-EVENT DISPATCH, NOT TO FRAMES.
+        The write was already rAF-scheduled, never written straight from
+        the scroll handler. But "schedule one frame when a scroll event
+        arrives, then go back to sleep" only samples geometry as often as
+        scroll events happen to be dispatched, and dispatch cadence is not
+        the same clock as the display's paint cadence -- it can burst or
+        go quiet for a stretch, especially during touch-driven momentum
+        scrolling, and each quiet stretch reads as a catch-up jump rather
+        than a glide. frame() now keeps riding requestAnimationFrame for a
+        short coast window (PARALLAX_IDLE_MS) after the last scroll/resize
+        signal, sampling live geometry every displayed frame through that
+        window instead of only when a scroll event happens to land. It
+        still comes to a full stop shortly after scrolling actually stops
+        -- this is a bounded tail, not a free-running loop -- and the
+        IntersectionObserver below still means an off-screen element costs
+        nothing regardless of how long the coast window runs.
   ----------------------------------------------------------------------- */
 
   function initParallax() {
@@ -727,6 +756,18 @@
     var active = []; // { el, idx }
     var rafId = null;
     var enabled = true;
+
+    // How long, after the last scroll/resize signal, frame() keeps asking
+    // for another frame on its own instead of waiting to be asked again.
+    // See the cadence note (point 2) in the big comment above: scroll-event
+    // dispatch is not the same clock as the display's paint cadence and can
+    // go quiet for a stretch mid-scroll, so this bridges that gap by
+    // sampling geometry every real frame for a short while. Long enough to
+    // cover a realistic gap between coalesced scroll events on a touch
+    // device; short enough that the loop is clearly, promptly at rest again
+    // once scrolling actually stops.
+    var PARALLAX_IDLE_MS = 200;
+    var lastActivity = 0;
 
     function activeIndexOf(idx) {
       for (var i = 0; i < active.length; i++) if (active[i].idx === idx) return i;
@@ -741,45 +782,82 @@
 
       // w is half the width, in raw units, of the band where the element is
       // fully visible and not yet clipped by either viewport edge (see the
-      // comment above initParallax for the derivation). Remap raw through a
-      // symmetric clamped-linear curve built around that band: the band
-      // itself (raw in [0.5 - w, 0.5 + w]) is stretched out to output
-      // [0.15, 0.85], and the two partial-visibility tails on either side
-      // are compressed into [0, 0.15] and [0.85, 1]. Degenerate heights
-      // (an element as tall as, or taller than, the viewport, or vanishingly
-      // short) have no such band worth widening, so those fall back to the
-      // plain sweep instead of dividing by a near-zero span.
+      // derivation in the comment above initParallax). A negative or
+      // vanishing w means the element is as tall as, or taller than, the
+      // viewport -- no such band exists worth widening -- so that case,
+      // and only that case, falls back to the plain sweep rather than
+      // dividing by a near-zero w.
       var w = span > 0 ? (vh - rect.height) / (2 * span) : 0;
       var p;
-      if (w <= 0.001 || w >= 0.499) {
+      if (w <= 0.001) {
         p = raw;
       } else {
         var delta = raw - 0.5;
         var mag = Math.abs(delta);
         var sign = delta < 0 ? -1 : 1;
-        p = mag <= w
-          ? 0.5 + sign * (mag * (0.35 / w))
-          : 0.5 + sign * (0.35 + (mag - w) * (0.15 / (0.5 - w)));
+
+        // t: mag renormalised to the 0..1 half-domain, 0 at dead centre
+        // (raw = 0.5) and 1 at the true edge (raw = 0 or 1). a is this
+        // curve's slope at t = 0: 0.35/w, the same rate the old flat
+        // middle segment ran at, kept so the felt speed through the
+        // fully-visible band is unchanged by this rewrite.
+        //
+        // h(t) = a*t / (1 + (a-1)*t) is a single continuous curve from
+        // h(0)=0 to h(1)=1, steep near t=0 and easing off toward t=1,
+        // standing in for the old two straight segments without a second
+        // branch or a join to smooth by hand. Its derivative is
+        // a / (1 + (a-1)*t)^2, positive for every t in 0..1 whenever
+        // a > 0 (the denominator cannot reach 0 there), so it is
+        // monotonic for any element height -- unlike matching the old
+        // curve's checkpoints exactly would have been: solving for a
+        // that hits raw=0.5+w -> p=0.85 on the nose makes a collapse
+        // toward 0 as w approaches 0.5 (a tall element, close to the
+        // viewport's own height), which produces an almost-flat curve
+        // that then rushes at the very end -- a worse artifact than the
+        // corner it would replace. Matching the centre rate instead
+        // stays well-behaved across every w this site actually has.
+        var t = mag * 2;
+        var a = 0.35 / w;
+        var h = (a * t) / (1 + (a - 1) * t);
+        p = 0.5 + sign * h * 0.5;
       }
       p = clamp(p, 0, 1);
 
+      // Quantisation, investigated and left alone. Rounding to the nearest
+      // 1/500 is a step of Q = 0.002 in p. The CSS translate is
+      // (p - 0.5) * -20% of the element's own height (see 12A in
+      // styles.css), so one step moves the image Q * 0.20 * height =
+      // 0.0004 * height px. This site's [data-parallax] images run about
+      // 290-460px tall for the documented typical cases (treatment-row
+      // photos, per 12A's own comment) up to roughly 750px for the widest
+      // About/Visit photos on a wide desktop column: that is 0.12px to
+      // 0.30px per step, comfortably under the ~0.5px visibility floor.
+      // It would take a roughly 1250px-tall element to cross that floor,
+      // and nothing on this page is that tall. The delta gate just below
+      // (0.001) is tighter than the 0.002 rounding step, so it never
+      // actually withholds a write the rounding did not already coalesce
+      // -- both numbers are correct as they stand. This was not the
+      // jumpiness; see points 1 and 2 in the comment above instead.
       var rounded = Math.round(p * 500) / 500;
       if (Math.abs(rounded - lastValues[idx]) < 0.001) return; // delta gate
       lastValues[idx] = rounded;
       el.style.setProperty('--p', rounded.toFixed(4));
     }
 
-    function frame() {
+    function frame(now) {
       rafId = null;
       if (!enabled || reduced() || tabPaused || !active.length) return;
       for (var i = 0; i < active.length; i++) computeAndWrite(active[i].el, active[i].idx);
-      // Deliberately no reschedule here: only a new scroll/resize event, or
-      // the IntersectionObserver adding a newly-visible element, asks for
-      // another frame. A continuously self-scheduling loop is not needed
-      // for a value that only changes when the page actually scrolls.
+      // Keep sampling every real frame for a short while after the last
+      // scroll/resize signal, rather than waiting for the next 'scroll'
+      // event to ask for one -- see PARALLAX_IDLE_MS above. Once that
+      // window elapses with no fresh activity, this stops rescheduling
+      // itself and the loop is fully at rest again, exactly as before.
+      if (now - lastActivity < PARALLAX_IDLE_MS) rafId = requestAnimationFrame(frame);
     }
 
     function schedule() {
+      lastActivity = performance.now();
       if (rafId !== null) return;
       if (!enabled || reduced() || tabPaused || !active.length) return;
       rafId = requestAnimationFrame(frame);

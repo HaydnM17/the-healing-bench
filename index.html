@@ -88,6 +88,13 @@
     <ellipse cx="24" cy="33" rx="13.5" ry="7.5" fill="currentColor"/>
     <ellipse cx="24" cy="17" rx="8.5" ry="6.5" fill="currentColor"/>
   </symbol>
+  <!-- A single filled star for the rating. Drawn rather than typed: the
+       text glyph U+2605 renders at a wildly different size and baseline
+       from font to font, and this one has to sit level with a 3rem
+       Playfair numeral in the hero panel. -->
+  <symbol id="star" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12 1.6l3.09 6.26 6.91 1-5 4.87 1.18 6.87L12 17.35l-6.18 3.25L7 13.73l-5-4.87 6.91-1z"/>
+  </symbol>
 </svg>
 
 <a class="skip-link" href="#main">Skip to content</a>
@@ -98,6 +105,7 @@
     <span>The Healing Bench</span>
   </a>
   <nav class="nav" id="navList" aria-label="Main">
+    <a class="nav__link" href="#hero">Home</a>
     <a class="nav__link" href="#intro">About</a>
     <a class="nav__link" href="#practitioners">Practitioners</a>
     <a class="nav__link" href="#treatments">Treatments</a>
@@ -159,6 +167,13 @@
       <video class="hero__video" id="heroVideo" preload="none" muted playsinline
              aria-hidden="true" tabindex="-1"></video>
       <div class="hero__scrim" aria-hidden="true"></div>
+      <!-- The blackout. Rides --heroFade, which only starts once the reveal
+           panel has been at rest for a while, so the last stretch of the
+           hero dims the film to black before the About band arrives. It
+           sits above the film and the scrim but below the reveal panel, so
+           the text stays legible the whole way down while the picture
+           behind it goes. -->
+      <div class="hero__blackout" aria-hidden="true"></div>
       <svg class="hero__ring" id="heroRing" viewBox="0 0 48 48" aria-hidden="true">
         <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"
                 stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/>
@@ -198,9 +213,9 @@
         <p class="hero__reveal-kicker" style="--d:0">The Healing Bench</p>
         <p class="hero__reveal-hollow" style="--d:.08">It's all about you</p>
         <ul class="hero__reveal-facts">
-          <li style="--d:.3"><strong>4.8</strong><span>19 Google reviews</span></li>
+          <li style="--d:.3"><strong class="hero__reveal-rating"><svg class="hero__reveal-star" aria-hidden="true"><use href="#star"/></svg>4.8</strong><span>out of 5 on Google</span></li>
           <li style="--d:.4"><strong>Three</strong><span>practitioners, booked by name</span></li>
-          <li style="--d:.5"><strong>Until 7</strong><span>four nights a week, Saturdays too</span></li>
+          <li style="--d:.5"><strong>Open till' 7</strong><span>four nights a week, Saturdays too</span></li>
         </ul>
         <div class="hero__reveal-actions" style="--d:.62">
           <a class="btn btn--primary btn--hero" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>

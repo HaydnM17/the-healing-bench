@@ -210,19 +210,40 @@
   var LATE_FULL = 0.66;           // ...and where it is fully in
   var lastHeroLate = -1;
 
+  // The closing blackout. Starts only after the panel has been sitting at
+  // rest for a stretch, and reaches full black right at the section's end,
+  // so the film dims away before the About band's warm tan arrives rather
+  // than cutting straight from a lit room to a flat colour. Written from
+  // the same tick as --heroLate so the blackout costs no extra frame work.
+  var FADE_IN = 0.82;
+  var lastHeroFade = -1;
+
   function computeHeroLate() {
     var span = LATE_FULL - LATE_IN;
     if (span <= 0) return 1;
     return clamp((heroProgress() - LATE_IN) / span, 0, 1);
   }
 
+  function computeHeroFade() {
+    var span = 1 - FADE_IN;
+    if (span <= 0) return 0;
+    return clamp((heroProgress() - FADE_IN) / span, 0, 1);
+  }
+
   function writeHeroLate() {
     if (!stage) return;
+
     var late = computeHeroLate();
     if (Math.abs(late - lastHeroLate) >= DELTA_GATE) {
       stage.style.setProperty('--heroLate', String(late));
       stage.classList.toggle('is-late', late > 0.02);
       lastHeroLate = late;
+    }
+
+    var fade = computeHeroFade();
+    if (Math.abs(fade - lastHeroFade) >= DELTA_GATE) {
+      stage.style.setProperty('--heroFade', String(fade));
+      lastHeroFade = fade;
     }
   }
 
@@ -238,6 +259,7 @@
   function unpinFinalStates() {
     lastHeroOut = -1;
     lastHeroLate = -1;
+    lastHeroFade = -1;
   }
 
   /* ---------------------------------------------------------------------

@@ -764,10 +764,10 @@ strong, b {
 
 .nav a {
   position: relative;
-  padding: 9px 16px;
+  padding: 9px clamp(9px, 1.05vw, 14px);
   border-radius: var(--radius-pill);
-  font: 500 .8125rem/1 var(--font-body);
-  letter-spacing: .06em;
+  font: 500 clamp(.75rem, .92vw, .8125rem)/1 var(--font-body);
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: rgba(247, 241, 232, .78);
   text-decoration: none;
@@ -788,17 +788,17 @@ strong, b {
 @media (min-width: 900px) {
   .site-header {
     height: auto;
-    padding: 14px clamp(16px, 2.4vw, 28px);
-    gap: 14px;
+    padding: 14px clamp(14px, 2vw, 24px);
+    gap: clamp(8px, 1.1vw, 14px);
   }
 
   .nav {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     margin: 0 0 0 auto;
-    padding: 6px 8px;
+    padding: 6px 6px;
     border-radius: var(--radius-pill);
     isolation: isolate;
     background:
@@ -943,18 +943,21 @@ strong, b {
   }
 }
 
-/* Phone header row: brand, one Book pill, the toggle — never the phone
-   number pill too, which was the fourth thing crowding 360-390px and
-   clipping the toggle at the right edge. The number is already reachable
-   from the hero and the footer, so it drops here specifically rather
-   than needing a narrower control of its own. */
+/* The phone-number pill is the first thing to go when the header runs
+   out of room. On phones it was the fourth control crowding 360-390px and
+   clipping the toggle; between 900 and 1180 it is what pushes a nav that
+   now carries nine links off the right edge. The number is reachable from
+   the hero, the Book panel and the footer, so it drops rather than the
+   nav shrinking to unreadable type or losing a link. */
+@media (max-width: 1179.98px) {
+  .header-actions .btn--ghost {
+    display: none;
+  }
+}
+
 @media (max-width: 899.98px) {
   .header-actions {
     display: flex;
-  }
-
-  .header-actions .btn--ghost {
-    display: none;
   }
 }
 
@@ -1215,6 +1218,26 @@ strong, b {
     linear-gradient(to bottom, rgba(14, 11, 8, .62) 0%, rgba(14, 11, 8, .12) 30%, rgba(14, 11, 8, 0) 48%);
 }
 
+/* The hero closes on black. --heroFade runs across the last stretch of
+   the section, after the reveal panel has been sitting at rest, so the
+   picture dims away before the About band's warm tan arrives. Without it
+   the cut from a lit treatment room straight into a flat tan band was
+   abrupt; fading the film out first makes the tan read as the next thing
+   rather than an interruption.
+
+   z-index 2 puts it over the film and the scrim but under .hero__reveal
+   at 3, so the text stays fully legible while the picture behind it goes.
+   Opacity only, and a pure function of scroll like everything else here,
+   so it unwinds on the way back up. */
+.hero__blackout {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--espresso-deep);
+  opacity: var(--heroFade, 0);
+}
+
 .hero__crest {
   position: absolute;
   top: 36%;
@@ -1463,6 +1486,24 @@ strong, b {
   font-weight: 500;
   color: var(--bone);
   text-shadow: 0 2px 14px rgba(0, 0, 0, .55);
+}
+
+/* The star sits on the numeral's own line, sized in em so it tracks the
+   clamp above rather than needing its own breakpoints, and nudged down a
+   little because a star's optical centre sits above its bounding box
+   centre while a lining numeral's does not. */
+.hero__reveal-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: .28em;
+}
+
+.hero__reveal-star {
+  width: .78em;
+  height: .78em;
+  margin-top: .06em;
+  flex: none;
+  color: var(--bone);
 }
 
 .hero__reveal-facts span {

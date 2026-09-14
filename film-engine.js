@@ -38,8 +38,17 @@
   // patches the byte size in once the encode reports it. The loader
   // tolerates 0 here by falling back to the response's Content-Length,
   // so leave it at 0 rather than guessing.
-  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:1907459 };
-  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:1030986 }; // verified exact size on disk
+  // driftMax is how far into each film the idle auto-play is allowed to run
+  // before it stops and waits for a scroll. The two films are different
+  // lengths and paced differently, so a single shared fraction lands in the
+  // wrong place on one of them. Both values were measured by extracting frames
+  // and finding the last moment before the camera starts its descent:
+  //   portrait 21.04s, descent begins about 5.0s  ->  0.23
+  //   wide     11.25s, descent begins about 4.3s  ->  0.37
+  // Everything before that point is the stones holding while steam builds and
+  // the camera drifts gently, which is exactly what should auto-play.
+  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:1907459, driftMax:0.23 };
+  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:1030986, driftMax:0.37 };
 
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
@@ -64,15 +73,15 @@
   var POSTER_SAFETY_MS = 4000;    // start the blob fetch even if the poster hangs
   var RING_THROTTLE_MS = 100;     // ring redraw throttle
   // Idle auto-play speed, relative to real-time playback. At 0.12 the opening
-  // hold took 13 real seconds to cross and read as a still frame. 0.45 plays it
-  // slowly but visibly, so the hero is obviously alive rather than paused.
-  var DRIFT_RATE = 0.45;
-  // How far the idle drift is allowed to advance before a real scroll happens.
-  // The film opens holding on the stones with steam curling, then cranes down.
-  // The drift is capped inside that opening hold so the hero is alive on arrival
-  // but the descent only ever begins when the visitor actually scrolls.
-  // 0.075 of a 21.04s film is roughly the first 1.6 seconds, the hold itself.
-  var DRIFT_MAX = 0.075;
+  // took 13 real seconds to cross and read as a still frame. 0.75 plays it
+  // clearly, covering the whole opening beat in five or six seconds.
+  var DRIFT_RATE = 0.75;
+  // The cap now lives on each film variant as driftMax, because the two films
+  // are paced differently. See the VIDEO_PORTRAIT and VIDEO_WIDE definitions.
+  function driftMax() {
+    var v = currentVariant();
+    return (v && typeof v.driftMax === 'number') ? v.driftMax : 0.23;
+  }
   var HERO_OUT_VH = 0.66;         // --heroOut reaches 1 over this many viewport heights
 
   /* ---------------------------------------------------------------------
@@ -200,10 +209,10 @@
   var hasScrolled = false;
 
   function driftEligible() {
-    // target < DRIFT_MAX matters: without it the loop keeps running forever at
+    // target < driftMax() matters: without it the loop keeps running forever at
     // the cap, burning frames to add nothing. With it, the drift finishes the
     // opening hold, converges, and the rAF chain goes idle until a real scroll.
-    return !hasScrolled && target < DRIFT_MAX && heroOnScreen &&
+    return !hasScrolled && target < driftMax() && heroOnScreen &&
       !prefersReducedMotion() && !!video.duration && isFinite(video.duration);
   }
 
@@ -213,7 +222,7 @@
 
     var drifting = driftEligible();
     if (drifting) {
-      target = clamp(target + (DRIFT_RATE * dt / 1000) / video.duration, 0, DRIFT_MAX);
+      target = clamp(target + (DRIFT_RATE * dt / 1000) / video.duration, 0, driftMax());
     }
 
     shown += (target - shown) * (1 - Math.pow(1 - LERP_K, dt / 16.667));
@@ -246,21 +255,22 @@
   // enableScrub()'s own re-arm step, which must not be mistaken for a
   // visitor scroll or it would kill the auto-pan before it ever ran.
   function syncTarget() {
-    // Scroll drives the film from DRIFT_MAX to 1, not from 0 to 1. The idle
+    // Scroll drives the film from driftMax() to 1, not from 0 to 1. The idle
     // drift owns the opening hold and has already played it, so mapping scroll
     // to 0 here would throw that away and snap the film backwards on the very
-    // first wheel tick. Starting at DRIFT_MAX means scroll picks up exactly
+    // first wheel tick. Starting at driftMax() means scroll picks up exactly
     // where the drift stopped, at the moment the descent begins.
     var p = heroProgress();
     // enableScrub() calls this at load and on every gate flip. At the very top
     // with no scroll yet, leave target alone so the drift still owns the
-    // opening hold: writing DRIFT_MAX here would jump straight to the end of
+    // opening hold: writing driftMax() here would jump straight to the end of
     // the hold and there would be nothing left to auto-play.
     if (!hasScrolled && p <= 0) {
       if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
       return;
     }
-    target = DRIFT_MAX + p * (1 - DRIFT_MAX);
+    var dm = driftMax();
+    target = dm + p * (1 - dm);
     if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
   }
 

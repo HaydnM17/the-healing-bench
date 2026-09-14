@@ -1916,9 +1916,35 @@ strong, b {
    carries overflow:hidden so the scale/translate stays clipped to that
    box's own shape and radius. Transform only. -------------------------------------------------------------------------- */
 
+/* Travel raised from +/-6% to +/-10% of the image's own height (the -12%
+   coefficient below to -20%): at 6% the effect was real but not felt. A
+   typical treatment-row image is 220px wide by 293px tall at desktop
+   (.treatment-row__media's 220px grid track, 3/4 aspect-ratio) and 350px
+   by 437px on a 390px phone (full container width there, 4/5 aspect-
+   ratio), so the full --p:0->1 sweep was already a genuine 35px swing
+   desktop / 53px swing mobile, not the few pixels it looked like. What
+   ate most of that swing was where in the scroll it happens: --p is
+   computed in site.js as (viewportHeight - elementTop) / (viewportHeight
+   + elementHeight), which reaches 0 and 1 only once the row is just
+   entering or just leaving the screen edge — barely visible and not
+   where a visitor is looking. Through the comfortable middle third of
+   the scroll, where the row is actually being read, --p only moves
+   through a correspondingly narrow band around .5, so the felt drift in
+   that window was a small fraction of the nominal total: a few
+   perceptible pixels, easy to miss while reading the copy beside it.
+   Doubling the coefficient roughly doubles that felt fraction too,
+   without changing where in the scroll it happens.
+   Scale must keep covering the larger drift: a translate of amplitude A%
+   (each direction) needs scale >= 1 + 2A/100 to keep the image's own
+   scaled-up edge from ever clearing the frame, since percentages here
+   resolve against the pre-scale box while the scale itself is centred.
+   At A=10 that floor is 1.20; 1.25 keeps roughly the same five-point
+   margin above the floor that 1.16 gave the old 1.12 floor at A=6, as a
+   guard against object-fit rounding rather than cutting it exactly to
+   the line. */
 [data-parallax] {
   --p: .5;
-  transform: translate3d(0, calc((var(--p, .5) - .5) * -12%), 0) scale(1.16);
+  transform: translate3d(0, calc((var(--p, .5) - .5) * -20%), 0) scale(1.25);
 }
 
 /* --------------------------------------------------------------------------
@@ -2101,7 +2127,15 @@ strong, b {
 .about__copy {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  /* var(--space-lg), not the usual --space-md: extra insurance for the
+     spotlight below. The lede can fall back down toward this gap when it
+     loses .is-lit at the same moment the paragraph under it rises into
+     it (site.js lights one paragraph at a time, so the outgoing one and
+     the incoming one are travelling toward each other for part of the
+     transition, not just the incoming one moving alone), and a wider
+     static gap is what keeps that meeting point clear of both lines'
+     text. */
+  gap: var(--space-lg);
 }
 
 .about__copy p {
@@ -2134,8 +2168,17 @@ strong, b {
   /* translate, not transform. .about__copy carries both data-reveal and
      data-spotlight, and the reveal already owns transform: translateY on
      these same children; writing transform here would overwrite it. The
-     standalone translate and scale properties compose with it instead. */
-  translate: 0 34px;
+     standalone translate and scale properties compose with it instead.
+
+     34px against this paragraph's own line-height (~32px at the mobile
+     end of --fs-md/--lh-relaxed) was taller than a full line: on a
+     phone, the paragraph above loses .is-lit and sinks back toward this
+     one at the same moment this one rises to meet it, and the two used
+     to be able to close enough of that combined 34px+46px gap to run
+     text into text. 16px keeps the same rise-into-place feel at roughly
+     half a line, which the wider .about__copy gap above comfortably
+     absorbs even at the two elements' worst-case combined offset. */
+  translate: 0 16px;
   scale: .975;
   transition: opacity .6s var(--ease-out), translate .7s var(--ease-out), scale .7s var(--ease-out);
 }
@@ -2151,8 +2194,14 @@ strong, b {
    it steps forward. */
 [data-spotlight] > *:first-child {
   /* The display-serif lede gets the most travel: it is the line that
-     should feel like it steps forward out of the band. */
-  translate: 0 46px;
+     should feel like it steps forward out of the band. 46px was the
+     worst offender in the phone-collision report: at --fs-lg/--lh-snug's
+     mobile size that is well over a line-height of downward slack for
+     this paragraph to sink through when it loses .is-lit, straight into
+     the second paragraph rising to meet it. 20px is still visibly more
+     than the body copy's 16px above, so the lede still reads as the one
+     stepping forward, just not far enough to cross into the line below. */
+  translate: 0 20px;
   scale: .955;
 }
 
@@ -2335,6 +2384,22 @@ strong, b {
 
 .treatments__group + .treatments__group {
   margin-top: var(--space-xl);
+}
+
+/* The opener image (.treatments__opener, above) and this group are two
+   separate [data-reveal] targets, so they cross site.js's IntersectionObserver
+   threshold at different scroll positions — the image sits higher on the
+   page and gets there first. That gap in trigger time is site.js's to
+   own, not CSS's, but every one of these children still had to run the
+   system's full .6s fade+rise on top of it once its own trigger did
+   fire, which is what made the text read as arriving late rather than
+   as a quick second beat behind the image. Cutting the duration here
+   only, rather than in the shared rule in section 12, means Bodywork's
+   heading and rows finish catching up sooner without changing how
+   About, Practitioners, Visit, Reviews, FAQ or Book reveal. The
+   per-child stagger delay itself stays exactly as site.js writes it. */
+.treatments__group[data-stagger] > * {
+  transition-duration: .4s;
 }
 
 .treatments__group-head {
@@ -2645,6 +2710,32 @@ strong, b {
 .fees-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* The panels already cascade in via .fees__grid's own data-stagger (each
+   .fees__panel is a direct child, so the generic [data-stagger] > * rule
+   in section 12 already fades and rises the panel as a whole); this adds
+   a second, purely CSS-driven ladder one level deeper, so a panel with
+   more than one price row settles into place row by row rather than as
+   a single flat block. .fees__grid.in is the same class the generic
+   reveal system already toggles, so this needs no new markup or JS,
+   only a descendant selector on it. Opacity and translate only, and the
+   longest table here (Reflexology) has three rows, hence three steps;
+   the fourth is free headroom if a row is ever added. */
+.fees-table tbody tr {
+  opacity: 0;
+  translate: 0 10px;
+  transition: opacity .45s var(--ease-out), translate .45s var(--ease-out);
+}
+
+.fees__grid.in .fees-table tbody tr {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.fees-table tbody tr:nth-child(1) { transition-delay: 0ms; }
+.fees-table tbody tr:nth-child(2) { transition-delay: 90ms; }
+.fees-table tbody tr:nth-child(3) { transition-delay: 180ms; }
+.fees-table tbody tr:nth-child(4) { transition-delay: 270ms; }
 
 @media (max-width: 719.98px) {
   .fees-table:has(thead th:nth-child(6)) {
@@ -3419,7 +3510,15 @@ strong, b {
   border-radius: 8px;
   font-size: var(--fs-sm);
   color: var(--bone-soft);
-  transition: background-color .4s var(--ease-out), color .4s var(--ease-out);
+  /* opacity/translate added for the cascade below; background-color and
+     color stay first in the list and keep their own 0-delay, since a
+     transition-delay set on the shorthand as a single value would apply
+     to every property it lists, and the is-today highlight (whenever
+     that class is toggled) must never inherit a row's entrance delay. */
+  opacity: 0;
+  translate: 0 8px;
+  transition: background-color .4s var(--ease-out), color .4s var(--ease-out),
+              opacity .45s var(--ease-out), translate .45s var(--ease-out);
 }
 
 @media (min-width: 620px) {
@@ -3432,6 +3531,28 @@ strong, b {
 .book__hours-row + .book__hours-row {
   box-shadow: inset 0 1px 0 var(--line-dark);
 }
+
+/* The seven rows cascade in once the panel itself is revealed, rather
+   than appearing as a block of static text under the title: .book__panel
+   already gets .in from the same data-reveal system used everywhere else
+   on the page (see section 12), so this hooks into that class instead of
+   asking for its own observer or any markup change. Each transition-delay
+   below is a four-value list, positionally matching the four transitions
+   declared above (background-color, color, opacity, translate) in that
+   order, so only the last two — the entrance — actually get staggered;
+   the highlight's own two stay at 0s regardless of row position. */
+.book__panel.in .book__hours-row {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.book__hours-row:nth-child(1) { transition-delay: 0s, 0s, 0ms,   0ms; }
+.book__hours-row:nth-child(2) { transition-delay: 0s, 0s, 50ms,  50ms; }
+.book__hours-row:nth-child(3) { transition-delay: 0s, 0s, 100ms, 100ms; }
+.book__hours-row:nth-child(4) { transition-delay: 0s, 0s, 150ms, 150ms; }
+.book__hours-row:nth-child(5) { transition-delay: 0s, 0s, 200ms, 200ms; }
+.book__hours-row:nth-child(6) { transition-delay: 0s, 0s, 250ms, 250ms; }
+.book__hours-row:nth-child(7) { transition-delay: 0s, 0s, 300ms, 300ms; }
 
 .book__hours-day {
   position: relative;
@@ -3646,6 +3767,21 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
   .heat-reveal .heat-reveal__item {
     opacity: 1;
     transform: none;
+  }
+
+  /* Same reasoning as [data-reveal]/[data-stagger] above: pin outright
+     rather than rely on the .01ms global override, since these two rows
+     also start from opacity:0 and would otherwise stay invisible for
+     anyone who never triggers the .fees__grid.in / .book__panel.in
+     ancestor class the reveal depends on. */
+  .fees-table tbody tr {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .book__hours-row {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .slabel__rule {

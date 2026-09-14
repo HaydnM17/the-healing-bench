@@ -1031,10 +1031,12 @@ strong, b {
 .hero {
   position: relative;
   /* The scroll distance the film is scrubbed across. Was 1000vh, which meant
-     ten screens of scrolling before any content. Cut to 280vh: the sticky
-     stage takes 100vh of that, so the film plays across 180vh, under two
-     screens. Roberts Renovations uses 210svh total for the same reason. */
-  height: 280vh;
+     ten screens of scrolling before any content. Cut to 280vh, then raised
+     to 320vh once the reveal panel arrived: the sticky stage takes 100vh,
+     so there are 220vh of scroll, and the last quarter of that is the hold
+     with the film pinned on the table and the text at rest. Roberts
+     Renovations uses 210svh for a hero with nothing to hold on. */
+  height: 320vh;
   background: var(--espresso-deep);
 }
 
@@ -1048,29 +1050,57 @@ strong, b {
   --heroOut: 0;
 }
 
-/* Agent M's call, taken: a real treatment-room photograph rather than
-   the generated frame, since it is warmer and reads as an actual place
-   rather than an AI still. One file, not two: hero-poster.jpg and
-   hero-wide-poster.jpg exist for the two *film* orientations Agent F's
-   engine picks between, but a poster is only ever seen before that film
-   is ready (or under the reduced-motion / short-viewport / video-failed
-   gates below), so there is no matching orientation logic to get wrong
-   here the way there would be with the two generated frames — one real
-   photo, cover-cropped, serves every width. Position tuned slightly per
-   orientation so the room's own focal point stays in frame. */
+/* The poster was costing every visitor a 274KB download they never saw.
+   This rule used to default to room-1.jpg, the warm real treatment-room
+   photograph. But film-engine.js's initHeroOnce() overwrites this same
+   element's background-image with an inline style the moment it runs
+   (film-engine.js:499-500), pointing at the much smaller generated frame
+   that matches the film's own first frame. CSS is render-blocking and
+   the scripts are deferred, so the browser had good reason to fetch
+   room-1.jpg before the JS ever ran, then throw it away unseen. 274KB on
+   the critical path, on a phone, for nothing.
+
+   So the default is now the same small file the JS is about to set, which
+   makes the second fetch a cache hit rather than a new request. room-1.jpg
+   is kept for the only two cases where a visitor actually sits and looks
+   at the poster: the two gates that turn the film off entirely. Those are
+   media queries, so CSS can answer them without waiting for JS.
+
+   The portrait and landscape defaults mirror film-engine.js's own FILM_Q
+   ('(orientation: portrait) and (max-width: 1024px)', film-engine.js:461)
+   so the frame CSS paints is the frame the film is about to start on. */
 .hero__poster {
   position: absolute;
   inset: 0;
-  background-image: url('assets/room-1.jpg');
+  background-image: url('assets/hero-wide-poster.jpg');
   background-size: cover;
-  background-position: center 38%;
+  background-position: center 30%;
   opacity: 1;
   transition: opacity .6s var(--ease-out);
 }
 
-@media (orientation: landscape) {
+@media (orientation: portrait) and (max-width: 1024px) {
   .hero__poster {
+    background-image: url('assets/hero-poster.jpg');
+    background-position: center 38%;
+  }
+}
+
+/* The two static-fallback gates, matching GATES[3] and GATES[4] in
+   film-engine.js character for character. Here the poster is not a
+   placeholder for a film that is coming, it IS the hero, so it gets the
+   real photograph and the weight is worth paying. */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
+  .hero__poster {
+    background-image: url('assets/room-1.jpg');
     background-position: center 30%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__poster {
+    background-image: url('assets/room-1.jpg');
+    background-position: center 38%;
   }
 }
 
@@ -1281,6 +1311,31 @@ strong, b {
   pointer-events: auto;
 }
 
+/* The panel lands squarely on the brightest thing in the frame: the lit
+   sheet on the treatment table. Cream type on that was cream on cream.
+   A soft pool of shade travelling in with the panel gives every element
+   in it a ground, rather than patching each one with its own chip or
+   shadow and ending up with a cluttered stack of backing plates under a
+   large hollow headline. Fades in on --heroLate with everything else, so
+   it is never a dark blob sitting over the film early on. */
+.hero__reveal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 190%;
+  height: 175%;
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: none;
+  background: radial-gradient(ellipse 46% 40% at 50% 50%,
+    rgba(14, 11, 8, .8) 0%,
+    rgba(14, 11, 8, .58) 42%,
+    rgba(14, 11, 8, .2) 68%,
+    rgba(14, 11, 8, 0) 82%);
+  opacity: var(--heroLate, 0);
+}
+
 .hero__reveal > *,
 .hero__reveal-facts > li {
   --d: 0;
@@ -1295,6 +1350,7 @@ strong, b {
   letter-spacing: .28em;
   text-transform: uppercase;
   color: var(--bone-soft);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .8);
 }
 
 /* The hollow line. -webkit-text-stroke is the only way to get a real

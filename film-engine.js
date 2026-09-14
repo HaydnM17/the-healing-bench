@@ -38,17 +38,29 @@
   // patches the byte size in once the encode reports it. The loader
   // tolerates 0 here by falling back to the response's Content-Length,
   // so leave it at 0 rather than guessing.
-  // driftMax is how far into each film the idle auto-play is allowed to run
-  // before it stops and waits for a scroll. The two films are different
-  // lengths and paced differently, so a single shared fraction lands in the
-  // wrong place on one of them. Both values were measured by extracting frames
-  // and finding the last moment before the camera starts its descent:
-  //   portrait 21.04s, descent begins about 5.0s  ->  0.23
-  //   wide     11.25s, descent begins about 4.3s  ->  0.37
-  // Everything before that point is the stones holding while steam builds and
-  // the camera drifts gently, which is exactly what should auto-play.
-  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:1907459, driftMax:0.23 };
-  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:1030986, driftMax:0.37 };
+  // Both films are trimmed to end just after the camera reaches the table.
+  // What came after that was a slow push further and further into the bed,
+  // which is not a shot anyone wants to arrive at and sit on, and which the
+  // scrub can no longer reach anyway (see endMax below). Cutting it from the
+  // files rather than only from the mapping means a phone never downloads
+  // twelve seconds of footage it will never be shown: the portrait film went
+  // from 1,907,459 bytes to 806,904.
+  //
+  //   driftMax  how far in the idle auto-play runs before it stops and waits
+  //             for a scroll. Measured by extracting frames: the descent
+  //             begins about 5.0s into the portrait film and about 4.3s into
+  //             the wide one, and everything before that is the stones
+  //             holding while steam builds, which is exactly what should
+  //             auto-play.
+  //   endMax    where scroll stops the film. The camera arrives at the table
+  //             at about 9.0s (portrait) and 7.0s (wide). Past that it only
+  //             creeps closer, so the scrub ends on the arrival frame and the
+  //             last sliver of each file is headroom, never played.
+  //
+  //   portrait  9.625s   drift 5.0 -> 0.52   arrive 9.0 -> 0.935
+  //   wide      7.625s   drift 4.3 -> 0.56   arrive 7.0 -> 0.918
+  var VIDEO_PORTRAIT = { src:'assets/hero-scrub.mp4', bytes:806904, driftMax:0.52, endMax:0.935 };
+  var VIDEO_WIDE     = { src:'assets/hero-scrub-wide.mp4', bytes:760661, driftMax:0.56, endMax:0.918 };
 
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
@@ -80,8 +92,20 @@
   // are paced differently. See the VIDEO_PORTRAIT and VIDEO_WIDE definitions.
   function driftMax() {
     var v = currentVariant();
-    return (v && typeof v.driftMax === 'number') ? v.driftMax : 0.23;
+    return (v && typeof v.driftMax === 'number') ? v.driftMax : 0.52;
   }
+
+  function endMax() {
+    var v = currentVariant();
+    return (v && typeof v.endMax === 'number') ? v.endMax : 1;
+  }
+
+  // Scroll finishes the film well before it finishes the hero. Past this
+  // point the frame is pinned on the arrival and the remaining scroll is
+  // spent bringing the reveal panel in and then simply holding it there.
+  // Without that hold the panel completed and the section immediately
+  // started leaving, so the text was never on screen at rest.
+  var SCRUB_END = 0.55;
   var HERO_OUT_VH = 0.66;         // --heroOut reaches 1 over this many viewport heights
 
   /* ---------------------------------------------------------------------
@@ -175,8 +199,13 @@
      button you can click.
   --------------------------------------------------------------------- */
 
-  var LATE_IN = 0.52;             // film progress where the panel starts arriving
-  var LATE_FULL = 0.88;           // ...and where it is fully in
+  // The panel starts rising while the camera is still coming down (SCRUB_END
+  // is 0.55) and is fully in by 0.66, just after it lands. That leaves a third
+  // of the hero as pure hold: the frame pinned on the table, the text at
+  // rest, nothing moving. That hold is the point. At the original 0.88 the
+  // button landed and the section began scrolling away in the same gesture.
+  var LATE_IN = 0.34;             // hero progress where the panel starts arriving
+  var LATE_FULL = 0.66;           // ...and where it is fully in
   var lastHeroLate = -1;
 
   function computeHeroLate() {
@@ -310,8 +339,12 @@
       if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
       return;
     }
+    // Scroll drives the film from driftMax() to endMax() across the FIRST
+    // SCRUB_END of the hero, not across all of it. The rest of the hero is
+    // the frame held on the arrival while the reveal panel arrives and sits.
     var dm = driftMax();
-    target = dm + p * (1 - dm);
+    var sp = clamp(p / SCRUB_END, 0, 1);
+    target = dm + sp * (endMax() - dm);
     if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
   }
 
@@ -603,7 +636,10 @@
       // would discard whatever eased value the rAF loop had already
       // reached and snap the crest/caption if the visitor scrolled
       // during load.
-      requestSeek(heroProgress() * video.duration);
+      // shown, not heroProgress(): the lerp owns the current position and
+      // already reflects the scroll-to-film mapping, which heroProgress
+      // alone does not.
+      requestSeek(shown * video.duration);
       if (stage) stage.classList.add('video-ready');
       maybeStartDrift();
     }, { once: true });

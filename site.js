@@ -209,6 +209,17 @@
       return SECTION_IDS.indexOf(href.slice(1)) !== -1;
     });
 
+    // SECTION_IDS above is the SPINE's list only: the eight content sections
+    // that have a .spine__node[data-for] to fill. The hero has no such node
+    // and must never get one, so it stays out of SECTION_IDS on purpose.
+    // But the nav's Home link (href="#hero") still needs to light up while
+    // the hero is on screen, so it is added to the current-link candidates
+    // here, separately from the spine's own bookkeeping below. Scoped to
+    // .nav specifically because the header's brand mark also links to
+    // #hero and must never be marked current by accident.
+    var homeLink = doc.querySelector('.nav a[href="#hero"]');
+    if (homeLink && navLinks.indexOf(homeLink) === -1) navLinks.push(homeLink);
+
     var passedState = {};
     var currentId = null;
     var io = null;
@@ -239,7 +250,10 @@
       for (var i = 0; i < sections.length; i++) {
         if (passedState[sections[i].id]) found = sections[i].id;
       }
-      if (found) setCurrent(found);
+      // Nothing passed yet, or the visitor has scrolled back up above every
+      // section: that is precisely "still in the hero", so Home is the
+      // fallback rather than leaving the previous link lit or none at all.
+      setCurrent(found || 'hero');
     }
 
     var TRIGGER_FRACTION = 0.2; // 20 percent from the top of the viewport

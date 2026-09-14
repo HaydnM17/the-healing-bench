@@ -174,8 +174,36 @@
         </p>
         <h1 class="hero__h1">Warmth that travels</h1>
         <div class="hero__actions">
-          <a class="btn btn--primary" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
+          <a class="btn btn--primary btn--hero" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
           <a class="btn btn--ghost" href="#treatments">See treatments</a>
+        </div>
+      </div>
+      <!-- The reveal, over the settled frame. The film's camera finishes
+           its descent and comes to rest on the table; this arrives on top
+           of that, driven by --heroLate on #heroStage (film-engine.js),
+           not by scroll pixels, so it lands on a moment in the footage
+           rather than at a scroll depth. Each child reads the same
+           variable through its own --d offset, which is what staggers
+           them without a single transition or keyframe: the whole panel
+           is a pure function of scroll position and so is fully
+           reversible, scroll back up and it unbuilds itself.
+
+           "It's all about you" is the practice's own line, verbatim from
+           the About paragraph and from DESIGN-PACKAGE.md. It is not new
+           copy written for this panel. The three facts under it are all
+           on the page elsewhere: the Google rating and review count, the
+           three named practitioners, and the evening and Saturday hours
+           from DESIGN-PACKAGE.md section 14. -->
+      <div class="hero__reveal" id="heroReveal">
+        <p class="hero__reveal-kicker" style="--d:0">The Healing Bench</p>
+        <p class="hero__reveal-hollow" style="--d:.08">It's all about you</p>
+        <ul class="hero__reveal-facts">
+          <li style="--d:.3"><strong>4.8</strong><span>19 Google reviews</span></li>
+          <li style="--d:.4"><strong>Three</strong><span>practitioners, booked by name</span></li>
+          <li style="--d:.5"><strong>Until 7</strong><span>four nights a week, Saturdays too</span></li>
+        </ul>
+        <div class="hero__reveal-actions" style="--d:.62">
+          <a class="btn btn--primary btn--hero" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book an appointment</a>
         </div>
       </div>
     </div>

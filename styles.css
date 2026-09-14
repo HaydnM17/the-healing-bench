@@ -1226,6 +1226,201 @@ strong, b {
   gap: var(--space-sm);
 }
 
+
+/* --------------------------------------------------------------------------
+   9B. THE HERO REVEAL, over the settled frame
+   Agent F writes --heroLate (0 to 1 across film progress 0.52 to 0.88)
+   onto #heroStage, plus .is-late once it has started. The crest and
+   caption leave on --heroOut, which is spent by about film progress
+   0.37; this arrives well after they have gone, so the two never share
+   the frame.
+
+   Every child animates off that one variable through its own --d offset
+   rather than a transition or a keyframe. That is what makes the panel
+   reversible: scroll back up the hero and it unbuilds itself frame for
+   frame, because there is no time-based animation with its own opinion
+   about where it should be. The same reason nothing here has a
+   transition on transform or opacity, matching the crest and caption
+   directly above.
+
+   --t is each child's own progress: the shared --heroLate, re-based so
+   that a child with --d:.3 sits at 0 until the panel is 30% in and
+   reaches 1 with everything else.
+   -------------------------------------------------------------------------- */
+
+/* Hidden unless the film is actually scrubbing. Every gate that falls back
+   to the static hero leaves the crest and caption pinned in the middle of
+   the frame, which is where this sits. See enableScrub() in
+   film-engine.js. */
+.hero__reveal {
+  display: none;
+}
+
+.hero__stage.is-scrubbing .hero__reveal {
+  display: flex;
+}
+
+.hero__reveal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: min(760px, 100% - var(--gutter) * 2);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+  transform: translate3d(-50%, -50%, 0);
+  /* Not clickable until it is actually there. An invisible button at
+     opacity 0 is still a button, and it would sit over the whole frame
+     swallowing clicks for the entire first half of the hero. */
+  pointer-events: none;
+}
+
+.hero__stage.is-late .hero__reveal {
+  pointer-events: auto;
+}
+
+.hero__reveal > *,
+.hero__reveal-facts > li {
+  --d: 0;
+  --t: clamp(0, calc((var(--heroLate, 0) - var(--d)) / (1 - var(--d))), 1);
+  opacity: var(--t);
+  transform: translate3d(0, calc((1 - var(--t)) * 26px), 0);
+}
+
+.hero__reveal-kicker {
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--bone-soft);
+}
+
+/* The hollow line. -webkit-text-stroke is the only way to get a real
+   outline on live text; the @supports guard matters because
+   color:transparent with no stroke is invisible text, not a fallback.
+   The drop-shadow (filter, not text-shadow) traces the stroke itself
+   rather than the glyph's absent fill, which is what keeps the outline
+   legible where the footage behind it goes bright. */
+.hero__reveal-hollow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 11vw, 6.5rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: var(--ls-hero, -.01em);
+  color: var(--bone);
+}
+
+@supports (-webkit-text-stroke: 1px currentColor) {
+  .hero__reveal-hollow {
+    -webkit-text-stroke: 1.25px var(--bone);
+    filter: drop-shadow(0 2px 18px rgba(0, 0, 0, .6));
+    /* Hollow, then a faint fill washing in over the last quarter of the
+       panel's arrival, so the line reads as drawing itself and then
+       filling rather than simply being there. Done with the fill colour's
+       own alpha rather than a second copy of the text, which would have
+       to re-wrap identically at every width to stay registered. */
+    -webkit-text-fill-color: rgba(247, 241, 232,
+      calc(clamp(0, calc((var(--heroLate, 0) - .72) / .28), 1) * .2));
+  }
+
+  /* The stroke thins out at phone sizes if it stays at 1.25px against a
+     much smaller glyph, so it comes down with the type. */
+  @media (max-width: 720px) {
+    .hero__reveal-hollow {
+      -webkit-text-stroke-width: 1px;
+    }
+  }
+}
+
+/* The ul is only a wrapper; its children carry the stagger. Left in the
+   rule above it would multiply its own fade into every item's, pushing
+   all three facts much later than their --d asks for. */
+.hero__reveal-facts {
+  opacity: 1;
+  transform: none;
+}
+
+.hero__reveal-facts {
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-sm) var(--space-lg);
+}
+
+.hero__reveal-facts > li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+  max-width: 200px;
+}
+
+.hero__reveal-facts strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 4.5vw, 1.9rem);
+  font-weight: 500;
+  color: var(--bone);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .55);
+}
+
+.hero__reveal-facts span {
+  font-size: .8125rem;
+  line-height: 1.35;
+  color: var(--bone-soft);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
+}
+
+.hero__reveal-actions {
+  margin-top: var(--space-xs);
+}
+
+/* --------------------------------------------------------------------------
+   9C. THE HERO BOOKING BUTTON
+   Bigger than a body-copy button and lit from behind, because it is the
+   one control on a full-bleed moving photograph rather than on a flat
+   band, and at the standard .btn size it was disappearing into the
+   footage. The halo breathes very slowly. Fast enough to notice, slow
+   enough that it reads as the button sitting in the room's own light
+   rather than as a notification demanding something.
+   -------------------------------------------------------------------------- */
+
+@keyframes ctaHalo {
+  0%, 100% { box-shadow: 0 10px 30px rgba(14, 11, 8, .45), 0 0 0 0 rgba(247, 241, 232, .3); }
+  50%      { box-shadow: 0 10px 30px rgba(14, 11, 8, .45), 0 0 0 10px rgba(247, 241, 232, 0); }
+}
+
+.btn--hero {
+  padding: 19px 40px;
+  font-size: 1.0625rem;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 30px rgba(14, 11, 8, .45);
+  animation: ctaHalo 3.6s ease-out infinite;
+}
+
+.btn--hero:hover,
+.btn--hero:focus-visible {
+  /* The halo owns box-shadow, so hover cannot use it without the
+     keyframe stamping over the hover value on its next frame. Scale and
+     brightness are free. */
+  animation-play-state: paused;
+  scale: 1.03;
+  filter: brightness(1.08);
+}
+
+@media (max-width: 480px) {
+  .btn--hero {
+    padding: 17px 30px;
+    font-size: 1rem;
+  }
+}
 /* --------------------------------------------------------------------------
    9A. THE FIVE HERO GATES
    These five strings must stay character for character identical to

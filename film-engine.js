@@ -156,6 +156,45 @@
     }
   }
 
+  /* ---------------------------------------------------------------------
+     --heroLate: 0 to 1 across the tail of the film, after the camera has
+     finished its descent and settled on the table. Agent S reads it on
+     #heroStage to bring .hero__reveal in over the settled frame.
+
+     Deliberately NOT --heroOut inverted. --heroOut is a function of raw
+     scrolled pixels over two thirds of a viewport, which is how the crest
+     and caption leave: quickly, near the top, regardless of how long the
+     film is. This one is a function of the film's own progress, because
+     it has to land on a particular moment in the footage rather than at a
+     particular scroll depth. With the hero at 280vh, --heroOut is spent
+     by about heroProgress 0.37, so the caption is long gone before this
+     starts at 0.52 and the two never share the screen.
+
+     .is-late rides along because pointer-events cannot be driven from a
+     custom property, and an invisible button at opacity 0 is still a
+     button you can click.
+  --------------------------------------------------------------------- */
+
+  var LATE_IN = 0.52;             // film progress where the panel starts arriving
+  var LATE_FULL = 0.88;           // ...and where it is fully in
+  var lastHeroLate = -1;
+
+  function computeHeroLate() {
+    var span = LATE_FULL - LATE_IN;
+    if (span <= 0) return 1;
+    return clamp((heroProgress() - LATE_IN) / span, 0, 1);
+  }
+
+  function writeHeroLate() {
+    if (!stage) return;
+    var late = computeHeroLate();
+    if (Math.abs(late - lastHeroLate) >= DELTA_GATE) {
+      stage.style.setProperty('--heroLate', String(late));
+      stage.classList.toggle('is-late', late > 0.02);
+      lastHeroLate = late;
+    }
+  }
+
   function pinToFinalStates() {
     if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
     lastTick = 0;
@@ -167,6 +206,7 @@
 
   function unpinFinalStates() {
     lastHeroOut = -1;
+    lastHeroLate = -1;
   }
 
   /* ---------------------------------------------------------------------
@@ -233,6 +273,7 @@
       requestSeek(shown * video.duration);
     }
     writeHeroOut();
+    writeHeroLate();
 
     if (!converged || drifting) {
       rafId = requestAnimationFrame(tick);
@@ -589,9 +630,17 @@
     if (scrubOn) return;
     scrubOn = true;
     initHeroOnce();
+    // .hero__reveal only exists while the film is actually being scrubbed.
+    // Every gate that falls back to the static hero leaves the crest and
+    // caption pinned in the middle of the frame, which is exactly where the
+    // reveal panel sits, so the two would land on top of each other. A
+    // scroll-driven reveal is also the wrong thing to hand someone who has
+    // asked for reduced motion.
+    if (stage) stage.classList.add('is-scrubbing');
     window.addEventListener('scroll', onScroll, { passive: true });
     unpinFinalStates(); // resets the cached --heroOut so a stale pinned value gets rewritten
     writeHeroOut();
+    writeHeroLate();
     syncTarget(); // re-seek to the current scroll position; not a visitor scroll, so drift stays live
     maybeSwapVariant(); // picks up an orientation change that happened while scrub was off
   }
@@ -599,6 +648,7 @@
   function disableScrub() {
     if (!scrubOn) return;
     scrubOn = false;
+    if (stage) stage.classList.remove('is-scrubbing');
     window.removeEventListener('scroll', onScroll);
     if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
   }

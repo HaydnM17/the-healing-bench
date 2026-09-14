@@ -1165,11 +1165,27 @@
     var items = Array.prototype.slice.call(doc.querySelectorAll('.faq-item'));
     if (!items.length) return;
 
+    var FAQ_MS = 350; // keeps step with .faq-item's CSS transition duration (.35s)
+
     for (var i = 0; i < items.length; i++) {
       (function (details) {
         var summary = details.querySelector('summary');
         var content = details.querySelector('.faq-item__a');
         if (!summary || !content) return;
+
+        // styles.css only puts a `transition: height` on .faq-item (the
+        // <details> element) as a default "in case JS toggles a class
+        // rather than setting its own" (see its comment) — it does not
+        // cover .faq-item__a, which is the element actually measured and
+        // animated below. Without a transition declared on THIS element,
+        // changing its height/opacity never starts a CSS transition, so
+        // transitionend below never fires, details.open never gets reset
+        // to false on close, and every click after the first close is
+        // misread as "already open" — the answer can never be reopened.
+        // Setting the transition here, inline, is what the CSS comment
+        // was anticipating: JS sets its own instead of relying on the
+        // fallback.
+        content.style.transition = 'height ' + FAQ_MS + 'ms var(--ease-out), opacity ' + FAQ_MS + 'ms var(--ease-out)';
 
         // Bound to the <summary> only, not the whole <details>. A click
         // anywhere in an open answer bubbles up through <details> too, so
@@ -1199,11 +1215,30 @@
               content.style.height = '0px';
               content.style.opacity = '0';
             });
-            content.addEventListener('transitionend', function onEnd() {
+
+            // details.open must get reset to false, and the inline height
+            // cleared, no matter what — otherwise the next click still
+            // sees details.open === true and this item is dead forever.
+            // transitionend is the precise signal for "the close finished",
+            // but it is backed by a timer fallback so a missed event
+            // (interrupted animation, zero-height content, a future CSS
+            // change that drops the transition again) can never leave the
+            // item stuck. Whichever fires first wins; the other is inert.
+            var finished = false;
+            function finishClose() {
+              if (finished) return;
+              finished = true;
               details.open = false;
               content.style.height = '';
+              content.style.opacity = '';
               content.removeEventListener('transitionend', onEnd);
-            }, { once: true });
+              clearTimeout(fallback);
+            }
+            function onEnd(ev) {
+              if (ev.target === content && ev.propertyName === 'height') finishClose();
+            }
+            content.addEventListener('transitionend', onEnd);
+            var fallback = setTimeout(finishClose, FAQ_MS + 80);
           }
         });
       })(items[i]);
@@ -1796,7 +1831,29 @@
      the middle of the viewport rather than by a scroll handler, so it costs
      nothing per frame: the band is a rootMargin that discards the top and
      bottom of the screen, leaving a strip about a fifth of the way up from
-     centre, and a paragraph is lit exactly while it is crossing that strip.
+     centre.
+
+     Exactly one paragraph is ever lit: the one nearest the band's own
+     centre line, among whichever are currently intersecting it. This used
+     to light every paragraph that was independently intersecting the band,
+     which is unstable right at a band edge — a paragraph straddling that
+     line toggles in and out with every few pixels of scroll, and lit vs
+     unlit differ by up to a 46px translate (see styles.css), so each
+     toggle was a visible jump. Picking a single winner removes the
+     instability by construction: a boundary crossing now swaps which
+     paragraph is lit rather than flickering one on and off. styles.css's
+     own comments already assumed this ("site.js lights one paragraph at a
+     time") even though the old implementation did not actually guarantee
+     it.
+
+     The IntersectionObserver callback only fires on a threshold crossing
+     (an element entering or leaving the band), never per scroll frame, so
+     it is cheap to call getBoundingClientRect() inside it for the couple
+     of elements currently in the band — far cheaper than a scroll handler
+     measuring every paragraph, and it keeps the centre-distance figure
+     fresh rather than reusing a rect cached from whenever that element
+     last crossed the boundary (which can be stale by however long it has
+     been comfortably centred since).
 
      Only ever adds and removes one class. The movement itself is CSS, and
      is transform and opacity only, so nothing here can cause a layout.
@@ -1824,10 +1881,43 @@
       return { pin: function () { litAll(true); }, unpin: function () { litAll(true); } };
     }
 
+    // Parallel to `all`: whether each element is currently intersecting
+    // the band, per the observer's own bookkeeping. currentIndex is which
+    // one (if any) currently carries .is-lit.
+    var intersecting = [];
+    var currentIndex = -1;
+
+    // The band's own centre line, not the viewport's: rootMargin below
+    // insets 38% off the top and 42% off the bottom, so the band itself
+    // sits slightly above true viewport centre (0.48 of the way down, not
+    // 0.50). Kept as one named fraction so it can only drift from the
+    // rootMargin string below by an explicit edit to both.
+    var BAND_CENTER_FRAC = 0.48; // (38% + (100% - 42%)) / 2
+
+    function chooseWinner() {
+      var bandCenter = window.innerHeight * BAND_CENTER_FRAC;
+      var winner = -1;
+      var winnerDist = Infinity;
+      for (var k = 0; k < all.length; k++) {
+        if (!intersecting[k]) continue;
+        var rect = all[k].getBoundingClientRect();
+        var dist = Math.abs((rect.top + rect.height / 2) - bandCenter);
+        if (dist < winnerDist) { winnerDist = dist; winner = k; }
+      }
+      return winner;
+    }
+
     var io = new IntersectionObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) {
-        entries[i].target.classList.toggle('is-lit', entries[i].isIntersecting);
+        var idx = all.indexOf(entries[i].target);
+        if (idx !== -1) intersecting[idx] = entries[i].isIntersecting;
       }
+
+      var winner = chooseWinner();
+      if (winner === currentIndex) return; // delta gate: no visible change
+      if (currentIndex !== -1) all[currentIndex].classList.remove('is-lit');
+      if (winner !== -1) all[winner].classList.add('is-lit');
+      currentIndex = winner;
     }, {
       // Keep only a band across the middle third, biased slightly above
       // centre, which is where the eye actually sits while reading.
@@ -1842,10 +1932,14 @@
       // deciding anything; unpin hands the decision back.
       pin: function () {
         for (var k = 0; k < all.length; k++) io.unobserve(all[k]);
+        intersecting = [];
+        currentIndex = -1;
         litAll(true);
       },
       unpin: function () {
         litAll(false);
+        intersecting = [];
+        currentIndex = -1;
         for (var m = 0; m < all.length; m++) io.observe(all[m]);
       }
     };

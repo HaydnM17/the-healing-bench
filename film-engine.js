@@ -63,7 +63,10 @@
   var WATCHDOG_MS = 20000;        // stream stall abort, re-armed on every chunk
   var POSTER_SAFETY_MS = 4000;    // start the blob fetch even if the poster hangs
   var RING_THROTTLE_MS = 100;     // ring redraw throttle
-  var DRIFT_RATE = 0.12;          // idle auto-pan speed, relative to real-time playback
+  // Idle auto-play speed, relative to real-time playback. At 0.12 the opening
+  // hold took 13 real seconds to cross and read as a still frame. 0.45 plays it
+  // slowly but visibly, so the hero is obviously alive rather than paused.
+  var DRIFT_RATE = 0.45;
   // How far the idle drift is allowed to advance before a real scroll happens.
   // The film opens holding on the stones with steam curling, then cranes down.
   // The drift is capped inside that opening hold so the hero is alive on arrival
@@ -243,7 +246,21 @@
   // enableScrub()'s own re-arm step, which must not be mistaken for a
   // visitor scroll or it would kill the auto-pan before it ever ran.
   function syncTarget() {
-    target = heroProgress();
+    // Scroll drives the film from DRIFT_MAX to 1, not from 0 to 1. The idle
+    // drift owns the opening hold and has already played it, so mapping scroll
+    // to 0 here would throw that away and snap the film backwards on the very
+    // first wheel tick. Starting at DRIFT_MAX means scroll picks up exactly
+    // where the drift stopped, at the moment the descent begins.
+    var p = heroProgress();
+    // enableScrub() calls this at load and on every gate flip. At the very top
+    // with no scroll yet, leave target alone so the drift still owns the
+    // opening hold: writing DRIFT_MAX here would jump straight to the end of
+    // the hold and there would be nothing left to auto-play.
+    if (!hasScrolled && p <= 0) {
+      if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
+      return;
+    }
+    target = DRIFT_MAX + p * (1 - DRIFT_MAX);
     if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
   }
 

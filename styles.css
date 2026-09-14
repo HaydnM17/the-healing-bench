@@ -1508,11 +1508,11 @@ strong, b {
 /* --------------------------------------------------------------------------
    12A. PARALLAX: [data-parallax], reading --p (0 to 1 scroll progress
    through the element). Agent M confirms this sits on the real <img>
-   itself in all eleven cases (About, each practitioner photo, the
-   Treatments opener, three treatment-row images, the hot-stone
-   backdrop, the Visit photograph) rather than on a wrapping figure, so
-   the transform is built for an image: scaled up so a translate never
-   uncovers an edge, then drifted opposite the scroll direction. Every
+   itself in every case (About, the Treatments opener, three treatment-row
+   images, the hot-stone backdrop, the Visit photograph) rather than on a
+   wrapping figure, so the transform is built for an image: scaled up so
+   a translate never uncovers an edge, then drifted opposite the scroll
+   direction. Every
    parallax image's own containing box (figure, card frame, media div)
    carries overflow:hidden so the scale/translate stays clipped to that
    box's own shape and radius. Transform only. -------------------------------------------------------------------------- */
@@ -1523,28 +1523,142 @@ strong, b {
 }
 
 /* --------------------------------------------------------------------------
-   12B. THE PRACTITIONER PHOTO UNWRAP: .practitioner-card__frame
-   The clip-path animates on this inner wrapper, never on
-   .practitioner-card itself, so the outer card's own 16px radius and
-   overflow:hidden are what actually bound the visible shape at every
-   frame of the animation; the frame's clip-path only ever changes how
-   much of the photo is revealed inside that already-rounded, already-
-   clipped box. Transform/opacity are untouched here, so this is exempt
-   from the transform-and-opacity-only rule the way a clip-path reveal
-   generally is (no discrete state to fake it with). -------------------------------------------------------------------------- */
+   12B. THE PRACTITIONER BUBBLES: .practitioner-card__frame
+   The three portraits are circular bubbles that drift on their own, not
+   rectangular card tops. The work is split across two elements because a
+   single one cannot do both jobs:
+
+     .practitioner-card__frame  the bubble. Owns the circle's size, its
+                                halo and drop shadow, and the idle float
+                                keyframes. It must NOT take a clip-path,
+                                because clip-path clips an element's own
+                                box-shadow too and the halo would vanish.
+     .practitioner-card__photo  the mask. Owns border-radius 50% and the
+                                iris-open reveal. Safe to clip, since it
+                                casts no shadow of its own.
+
+   The float runs on transform, so hover uses the separate `scale`
+   property to lift the bubble. Writing a transform on hover instead
+   would replace the keyframe's transform outright and freeze the drift
+   mid-cycle. Same reason ::before carries the ripple ring: it animates
+   its own transform independently of its parent's.
+
+   Three durations that share no common factor (7.2s, 8.6s, 6.4s) with
+   negative delays so the bubbles start already out of phase. Matching
+   periods would let all three sync up and pulse together, which reads
+   as a loading state rather than as drifting. -------------------------------------------------------------------------- */
+
+@keyframes bubbleFloat {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+  30%  { transform: translate3d(4px, -10px, 0) rotate(.7deg); }
+  62%  { transform: translate3d(-4px, -4px, 0) rotate(-.6deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+/* Steam leaving the stone. Opacity is gone by 58%, so roughly half of
+   each cycle is completely still; a ring that expanded continuously
+   would read as a notification badge. */
+@keyframes bubbleRipple {
+  0%   { transform: scale(1); opacity: 0; }
+  12%  { opacity: .5; }
+  58%  { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
 
 .practitioner-card__frame {
   position: relative;
   display: block;
-  overflow: hidden;
-  clip-path: inset(0 0 34% 0);
-  transition: clip-path .9s var(--ease-out);
+  /* Sized against the card, not the viewport. At the 760px breakpoint the
+     grid goes three across while the page is still narrow, so a column's
+     content box drops to about 162px; a viewport-relative width would
+     still ask for 208px there and the card's overflow:hidden would shear
+     the bubble's sides off. */
+  width: min(208px, 100%);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 50%;
+  /* Drop shadow, a hairline hugging the rim, then a soft warm bloom
+     sitting off the edge. The bloom is what makes it read as floating
+     above the cream rather than sitting on it. */
+  box-shadow:
+    0 20px 34px -18px rgba(42, 33, 26, .5),
+    0 0 0 1px rgba(199, 175, 142, .55),
+    0 0 30px 2px rgba(199, 175, 142, .38);
+  scale: 1;
+  animation: bubbleFloat 7.2s ease-in-out infinite;
+  transition: scale .45s var(--ease-out), box-shadow .45s var(--ease-out);
+  will-change: transform;
 }
 
-[data-reveal].in .practitioner-card__frame,
-[data-stagger].in .practitioner-card__frame,
-.practitioner-card__frame.in {
-  clip-path: inset(0);
+.practitioner-card--laurette .practitioner-card__frame {
+  animation-duration: 8.6s;
+  animation-delay: -3.4s;
+}
+
+.practitioner-card--naira .practitioner-card__frame {
+  animation-duration: 6.4s;
+  animation-delay: -1.9s;
+}
+
+/* The ripple sits behind the photo (::before precedes the element's own
+   children in paint order), so only the part that has expanded past the
+   rim is ever visible. */
+.practitioner-card__frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid rgba(199, 175, 142, .85);
+  animation: bubbleRipple 9s ease-out infinite;
+  pointer-events: none;
+}
+
+.practitioner-card--laurette .practitioner-card__frame::before { animation-delay: -5.2s; }
+.practitioner-card--naira    .practitioner-card__frame::before { animation-delay: -2.6s; }
+
+/* The glass dome: a specular highlight up and to the left, over the
+   photo. soft-light keeps the face's own tones rather than washing a
+   flat white film across it. */
+.practitioner-card__frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(58% 46% at 31% 22%, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 68%),
+    radial-gradient(70% 60% at 72% 88%, rgba(42, 33, 26, .22), rgba(42, 33, 26, 0) 70%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.practitioner-card__photo {
+  border-radius: 50%;
+  /* Iris open. A circular inset rather than the page's usual bottom-up
+     unwrap, so the reveal agrees with the shape instead of fighting it. */
+  clip-path: inset(24% round 50%);
+  transition: clip-path 1s var(--ease-out), scale .55s var(--ease-out);
+}
+
+[data-reveal].in .practitioner-card__photo,
+[data-stagger].in .practitioner-card__photo,
+.practitioner-card.in .practitioner-card__photo {
+  clip-path: inset(0 round 50%);
+}
+
+/* Hover lifts the bubble and warms the bloom. Scale only, never
+   transform, or the float stops dead for as long as the pointer rests. */
+.practitioner-card:hover .practitioner-card__frame,
+.practitioner-card:focus-within .practitioner-card__frame {
+  scale: 1.055;
+  box-shadow:
+    0 26px 42px -18px rgba(42, 33, 26, .55),
+    0 0 0 1px rgba(199, 175, 142, .8),
+    0 0 44px 6px rgba(199, 175, 142, .55);
+}
+
+.practitioner-card:hover .practitioner-card__photo,
+.practitioner-card:focus-within .practitioner-card__photo {
+  scale: 1.06;
 }
 
 /* --------------------------------------------------------------------------
@@ -1627,31 +1741,47 @@ strong, b {
 }
 
 /* --------------------------------------------------------------------------
-   14. SECTION: PRACTITIONERS (cream, image-card grid)
+   14. SECTION: PRACTITIONERS (cream, bubble grid)
    Three white, 16px-radius cards, three across on desktop, one column on
-   phone. Photo on top, caption below: name in Playfair, title and
-   description in Jost, the review pull-quote closing the card.
+   phone. A circular floating portrait bubble centred at the top of each
+   card (section 12B owns the bubble itself), then centred caption below:
+   name in Playfair, title and description in Jost, the review pull-quote
+   closing the card. Everything centres on the bubble's axis, which is why
+   this is the one card type on the page that is not left-aligned.
    -------------------------------------------------------------------------- */
 
+/* One column until 1000px, not 760px. These cards carry a full review
+   quote, and centred text in a 236px column breaks to two and three
+   words a line, which was readable while the copy was left-aligned and
+   is not now. The single-column stack is capped and centred rather than
+   run full-bleed, so a card never gets so wide that a 208px bubble looks
+   stranded in it. */
 .practitioners__grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-md);
+  max-width: 460px;
+  margin-inline: auto;
 }
 
-@media (min-width: 760px) {
+@media (min-width: 1000px) {
   .practitioners__grid {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
+    max-width: none;
   }
 }
 
 .practitioner-card {
+  /* The bubble no longer bleeds to the card's top edge, so the card
+     supplies the room its halo and ripple need on every side. */
+  padding: var(--space-lg) var(--space-md) var(--space-md);
   background: var(--card);
   color: var(--ink);
   border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: var(--ground-card-shadow);
+  text-align: center;
   transform: translateY(0);
   transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out);
 }
@@ -1665,10 +1795,10 @@ strong, b {
   box-shadow: var(--ground-card-shadow-hover);
 }
 
-/* .practitioner-card__frame (the clip-path unwrap wrapper) is styled in
-   section 12B; it sits directly around the <img> below. */
+/* .practitioner-card__frame (the bubble) is styled in section 12B; this
+   is the <img> inside it, filling the circle without distortion. No
+   aspect-ratio here, because the frame is already a 1:1 box. */
 .practitioner-card__photo {
-  aspect-ratio: 4 / 5;
   width: 100%;
   height: 100%;
   display: block;
@@ -1678,9 +1808,10 @@ strong, b {
 }
 
 .practitioner-card__body {
-  padding: var(--space-md);
+  padding-top: var(--space-md);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-2xs);
 }
 
@@ -2681,8 +2812,17 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     transform: none;
   }
 
-  .practitioner-card__frame {
-    clip-path: inset(0);
+  /* The bubbles keep their shape and their halo, they just stop drifting.
+     The global rule above already collapses animation-duration, but the
+     ripple ring starts its cycle at opacity 0 and would be frozen there
+     as a permanent 1px circle sitting 2px off the rim, so hide it
+     outright rather than leave a stray outline behind. */
+  .practitioner-card__photo {
+    clip-path: inset(0 round 50%);
+  }
+
+  .practitioner-card__frame::before {
+    display: none;
   }
 
   [data-carousel-track] > .review-card {

@@ -221,13 +221,19 @@
        itself, per initReveal()'s documented contract in site.js: the
        container is what gets observed, and each .practitioner-card, as a
        direct child, is handed .in in turn with an incrementing delay by
-       that same function. Agent S keys the clip-path photo unwrap off
-       ".practitioner-card.in". Individual cards carry no data-reveal of
+       that same function. Individual cards carry no data-reveal of
        their own, since a child with its own observer could reveal ahead
        of the parent's cascade and defeat the stagger.
-       .practitioner-card__photo is a real <img>, so it needs object-fit:
-       cover, object-position: center, width: 100%, height: 100%, display:
-       block, to fill practitioner-card__frame without distortion. -->
+       The portraits are circular floating bubbles rather than the
+       rectangular image-card tops used elsewhere on the page.
+       .practitioner-card__frame is the bubble itself (size, halo, drop
+       shadow, idle float keyframes) and .practitioner-card__photo is the
+       circular mask inside it, carrying its own iris-open reveal keyed
+       off ".practitioner-card.in".
+       These three photos deliberately do NOT take data-parallax. A scroll
+       drift inside a 200px circle fights the float animation for the same
+       few pixels and reads as a wobble, so the bubble's own motion is the
+       only motion here. -->
   <section id="practitioners" class="section practitioners tone-cream">
     <div class="container">
       <div class="slabel" data-reveal>
@@ -241,7 +247,7 @@
 
         <article class="practitioner-card practitioner-card--deborah">
           <div class="practitioner-card__frame">
-            <img class="practitioner-card__photo" data-parallax src="assets/team-deborah.jpg" alt="Deborah Williston, co-owner and registered massage therapist" width="800" height="800" loading="lazy" decoding="async">
+            <img class="practitioner-card__photo" src="assets/team-deborah.jpg" alt="Deborah Williston, co-owner and registered massage therapist" width="800" height="800" loading="lazy" decoding="async">
           </div>
           <div class="practitioner-card__body">
             <h3 class="practitioner-card__name">Deborah Williston</h3>
@@ -256,7 +262,7 @@
 
         <article class="practitioner-card practitioner-card--laurette">
           <div class="practitioner-card__frame">
-            <img class="practitioner-card__photo" data-parallax src="assets/team-laurette.jpg" alt="Laurette Lachance" width="800" height="800" loading="lazy" decoding="async">
+            <img class="practitioner-card__photo" src="assets/team-laurette.jpg" alt="Laurette Lachance" width="800" height="800" loading="lazy" decoding="async">
           </div>
           <div class="practitioner-card__body">
             <h3 class="practitioner-card__name">Laurette Lachance</h3>
@@ -277,7 +283,7 @@
 
         <article class="practitioner-card practitioner-card--naira">
           <div class="practitioner-card__frame">
-            <img class="practitioner-card__photo" data-parallax src="assets/team-naira.jpg" alt="Naira Fawzi, registered reflexologist" width="800" height="800" loading="lazy" decoding="async">
+            <img class="practitioner-card__photo" src="assets/team-naira.jpg" alt="Naira Fawzi, registered reflexologist" width="800" height="800" loading="lazy" decoding="async">
           </div>
           <div class="practitioner-card__body">
             <h3 class="practitioner-card__name">Naira Fawzi</h3>

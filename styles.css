@@ -1915,6 +1915,7 @@ strong, b {
 
 #heatStoneHint {
   margin-top: var(--space-sm);
+  margin-inline: auto;
   font-family: var(--font-body);
   font-size: .8125rem;
   letter-spacing: .1em;
@@ -3348,6 +3349,7 @@ strong, b {
 
 .reviews__cta-lede {
   margin-bottom: var(--space-sm);
+  margin-inline: auto;
   color: var(--bone-soft);
 }
 
@@ -3554,6 +3556,7 @@ strong, b {
 
 .faq__cta-lede {
   margin-bottom: var(--space-sm);
+  margin-inline: auto;
   color: var(--ink-soft);
 }
 

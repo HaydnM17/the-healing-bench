@@ -775,6 +775,21 @@ strong, b {
     clip: rect(0, 0, 0, 0);
     border: 0;
   }
+
+  /* .site-header is position: fixed, so .brand's backdrop-filter above
+     forces the compositor to re-sample and re-blur whatever sits behind
+     the pill on every scroll frame, for as long as the page stays open
+     -- unconditional, at every width, precisely the motion cost a phone
+     GPU feels most and the owner has flagged repeatedly. At the small
+     size this pill renders here, a flat fill reads the same as the 10px
+     blur, so phones trade the blur for a slightly more opaque version of
+     the same fill and skip the per-frame cost entirely. Desktop is
+     unchanged: there the blur is cheap and worth keeping. */
+  .brand {
+    background: rgba(14, 11, 8, .88);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .nav {
@@ -2707,11 +2722,10 @@ strong, b {
 }
 
 /* The hot-stone hold interaction: a single photographic backdrop
-   (still-heat.jpg, parallax-cropped per 12A) behind the button and its
-   reveal text, with a scrim so both stay legible over real photography.
-   still-falling.jpg's screen-blended ambient layer
-   (formerly .stone-interaction__ambient) has been removed from the
-   markup entirely; this is one photo, not a two-layer backdrop. */
+   (still-heat.jpg, parallax-cropped per 12A) sits behind the button and
+   its reveal text via .stone-interaction__bg, with a scrim so both stay
+   legible over real photography. This is the only backdrop layer --
+   there is no second image behind it. */
 .stone-interaction {
   position: relative;
   overflow: hidden;

@@ -2043,9 +2043,10 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    12A. [data-parallax]: STATIC CROP, NOT A LIVE EFFECT
-   This attribute used to flag the 13 images (About, the Treatments
-   opener, the hot-stone backdrop, several treatment-row photos, the
-   Visit photograph) that took a scroll-linked translate driven by a --p
+   This attribute used to flag 13 images (About, the Treatments opener,
+   the hot-stone backdrop, several treatment-row photos, and, until 17
+   swapped that photograph for a Google Maps embed, the Visit
+   photograph) that took a scroll-linked translate driven by a --p
    custom property site.js wrote on scroll, composing with a separate
    continuous idle drift on three of them (formerly section 12D). After
    two rounds of trying to smooth that motion it still read as choppy, so
@@ -2055,7 +2056,10 @@ strong, b {
    left to cover — it is simply the crop these images already sat at,
    kept exactly as-is so nothing reframes now that the motion has
    stopped, and because the owner wants this imagery to read ambient,
-   close-up and still. Four groups of these images also sit inside a
+   close-up and still. 12 images carry the attribute today; the Visit
+   photograph's replacement (.visit__map, holding a Maps <iframe>, and
+   .visit__card) needs no static crop of its own and carries no
+   data-parallax. Three groups of these images also sit inside a
    [data-reveal]/[data-stagger] container and get an explicit combined
    drop-and-settle entrance on top of this static crop, stated directly
    rather than left to fall out of whichever of this rule and
@@ -2087,11 +2091,19 @@ strong, b {
    for the 22px drop back, so the visible entrance is now the drop AND
    the zoom together, once, on arrival, for: .about__image (inside
    .about__media[data-reveal]), the Treatments opener image (inside
-   .treatments__opener[data-reveal]), .visit__image (inside
-   .visit__media[data-reveal]), and .stone-interaction__bg. The first
-   three are direct children of their own [data-reveal] container, so
-   they already had a correct opacity fade from [data-reveal] > * /
+   .treatments__opener[data-reveal]), and .stone-interaction__bg. The
+   first two are direct children of their own [data-reveal] container,
+   so they already had a correct opacity fade from [data-reveal] > * /
    .in > *; only transform needed restating.
+
+   (.visit__image used to be the third entry here, inside
+   .visit__media[data-reveal] — it left this group when 17 swapped the
+   Visit photograph for a Google Maps embed. Its replacement children,
+   .visit__map and .visit__card, are still direct children of
+   .visit__media[data-reveal], so they still get the plain fade+rise
+   from [data-reveal] > * / .in > * above; they just don't get this
+   rule's extra drop-and-zoom, which was specific to a photograph's own
+   crop and has no equivalent for a map or a text card.)
 
    .stone-interaction__bg is different: the html pass never added
    data-reveal to .stone-interaction__media, so it never gets near
@@ -2099,7 +2111,7 @@ strong, b {
    direct child of .treatments__group[data-reveal][data-stagger="70"]
    (confirmed against index.html), so the group's own stagger hands
    .stone-interaction an .in class directly — see staggerChildren() in
-   site.js. This rule keys the fourth entry off .stone-interaction(.in)
+   site.js. This rule keys that third entry off .stone-interaction(.in)
    rather than an attribute that is not in the markup, and supplies both
    opacity and transform for it, since nothing else does.
 
@@ -2120,17 +2132,18 @@ strong, b {
        above); its narrowest real column is ~280px wide at a 320px-wide
        phone (--gutter's 20px floor on each side), so ~350px tall at its
        shortest.
-     - .visit__media: min-height: clamp(320px, 44vw, 460px) — a 320px
-       floor, never smaller.
      - .stone-interaction__media: no fixed height, but its parent's own
        padding alone (2 × var(--space-2xl) = 192px) already clears
        137.5px before the stone button, hint and heat-reveal list even
        enter the count.
+   (.visit__media used to have an entry here too — min-height:
+   clamp(320px, 44vw, 460px), a 320px floor — back when it held
+   .visit__image. That image and its floor are both gone now; see the
+   note above and 17.)
    22px is safe at every one of these frames' real sizes. -------------------------------------------------------------------------- */
 
 .about__media[data-reveal] .about__image,
 .treatments__opener[data-reveal] img,
-.visit__media[data-reveal] .visit__image,
 .stone-interaction .stone-interaction__bg {
   opacity: 0;
   transform: translateY(22px) scale(1.32);
@@ -2139,7 +2152,6 @@ strong, b {
 
 .about__media[data-reveal].in .about__image,
 .treatments__opener[data-reveal].in img,
-.visit__media[data-reveal].in .visit__image,
 .stone-interaction.in .stone-interaction__bg {
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -2147,7 +2159,7 @@ strong, b {
 
 /* The treatment-row photographs (Hot Stones, Prenatal Massage,
    Reflexology, the four facials and the rest) sit one level deeper than
-   the four groups above: each <img> is a GRANDCHILD of
+   the three groups above: each <img> is a GRANDCHILD of
    .treatments__group[data-stagger] (.treatments__group >
    .treatment-row--media > .treatment-row__media > img), not a direct
    child, so [data-stagger] > * (section 12) only ever reached the row —
@@ -2343,13 +2355,16 @@ strong, b {
    still read as choppy, so the owner decided he would rather the
    photographs simply held still. The keyframes and the animation /
    animation-delay / will-change declarations that drove them are gone;
-   these three images carry no keyframe animation of any kind here any
-   more. They are styled by the sizing/object-fit rules for their
-   classes below, the static [data-parallax] crop in 12A, and — since
-   each also sits inside a [data-reveal] container — the explicit
-   one-shot drop-and-settle entrance transform stated in 12A-i, which
-   replaced an accidental specificity collision between those first two
-   rules with a deliberate one.
+   these three images carried no keyframe animation of any kind by the
+   end. .visit__image itself is gone now too — 17 swapped that
+   photograph for a Google Maps embed — so only .about__image and
+   .treatments__opener img remain of the three. Both are still styled by
+   the sizing/object-fit rules for their classes below, the static
+   [data-parallax] crop in 12A, and — since each also sits inside a
+   [data-reveal] container — the explicit one-shot drop-and-settle
+   entrance transform stated in 12A-i, which replaced an accidental
+   specificity collision between those first two rules with a
+   deliberate one.
    -------------------------------------------------------------------------- */
 
 /* --------------------------------------------------------------------------
@@ -3094,11 +3109,20 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    17. SECTION: VISIT (tan, split layout)
-   Hours left; right, still-table.jpg (a real <img>, .visit__image) with
-   a floating white address card (.visit__card) anchored over its lower
-   edge, echoing About's split at reduced intensity, per Agent M's real
-   markup: .visit__grid > .visit__hours + .visit__media > .visit__image
-   + .visit__card.
+   Hours left; right, a live Google Maps embed (.visit__map, wrapping an
+   <iframe>) with the address card (.visit__card) stacked BELOW it in
+   normal flow, not overlaid on top of it. Markup: .visit__grid >
+   .visit__hours + .visit__media > .visit__map + .visit__card.
+
+   This replaces the still-table.jpg photograph (.visit__image, now
+   removed) that used to fill .visit__media edge-to-edge with the card
+   floated over its lower portion, echoing About's split at reduced
+   intensity. That overlay composition doesn't carry over to a map: a
+   card sitting on top of part of an interactive iframe would swallow
+   every drag and click that lands on the covered area, so the card now
+   sits underneath the map in the stacking order that matters — outside
+   its box entirely. See 12A-i for what removing .visit__image changed
+   in the shared entrance rule it used to belong to.
    -------------------------------------------------------------------------- */
 
 .visit__grid {
@@ -3156,26 +3180,61 @@ strong, b {
   font-weight: 400;
 }
 
+/* Just a stacking column now: the radius/shadow/overflow-hidden panel
+   treatment that used to sit here (when this held one full-bleed <img>)
+   has moved onto .visit__map below, since that is the element playing
+   the photograph's old visual role. .visit__card no longer needs a
+   containing block to be absolutely positioned against, so this carries
+   no position/overflow of its own any more — nothing here depends on
+   it. */
 .visit__media {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* An <iframe> has no intrinsic size: left unset it renders at the UA
+   default (roughly 300×150px) regardless of the column it sits in, so
+   the aspect-ratio below is what actually gives the map a deliberate
+   box. 4/3 was chosen over a wider ratio like 16/9 because a single
+   street-address pin needs some vertical extent to show the cross
+   streets around it, not just the block it's on — a shorter embed reads
+   as a sliver of road rather than a locatable place. At the same time
+   4/3 stays well short of a full square, so it doesn't dominate the
+   375px-wide mobile column (390px viewport, --gutter's 20px floor each
+   side) the way a taller ratio would. In the desktop two-column grid
+   (min-width: 780px, the section's real breakpoint, below) it sits at
+   roughly the same scale the old min-height clamp(320px, 44vw, 460px)
+   photograph did.
+
+   Appearance: Maps embeds render in Google's own fixed light palette
+   and cannot be restyled, but this site is light-only throughout
+   (color-scheme: light, no dark variant anywhere in this file), so
+   there's no light-on-dark clash to correct for — only the ordinary
+   question of a white-ish map meeting the warm tan section ground. The
+   same var(--ground-card-shadow) every other card on this tan band
+   already carries (the fees cards, .about__media, the address card
+   below) bakes in a 1px near-black contact ring at low opacity
+   specifically to give a light panel a defined edge against tan (see
+   --shadow-card-tan's comment) — that is this site's existing answer to
+   exactly this problem, so reusing it here rather than adding a filter
+   keeps the map's real colours intact and matches every other panel
+   instead of inventing a one-off treatment for this one. */
+.visit__map {
   overflow: hidden;
   border-radius: var(--radius-card);
-  min-height: clamp(320px, 44vw, 460px);
+  aspect-ratio: 4 / 3;
   box-shadow: var(--ground-card-shadow);
 }
 
-.visit__image {
-  position: absolute;
-  inset: 0;
+.visit__map iframe {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  border: 0;
+  display: block;
 }
 
 .visit__card {
-  position: relative;
-  z-index: 1;
-  margin: clamp(120px, 24vw, 220px) var(--space-md) var(--space-md);
   background: var(--card);
   color: var(--ink);
   border-radius: var(--radius-card);
@@ -3195,6 +3254,19 @@ strong, b {
   text-decoration: underline;
   text-decoration-color: var(--line);
   text-underline-offset: .15em;
+}
+
+/* "Get directions" is the card's one call to action, not a fourth equal
+   contact line, so it gets a little extra separation above it the same
+   way .book__reach--map sets the map link apart from the phone/email
+   lines above it on the espresso Book panel — extra margin-top on top
+   of whatever spacing already applies, same underline as every other
+   link in this card via .visit__card a above. display: inline-block is
+   required for that margin-top to do anything at all: an anchor is
+   inline by default and an inline box ignores vertical margin. */
+.visit__directions {
+  display: inline-block;
+  margin-top: var(--space-2xs);
 }
 
 /* --------------------------------------------------------------------------
@@ -4132,21 +4204,25 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
      scale(1.32) crop for reduced-motion visitors only, leaving them
      looking at a differently framed photo than everyone else.
 
-     The five images with the explicit drop-and-settle entrance (12A-i)
+     The four images with the explicit drop-and-settle entrance (12A-i)
      are different: that rule has higher specificity than
      [data-reveal] > * / [data-stagger] > * above, so without a pin here
      it would keep winning even under reduced motion, leaving anyone who
      has not yet scrolled an image into view sitting at
      translateY(22px) scale(1.32) — the collapsed .01ms transition-duration
      above makes the eventual snap into place instant, but does nothing
-     for the time before .in is ever added. Pin all five to their settled
+     for the time before .in is ever added. Pin all four to their settled
      end state instead, same as [data-reveal] > * does for everything
      else: translateY(0) scale(1) reads identically to transform:none, so
      this loses nothing — it is genuinely their resting state, not a
-     stand-in for it, unlike the [data-parallax]-only case above. */
+     stand-in for it, unlike the [data-parallax]-only case above.
+     (.visit__image was a fifth entry here until 17 swapped that
+     photograph for a Google Maps embed; its replacement children,
+     .visit__map and .visit__card, need no pin of their own here — they
+     only ever got the plain [data-reveal] > * fade+rise above, which
+     the reduced-motion pin just above this comment already covers.) */
   .about__media[data-reveal] .about__image,
   .treatments__opener[data-reveal] img,
-  .visit__media[data-reveal] .visit__image,
   .stone-interaction .stone-interaction__bg,
   .treatments__group[data-stagger] .treatment-row__media img,
   .book__media[data-reveal] {

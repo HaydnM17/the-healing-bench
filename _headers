@@ -1,7 +1,8 @@
-# The Healing Bench, single static page. No contact form, no analytics script, no map or
-# video embed, no self-hosted fonts and no /vendor directory, so the security headers below
-# are scoped tighter than the client-site-kit template: nothing is allowed here that this
-# page does not actually load.
+# The Healing Bench, single static page. No contact form, no analytics script, no video
+# embed, no self-hosted fonts and no /vendor directory, so the security headers below are
+# scoped tighter than the client-site-kit template: nothing is allowed here that this page
+# does not actually load. The one exception is the Google Maps iframe in #visit, covered by
+# frame-src below.
 #
 # Content-Security-Policy, directive by directive:
 #   default-src 'self'         Fallback for any fetch type not named below. Same origin
@@ -56,7 +57,21 @@
 #   base-uri 'self'           Stops an injected <base> tag from rewriting relative URLs.
 #   form-action 'self'        No <form> exists on the page today; this only guards against
 #                              one being added later and mis-pointed at another origin.
-#   frame-src 'none'          Nothing is framed. Booking is a plain link to ClinicSense
+#   frame-src https://www.google.com
+#                              The #visit section now embeds a Google Maps iframe
+#                              (src="https://www.google.com/maps?q=...&output=embed"), so
+#                              'none' would block it outright. This is the only directive
+#                              the embed needs: frame-src governs whether THIS page may
+#                              display that URL in an <iframe>; it says nothing about what
+#                              the framed document is then allowed to load. Once the iframe
+#                              navigates to google.com, that document runs under Google's
+#                              own response headers, not this file's, so this page's
+#                              img-src/script-src/connect-src are never consulted for the
+#                              map tiles, pins or scripts inside the frame and do not need
+#                              widening. child-src (the older fallback some very old
+#                              WebKit builds read instead of frame-src) is deliberately not
+#                              added: every browser this site needs to support honours
+#                              frame-src. Booking is still a plain link to ClinicSense
 #                              (https://thehealingbench.clinicsense.com/book/), a normal page
 #                              navigation, not an embed, so ClinicSense never needs to appear
 #                              in this policy at all.
@@ -70,7 +85,7 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://www.google.com; frame-ancestors 'none'; upgrade-insecure-requests
 
 # DEPLOY STEP: the Strict-Transport-Security line above is safe to ship now but only actually
 # protects visitors once the custom domain shows a padlock (cloudflare-pages-launch, go-live

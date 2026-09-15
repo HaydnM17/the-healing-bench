@@ -734,15 +734,20 @@
   </section>
 
   <!-- 05. Hours and finding us. Full week, address with unit number, real
-       tel: and mailto: links. Split layout:
-       hours left, a map-feel card right holding the address over
-       still-table.jpg. Warm tan band. room-2.jpg moved to the book section,
-       one of the three high-visibility slots named for the
-       client's own treatment-room photography, so this section runs one
-       large image rather than two. Hours rise line by line: data-reveal
-       plus data-stagger="70" sit on .visit__hours itself, per
-       initReveal()'s documented contract in site.js, so the seven rows
-       cascade in turn rather than fading in as one block. -->
+       tel: and mailto: links. Split layout: hours left, a real Google Maps
+       embed right with the address/phone/email card sitting below it
+       (moved out from being an overlaid card on still-table.jpg, per the
+       owner: keep the map, keep all the info, just don't hide one behind
+       the other). still-table.jpg is no longer used on the page as of
+       this change; the file stays in assets/ in case a future pass wants
+       it elsewhere. The embed uses the no-API-key "?q=...&output=embed"
+       form, keyed to the same address as the card beneath it, the JSON-LD
+       block in <head>, and the footer. Warm tan band. room-2.jpg moved to
+       the book section, one of the three high-visibility slots named for
+       the client's own treatment-room photography. Hours rise line by
+       line: data-reveal plus data-stagger="70" sit on .visit__hours
+       itself, per initReveal()'s documented contract in site.js, so the
+       seven rows cascade in turn rather than fading in as one block. -->
   <section id="visit" class="section visit tone-tan">
     <div class="container">
       <div class="slabel" data-reveal>
@@ -785,7 +790,14 @@
         </div>
 
         <div class="visit__media" data-reveal>
-          <img class="visit__image" data-parallax src="assets/still-table.jpg" alt="The treatment table set with warm light at The Healing Bench" width="1080" height="1920" loading="lazy" decoding="async">
+          <div class="visit__map">
+            <iframe
+              src="https://www.google.com/maps?q=4460+Ontario+Street+Unit+2,+Beamsville,+ON+L3J+0A9&amp;output=embed"
+              title="Map showing The Healing Bench at 4460 Ontario Street, Unit 2, Beamsville"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen></iframe>
+          </div>
           <div class="visit__card">
             <address class="visit__address-block">
               4460 Ontario Street, Unit 2<br>
@@ -793,6 +805,7 @@
             </address>
             <p><a href="tel:+19055638826">(905) 563-8826</a></p>
             <p><a href="mailto:thehealingbench@hotmail.com">thehealingbench@hotmail.com</a></p>
+            <p><a class="visit__directions" href="https://www.google.com/maps/search/?api=1&amp;query=4460+Ontario+Street+Unit+2,+Beamsville,+ON+L3J+0A9" target="_blank" rel="noopener">Get directions</a></p>
           </div>
         </div>
       </div>

@@ -2173,7 +2173,7 @@
      MECHANISM 14. THE VISIT MAP EMBED LOADER.
 
      The map in #visit rendered fine on desktop and would not load at all on
-     the owner's phone. Two suspects, neither reproducible here, so this
+     a phone. Two suspects, neither reproducible here, so this
      removes both rather than guessing between them.
 
      One: "maps?q=...&output=embed" is a legacy URL that Google answers with

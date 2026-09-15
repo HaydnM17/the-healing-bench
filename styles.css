@@ -777,8 +777,8 @@ strong, b {
   /* .site-header is position: fixed, so .brand's backdrop-filter above
      forces the compositor to re-sample and re-blur whatever sits behind
      the pill on every scroll frame, for as long as the page stays open
-     -- unconditional, at every width, precisely the motion cost a phone
-     GPU feels most and the owner has flagged repeatedly. At the small
+     -- unconditional, at every width, precisely the kind of per-frame
+     cost that shows up as scroll jank on a phone. At the small
      size this pill renders here, a flat fill reads the same as the 10px
      blur, so phones trade the blur for a slightly more opaque version of
      the same fill and skip the per-frame cost entirely. Desktop is
@@ -990,14 +990,22 @@ strong, b {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    /* Measured off the render, not guessed: the worst ground this can
-       sit on is a white pricing card, where .6 composited to #6E6D6B and
-       left opaque bone at 4.6:1 -- over the floor but with nothing in
-       hand. .64 takes that worst case to ~5.2:1 and every darker band to
-       6:1 and up, and 36% of the page still reads through the blur. */
-    background: rgba(14, 11, 8, .64);
-    -webkit-backdrop-filter: blur(20px) saturate(125%);
-    backdrop-filter: blur(20px) saturate(125%);
+    /* Measured off the render, not guessed. The worst ground this can
+       sit on is the interior of a white pricing card in #fees, and no
+       blur helps there: averaging white with white returns white
+       however wide the radius, so the fill alpha alone decides that
+       case. At .6 the card composites to #6E6D6B and holds opaque bone
+       at 4.60:1. .593 is the arithmetic floor for 4.5:1, close enough
+       to an 8-bit rounding edge that it is not worth the tenth, so .6
+       is as light as this panel can honestly go. But because the worst
+       case is blur-independent, the radius was free: 20px down to 8px
+       costs that measurement nothing and is what actually answers the
+       ask, since the page behind now reads as the page rather than as
+       a fog. Saturate eased to 115% so the photographs behind keep
+       their colour without the panel tinting. */
+    background: rgba(14, 11, 8, .6);
+    -webkit-backdrop-filter: blur(8px) saturate(115%);
+    backdrop-filter: blur(8px) saturate(115%);
     border: 0;
     box-shadow: none;
     opacity: 0;
@@ -1014,16 +1022,16 @@ strong, b {
   }
 
   /* Just the type. No row borders, no panel chrome: each link is a line
-     of text that slides in from the left and settles. The negative
-     inline margin lets the current item's plate breathe past the text
-     without pushing the type off the gutter it shares with the page. */
+     of text that slides in from the right and settles. The negative
+     inline margin keeps the hover wash breathing past the text without
+     pushing the type off the gutter it shares with the page. */
   .nav a {
     padding: clamp(9px, 1.5vh, 15px) 12px;
     margin-inline: -12px;
-    /* The current item's plate is the only filled box left in the panel.
-       Capped so it stays a highlighted line of text on a landscape phone
-       instead of a 600px bar running the width of the screen; narrower
-       than any phone in portrait, so it changes nothing there. */
+    /* Caps the hover and focus wash so it stays a highlighted line of
+       text on a landscape phone instead of a 600px bar running the
+       width of the screen; narrower than any phone in portrait, so it
+       changes nothing there. */
     max-width: 420px;
     border: 0;
     border-radius: var(--radius-pill);
@@ -1033,7 +1041,7 @@ strong, b {
     letter-spacing: .07em;
     color: var(--bone);
     opacity: 0;
-    transform: translateX(-24px);
+    transform: translateX(24px);
     transition: opacity .26s var(--ease-out), transform .26s var(--ease-out),
                 color .2s var(--ease-out), background-color .2s var(--ease-out);
     transition-delay: 0s;
@@ -1066,17 +1074,31 @@ strong, b {
   .nav.is-open a:nth-child(8), .nav__list.is-open a:nth-child(8) { transition-delay: 182ms; }
   .nav.is-open a:nth-child(9), .nav__list.is-open a:nth-child(9) { transition-delay: 208ms; }
 
-  /* The one you are on. The desktop treatment is a 14%-bone fill tuned
-     for a narrow pill on an opaque bar; on a translucent ground it
-     lightens the plate and reads as a smudge. Inverted here: the plate
-     darkens (bone would wash out over whatever photograph or cream band
-     happens to be behind it), the type turns tan, and a tan marker sits
-     at the head of the line. Tan on the darkened plate measures 7:1. */
+  /* The one you are on. No plate: a filled box on a panel that has no
+     other filled boxes reads as a button rather than as a position, and
+     it fights the see-through ground this panel is now tuned for. The
+     weight and the tan rule at the head of the line carry it instead.
+
+     `background: none` rather than deleting the declaration: the plate
+     is set on .nav a.is-current outside any media query, so dropping
+     this line would not clear it, it would hand the panel the desktop
+     14%-bone fill and put back a lighter, worse smudge.
+
+     The type stays bone rather than turning tan, and that is forced by
+     the measurement, not a preference. Tan is a mid-tone; on the
+     composited panel over a white pricing card it reads 3.1:1, and the
+     darkened plate was the only reason it ever measured 7:1. With the
+     plate gone no warm accent can pass 4.5:1 here -- the whole ground
+     tops out at 5.18:1 against pure white -- so the colour cue moves
+     into the 3px rule, which is non-text and clears its own 3:1 bar at
+     3.11:1. Bone on the same ground is 4.60:1. The filled box survives
+     on hover and focus only, where it is feedback for a press rather
+     than a permanent mark. */
   .nav a.is-current,
   .nav a[aria-current='true'] {
-    color: var(--tan);
+    color: var(--bone);
     font-weight: 500;
-    background: rgba(14, 11, 8, .5);
+    background: none;
   }
 
   .nav a.is-current::before,
@@ -1094,11 +1116,14 @@ strong, b {
 }
 
 /* Where the blur cannot run the panel is nearly opaque instead: a 60%
-   fill with the page sitting sharp behind it is unreadable. */
+   fill with the page sitting sharp behind it is unreadable. Eased by
+   the same .04 the blurred fill was eased by, so the two move together
+   and this stays comfortably past the point where sharp type behind
+   the panel starts competing with the type on it. */
 @media (max-width: 899.98px) {
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .nav, .nav__list {
-      background: rgba(14, 11, 8, .95);
+      background: rgba(14, 11, 8, .91);
     }
   }
 }
@@ -2191,12 +2216,12 @@ strong, b {
    custom property site.js wrote on scroll, composing with a separate
    continuous idle drift on three of them (formerly section 12D). After
    two rounds of trying to smooth that motion it still read as choppy, so
-   the owner decided he would rather these photographs just held still.
+   these photographs are deliberately still now.
    Both motion sources are gone; scale(1.32) is what is left. It is no
    longer a coverage floor for any travel amplitude — there is no travel
    left to cover — it is simply the crop these images already sat at,
    kept exactly as-is so nothing reframes now that the motion has
-   stopped, and because the owner wants this imagery to read ambient,
+   stopped, and because this imagery is meant to read ambient,
    close-up and still. 12 images carry the attribute today; the Visit
    photograph's replacement (.visit__map, holding a Maps <iframe>, and
    .visit__card) needs no static crop of its own and carries no
@@ -2222,14 +2247,14 @@ strong, b {
    drop. On arrival, [data-reveal].in > * (0,2,0) beat [data-parallax]
    (0,1,0) on genuine specificity rather than source order, so the image
    eased from scale(1.32) down to scale(1) — a zoom with no drop. That
-   zoom-to-rest is the effect the owner likes, but it depended entirely
+   zoom-to-rest is the effect worth keeping, but it depended entirely
    on which rule happened to sit lower in the stylesheet; reordering
    sections would have silently killed it.
 
    This rule states both the start and the end transform directly, at a
    specificity neither of those two rules can beat, so the combined
-   effect no longer depends on source order at all. The owner also asked
-   for the 22px drop back, so the visible entrance is now the drop AND
+   effect no longer depends on source order at all. The 22px drop
+   belongs back with it, so the visible entrance is now the drop AND
    the zoom together, once, on arrival, for: .about__image (inside
    .about__media[data-reveal]), the Treatments opener image (inside
    .treatments__opener[data-reveal]), and .stone-interaction__bg. The
@@ -2490,11 +2515,11 @@ strong, b {
    12D. FORMERLY: AMBIENT DRIFT ON THE LARGE FRAMED PHOTOGRAPHS
    .about__image, .treatments__opener img and .visit__image used to carry
    a slow, continuous Ken Burns-style drift and zoom (ambientDrift +
-   ambientZoom keyframes) on top of the 12A scroll parallax, at the
-   owner's request. Two rounds of retuning that motion — an orbit path,
+   ambientZoom keyframes) on top of the 12A scroll parallax.
+   Two rounds of retuning that motion — an orbit path,
    a split zoom cycle, linear easing to kill the stop-and-restart —
-   still read as choppy, so the owner decided he would rather the
-   photographs simply held still. The keyframes and the animation /
+   still read as choppy, so the photographs are deliberately still
+   instead. The keyframes and the animation /
    animation-delay / will-change declarations that drove them are gone;
    these three images carried no keyframe animation of any kind by the
    end. .visit__image itself is gone now too — 17 swapped that
@@ -3759,7 +3784,7 @@ strong, b {
 }
 
 /* The one question on the page that has no answer yet. It is kept rather
-   than removed because the owner wants the gap visible: it invites the
+   than removed because the gap is meant to be visible: it invites the
    client to supply her own words, and her real FAQ questions with them.
    But a raw "[ANSWER TO CONFIRM.]" bracket reads as a defect rather than
    an invitation, so the blank is made to look deliberate instead. Quieter

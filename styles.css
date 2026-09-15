@@ -1,19 +1,17 @@
 /* ==========================================================================
-   THE HEALING BENCH. Design system, owned entirely by Agent S.
+   THE HEALING BENCH. Design system.
    Massage therapy and wellness in Beamsville.
 
-   DIRECTION-V3.md is binding on everything visual: warm spa editorial.
-   Alternating warm bands (espresso, tan, cream), Playfair Display for
-   display type, Jost for body and kickers, no mono face anywhere, no
-   chromatic accent anywhere. REDESIGN-PLAN.md and BUILD-CONTRACT-V2.md's
-   "one environment" and Lamborghini/ember palette are superseded on look;
-   their motion contract, file ownership and the copy gate still stand.
+   The visual direction is warm spa editorial: alternating warm bands
+   (espresso, tan, cream), Playfair Display for display type, Jost for
+   body and kickers, no mono face anywhere, no chromatic accent anywhere.
+   An earlier "one environment" concept and its Lamborghini/ember palette
+   are superseded on look; the motion rules and the copy gate still stand.
 
-   Read before touching this file: DIRECTION-V3.md, BUILD-CONTRACT-V2.md
-   (DOM/motion sections only), haydn-house-style. Phone first at 390px,
-   then widened. Animate only transform and opacity; never filter, width,
-   height, top or left, for anything continuous. Discrete hover/state
-   changes on colour are fine.
+   Phone first at 390px, then widened, and written to the house style.
+   Animate only transform and opacity; never filter, width, height, top
+   or left, for anything continuous. Discrete hover/state changes on
+   colour are fine.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -103,7 +101,7 @@ table {
   border-collapse: collapse;
 }
 
-/* No chromatic accent anywhere per DIRECTION-V3: text selection stays a
+/* No chromatic accent anywhere: text selection stays a
    neutral warm tan tint, never the removed ember token. */
 ::selection {
   background: rgba(217, 198, 172, .6);
@@ -112,12 +110,12 @@ table {
 
 /* --------------------------------------------------------------------------
    1. TOKENS
-   The exact DIRECTION-V3 palette and fonts, character for character, plus
+   The palette and fonts, character for character, plus
    an internal-only scale nothing outside this file needs to reference.
    -------------------------------------------------------------------------- */
 
 :root {
-  /* Palette, from DIRECTION-V3.md, verbatim. */
+  /* Palette. */
   --espresso: #17120E;
   --espresso-deep: #0E0B08;
   --tan: #D9C6AC;
@@ -136,9 +134,9 @@ table {
   --line: rgba(42, 33, 26, .14);
   --line-dark: rgba(247, 241, 232, .16);
 
-  /* Derived, not in the direction doc but needed to build it out: a raised
-     dark-ground card fill (DIRECTION-V3 defines --card for tan/cream only
-     and says dark-ground cards carry no shadow, which still leaves them
+  /* Derived, not part of the core palette but needed to build it out: a
+     raised dark-ground card fill (--card is defined for tan/cream only
+     and dark-ground cards carry no shadow, which still leaves them
      needing a fill distinct from the espresso ground behind them), a
      warm shadow for light-ground cards, and a couple of tan/cream steps
      for internal contrast (table stripes, hairline panels). */
@@ -177,7 +175,7 @@ table {
   /* Kept as an alias for anywhere still reading the old flat name. */
   --shadow-warm: var(--shadow-card-cream);
 
-  /* Fonts, DIRECTION-V3 verbatim. Fraunces, Karla, IBM Plex Mono, Bricolage
+  /* Fonts. Fraunces, Karla, IBM Plex Mono, Bricolage
      Grotesque and Space Mono must never appear in this file. */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'Jost', system-ui, sans-serif;
@@ -187,8 +185,8 @@ table {
   --gutter: clamp(20px, 5vw, 72px);
   --measure: 62ch;
 
-  /* Internal spacing and radius scale. Two-tier radius policy per
-     DIRECTION-V3: 16px on every card and image, a full pill (999px) on
+  /* Internal spacing and radius scale. Two-tier radius policy:
+     16px on every card and image, a full pill (999px) on
      every control, nothing in between. Full-bleed hero/book photography
      is the one deliberate exception, styled at 0 further down. */
   --space-2xs: 6px;
@@ -207,12 +205,12 @@ table {
 
   /* Type scale, phone value first, desktop second, all clamp()-built in
      rem so a visitor's own root size still scales the page. Sizes hold
-     the v2 floors DIRECTION-V3 reaffirms: body 17/18px, section heading
+     the established v2 floors: body 17/18px, section heading
      40px phone up to 88px desktop. Nothing here dips under 15px except
-     the kicker, which DIRECTION-V3 sets at 12 to 13px by name. */
+     the kicker, deliberately set at 12 to 13px. */
   --fs-kicker:    clamp(.75rem, .72rem + .12vw, .8125rem);   /* 12 -> 13px */
   --fs-sm:        clamp(.9375rem, .9rem + .18vw, 1rem);       /* 15 -> 16px */
-  --fs-base:      clamp(1.0625rem, 1.02rem + .2vw, 1.125rem); /* 17 -> 18px, contract floor */
+  --fs-base:      clamp(1.0625rem, 1.02rem + .2vw, 1.125rem); /* 17 -> 18px, body floor */
   --fs-md:        clamp(1.1875rem, 1.1rem + .38vw, 1.375rem); /* 19 -> 22px */
   --fs-card-name: clamp(1.25rem, 1.16rem + .4vw, 1.5rem);     /* 20 -> 24px, image-card captions */
   --fs-row-name:  clamp(1.375rem, 1.2rem + .8vw, 2rem);       /* 22 -> 32px, list/group headings */
@@ -249,8 +247,8 @@ table {
 
 /* --------------------------------------------------------------------------
    2. GROUND CONTEXT
-   The alternating warm-band rhythm, DIRECTION-V3's defining structural
-   move. Agent M puts exactly one of three real classes on each section,
+   The alternating warm-band rhythm, the page's defining structural
+   move. The markup puts exactly one of three real classes on each section,
    .tone-espresso / .tone-tan / .tone-cream, which is the actual switch;
    the section ids and the .ground-* aliases below are kept as a second
    way in, so the same result holds even if a class is ever missing.
@@ -259,7 +257,7 @@ table {
    shadow, and the two button-fill roles), which every component below
    reads instead of hardcoding a light or dark assumption: a card, a
    button or a rule never needs to know which band it is in. No two
-   neighbours share a ground, per the exact order in DIRECTION-V3.md:
+   neighbours share a ground, in this exact order:
    hero espresso (photographic), about tan, practitioners cream,
    treatments espresso, fees cream, visit tan, reviews espresso, faq
    cream, book espresso (photographic).
@@ -324,7 +322,7 @@ table {
   color: var(--ground-ink);
 }
 
-/* Band transitions are hard edges, never gradients, per DIRECTION-V3. No
+/* Band transitions are hard edges, never gradients. No
    rule is needed at most seams: an espresso band next to a light one is
    an 11-17:1 luminance jump, plainly a seam on its own. The one place
    that needs help is a light-to-light seam: --tan and --cream measure
@@ -358,9 +356,9 @@ h1, h2, h3, h4,
   color: inherit;
 }
 
-/* 400 is the default per DIRECTION-V3 ("Playfair Display 400 for big
-   display, 500 and 600 only where a heading must hold against a busy
-   photograph"). Section headings read fine at 400 on a flat band; the
+/* 400 is the default: Playfair Display 400 for big display, 500 and
+   600 only where a heading must hold against a busy photograph.
+   Section headings read fine at 400 on a flat band; the
    two headings that sit over real footage (the hero, the book CTA) step
    up to weight below. */
 h1, h2 { font-weight: 400; }
@@ -445,7 +443,7 @@ p, .lede, .prose p, blockquote, .faq-item__a {
   color: var(--ground-ink-soft, var(--ink-soft));
 }
 
-/* Kickers: uppercase Jost, wide tracking, 12 to 13px, per DIRECTION-V3.
+/* Kickers: uppercase Jost, wide tracking, 12 to 13px.
    This is the one small label size on the page; nothing else drops
    under 15px. No mono face anywhere. */
 .kicker, .eyebrow {
@@ -479,12 +477,12 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    3A. WORD-MASK HEADING REVEAL, data-split="words"
-   Every h2 carries data-split="words" per the motion contract. Agent J
-   wraps each word in a .word-mask span at runtime (site.js's
-   splitWords()), each one wrapping a .word-mask__inner span, and adds
-   .in to the heading itself once it enters view; the full string stays
-   in the DOM for screen readers via the heading's own text plus (if J
-   chooses) an aria-label duplicate. Purely additive: an unsplit heading
+   Every h2 carries data-split="words". site.js wraps each word in a
+   .word-mask span at runtime (splitWords()), each one wrapping a
+   .word-mask__inner span, and adds .in to the heading itself once it
+   enters view; the full string stays in the DOM for screen readers via
+   the heading's own text plus an optional aria-label duplicate. Purely
+   additive: an unsplit heading
    with no .word-mask children renders exactly as a plain heading, so
    this never depends on the split actually having run. Transform and
    opacity only. (These selectors previously read .mask / .mask > span,
@@ -532,15 +530,15 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    4A. SECTION LABEL: .slabel (data-reveal) THEN .shead AS SIBLINGS
-   The real markup is BUILD-CONTRACT-V2's device (.slabel > .slabel__n +
+   The real markup is a three-part device (.slabel > .slabel__n +
    .slabel__glyph + .slabel__rule, then a sibling <h2 class="shead">), not
-   wrapped in any .section__head container. DIRECTION-V3 retires the
-   numbered index and the cairn-as-label-glyph, so .slabel__n and
+   wrapped in any .section__head container. The numbered index and the
+   cairn-as-label-glyph are retired, so .slabel__n and
    .slabel__glyph are hidden here rather than removed from markup — the
    cairn stays reserved for the hero crest, the header brand and the
    favicon only. .slabel itself collapses to nothing on a centred section
    and survives only as the self-drawing hairline on the two split-layout
-   sections (About, Visit), which is the one place DIRECTION-V3 keeps it.
+   sections (About, Visit), which is the one place it is kept.
    .shead is centred by default and left-aligned on those same two
    sections. -------------------------------------------------------------------------- */
 
@@ -617,7 +615,7 @@ strong, b {
 }
 
 /* No chromatic accent: focus rings use ink on light grounds and bone on
-   dark, at a 2px offset, per DIRECTION-V3. Scoped by the same ground
+   dark, at a 2px offset. Scoped by the same ground
    variables everything else reads, so it flips automatically per band. */
 :focus-visible {
   outline: 2px solid var(--ground-ink, var(--ink));
@@ -667,7 +665,7 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    6. THE MARK: THE CAIRN
-   Three stacked stones, Agent M's <symbol id="cairn"> referenced by
+   Three stacked stones, a <symbol id="cairn"> in the markup referenced by
    <use>. Styled here wherever it appears: the hero crest, the header
    brand, and nowhere else in v3 (it drops out of the section label
    device and stays out of the favicon's own markup, which is inline SVG
@@ -1260,13 +1258,13 @@ strong, b {
 /* --------------------------------------------------------------------------
    9. HERO STAGE
    A full-bleed, low-lit treatment film (two source files, portrait and
-   landscape, chosen by Agent F's JS, which also cover-fits each frame
+   landscape, chosen by the film engine, which also cover-fits each frame
    itself as it draws to the canvas — no letterboxing) graded down so it
    supports rather than competes, since
    the footage is AI-generated and does not survive close inspection.
    Above centre: the cairn crest and a quiet wordmark. Below: a kicker, the
-   page's one big serif headline, and one or two pill buttons. Agent F
-   writes --heroOut (0 to 1, over 0.66 of a viewport height) onto
+   page's one big serif headline, and one or two pill buttons. The film
+   engine writes --heroOut (0 to 1, over 0.66 of a viewport height) onto
    #heroStage; this file translates and fades the crest and caption off
    with it. No CSS transition on that translate/opacity, deliberately, so
    it can never fall a frame behind the JS driving it.
@@ -1581,7 +1579,7 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    9B. THE HERO REVEAL, over the settled frame
-   Agent F writes --heroLate (0 to 1 across film progress 0.52 to 0.88)
+   The film engine writes --heroLate (0 to 1 across film progress 0.52 to 0.88)
    onto #heroStage, plus .is-late once it has started. The crest and
    caption leave on --heroOut, which is spent by about film progress
    0.37; this arrives well after they have gone, so the two never share
@@ -1933,7 +1931,7 @@ strong, b {
 }
 
 /* Sized to actually show the cairn glyph each node now contains, per
-   Agent M's real markup (<span class="spine__node"><svg><use
+   the real markup (<span class="spine__node"><svg><use
    href="#cairn"/></svg></span>) — a plain 7px dot from v2 would reduce a
    three-stone mark to an unreadable speck. */
 .spine__node {
@@ -1982,8 +1980,8 @@ strong, b {
 /* --------------------------------------------------------------------------
    11. THE HOLD INTERACTION
    Press and hold the cairn to feel it warm. --heat runs 0 to 1. This is
-   now the one deliberate exception to DIRECTION-V3's "no chromatic
-   accent" rule, by the owner's explicit request: a heated stone reads
+   now the one deliberate exception to the "no chromatic
+   accent" rule: a heated stone reads
    as red, not as a brighter neutral, so the glow now moves off --tan
    toward an ember red (#C2451F, warm and orange-leaning rather than a
    clean fire-engine red) as --heat climbs. It is mixed live off --heat
@@ -1995,7 +1993,7 @@ strong, b {
    the glyph reads as the cool object the heat radiates around rather
    than as material that is itself heating, and staying bone keeps it
    legible against its own reddening glow instead of the two colours
-   converging. Agent M's actual markup replaces the drawn stone body
+   converging. The actual markup replaces the drawn stone body
    with the cairn mark itself (.stone__mark, an <svg><use
    href="#cairn"/></svg>) as the button's one visual, plus its halo; the
    button sits over the photographic backdrop styled in section 15.
@@ -2161,7 +2159,7 @@ strong, b {
    inline style would fight a CSS one targeting the same property rather
    than simply losing to it (the two race on every re-render), so a
    container that carries both data-reveal and data-stagger, which is how
-   Agent M's markup pairs them everywhere, must get its delay from JS
+   the markup pairs them everywhere, must get its delay from JS
    only. A plain data-reveal with no data-stagger just reveals every
    child at once, which is correct for a single-item container (a lone
    .about__copy, .book__frame). */
@@ -2169,7 +2167,7 @@ strong, b {
   transition-delay: 0ms;
 }
 
-/* Agent J's data-stagger: the same fade+rise as [data-reveal], on a
+/* data-stagger: the same fade+rise as [data-reveal], on a
    container whose own JS-written inline transition-delay staggers the
    children. CSS supplies only the base transition and the two end
    states, never a delay value. */
@@ -2512,13 +2510,13 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    13. SECTION: ABOUT (tan, split layout)
-   Text left, still-linen.jpg right at full column height: a real <img>
-   in .about__media, per Agent M's actual markup (.about__grid >
+   Text left, a portrait photograph right at full column height: a real
+   <img> in .about__media, per the markup (.about__grid >
    .about__copy + .about__media > .about__image). room-1.jpg moved to
-   #heroPoster per Agent M's call (see section 9), so this is
-   still-linen.jpg, the raking-light linen fold: the room being made
-   ready, immediately below the hero. No image smaller than a third of
-   the viewport on desktop, per DIRECTION-V3: the media column runs a
+   #heroPoster (see section 9), so this is still-oil.jpg, a small
+   ceramic bowl of warm massage oil resting on folded linen: the room
+   being made ready, immediately below the hero. No image smaller than a
+   third of the viewport on desktop: the media column runs a
    full half of the grid, never a thumbnail.
    -------------------------------------------------------------------------- */
 
@@ -3257,10 +3255,11 @@ strong, b {
    normal flow, not overlaid on top of it. Markup: .visit__grid >
    .visit__hours + .visit__media > .visit__map + .visit__card.
 
-   This replaces the still-table.jpg photograph (.visit__image, now
-   removed) that used to fill .visit__media edge-to-edge with the card
-   floated over its lower portion, echoing About's split at reduced
-   intensity. That overlay composition doesn't carry over to a map: a
+   This replaces the still-table.jpg photograph (.visit__image, since
+   removed along with the image file itself) that used to fill
+   .visit__media edge-to-edge with the card floated over its lower
+   portion, echoing About's split at reduced intensity. That overlay
+   composition doesn't carry over to a map: a
    card sitting on top of part of an interactive iframe would swallow
    every drag and click that lands on the covered area, so the card now
    sits underneath the map in the stacking order that matters — outside
@@ -3414,13 +3413,13 @@ strong, b {
 
 /* --------------------------------------------------------------------------
    18. SECTION: REVIEWS (espresso, image-card carousel)
-   Dark, borderless-per-DIRECTION-V3-exception raised cards (a hairline
-   border stands in for the shadow DIRECTION-V3 withholds on dark
+   Dark raised cards, shadowless by exception (a hairline
+   border stands in for the shadow withheld on dark
    grounds), each carrying a small circular headshot of the practitioner
    the quote is about, since all three quotes here are the same three
    quotes attributed on the Practitioners cards above.
 
-   Built to Agent J's carousel shape: [data-carousel] is the outer
+   Built to the carousel shape in site.js: [data-carousel] is the outer
    wrapper, [data-carousel-view] the clipping viewport (overflow:hidden,
    nothing else — no padding that would let a card show past its own
    edge), [data-carousel-track] the flex row JS translates as a whole,
@@ -3604,8 +3603,8 @@ strong, b {
    decorative glyph on top of it doubles the punctuation. Pick one; the
    paragraph's own marks are the copy gate's verbatim text and stay,
    this ornament does not. Kept in the DOM (aria-hidden already, so
-   nothing is lost to assistive tech) rather than asking for a markup
-   change, per the file-ownership rule. */
+   nothing is lost to assistive tech) rather than changing the
+   markup. */
 .review-card__mark {
   display: none;
 }
@@ -3702,7 +3701,7 @@ strong, b {
   color: var(--ink-soft);
 }
 
-/* Agent J measured this deliberately: the accordion animates the real
+/* Measured deliberately: the accordion animates the real
    height property, not max-height, because max-height animations either
    overshoot (a large fixed cap) or undershoot (a small one) whenever
    the answer's actual wrapped line count changes at a given viewport
@@ -3775,15 +3774,15 @@ strong, b {
    20. SECTION: BOOK (espresso, full-bleed photograph, glass closing panel)
    room-2.jpg, the client's own warm treatment room, full-bleed behind
    the closing call to action, echoing the hero's grading so the page
-   visually returns to where it started. Real elements per Agent M's
+   visually returns to where it started. Real elements in the
    markup: .book__stage wraps .book__media (the <img>), .book__scrim
    (a real div, not a pseudo-element) and .container; normal DOM order
    already stacks scrim over photo and content over both, so no z-index
    is load-bearing here, only position for the two absolutely-placed
    layers.
 
-   The detail classes HANDOFF-BOOKING.md section 5 asked for are all
-   below. That handoff proposed four equal columns of text; this does
+   The detail classes for the closing block are all
+   below. An earlier layout proposed four equal columns of text; this does
    not, because four columns of loose type floating on a photograph is
    what made this section read as an afterthought in the first place.
    Instead everything lands inside one smoked-glass panel, the same
@@ -3833,8 +3832,8 @@ strong, b {
    target, the same "lone .about__copy, .book__frame" shape section 12
    already documents — which needs no wrapper and cannot touch the scrim
    or the content it does not own. It does nothing until that attribute
-   is added: CSS-only per this pass, so flagged here for the html agent
-   rather than added by this file. [data-parallax]'s scale(1.32) is
+   is added: this pass is CSS-only, so the markup change is noted here
+   rather than made from this file. [data-parallax]'s scale(1.32) is
    reused directly (not the attribute itself, just its value) for visual
    consistency with the other large feature photographs on the page.
 
@@ -4022,7 +4021,7 @@ strong, b {
 }
 
 /* ---- Live status pill --------------------------------------------------
-   No chromatic accent, per DIRECTION-V3: open and closed are told apart
+   No chromatic accent: open and closed are told apart
    by lightness and by whether the dot breathes, never by a green light.
    [hidden] until initHours() has decided, so a visitor with JS off never
    sees an empty pill making a claim about nothing.

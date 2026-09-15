@@ -1,3 +1,10 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Internal process notes must never ship: this site is served from the repo root.
+HANDOFF-*.md
+*-INTERNAL.md
+*.bak
+*.orig
+*~

@@ -740,9 +740,17 @@
        owner: keep the map, keep all the info, just don't hide one behind
        the other). still-table.jpg is no longer used on the page as of
        this change; the file stays in assets/ in case a future pass wants
-       it elsewhere. The embed uses the no-API-key "?q=...&output=embed"
-       form, keyed to the same address as the card beneath it, the JSON-LD
-       block in <head>, and the footer. Warm tan band. room-2.jpg moved to
+       it elsewhere. The embed is the canonical no-API-key
+       /maps/embed?origin=mfe&pb=... endpoint, keyed to the same address as
+       the card beneath it, the JSON-LD block in <head>, and the footer. It
+       ships with NO src and NO loading="lazy": the URL sits in data-src and
+       initMapEmbed() in site.js assigns it once. The older
+       "?q=...&output=embed" form 302s cross-origin, and a natively lazy
+       iframe inside this transformed, transparent [data-reveal] ancestor
+       never loaded at all on mobile Safari; removing both suspects removes
+       the bug. If the frame has not fired load inside eight seconds the
+       .visit__map-fallback link un-hides, so the address stays reachable
+       either way. Warm tan band. room-2.jpg moved to
        the book section, one of the three high-visibility slots named for
        the client's own treatment-room photography. Hours rise line by
        line: data-reveal plus data-stagger="70" sit on .visit__hours
@@ -792,11 +800,12 @@
         <div class="visit__media" data-reveal>
           <div class="visit__map">
             <iframe
-              src="https://www.google.com/maps?q=4460+Ontario+Street+Unit+2,+Beamsville,+ON+L3J+0A9&amp;output=embed"
+              id="visitMap"
+              data-src="https://www.google.com/maps/embed?origin=mfe&amp;pb=!1m2!2m1!1s4460+Ontario+Street+Unit+2,+Beamsville,+ON+L3J+0A9"
               title="Map showing The Healing Bench at 4460 Ontario Street, Unit 2, Beamsville"
-              loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen></iframe>
+            <a class="visit__map-fallback btn btn--ghost btn--sm" href="https://www.google.com/maps/search/?api=1&amp;query=4460+Ontario+Street+Unit+2,+Beamsville,+ON+L3J+0A9" target="_blank" rel="noopener" hidden>Open in Google Maps</a>
           </div>
           <div class="visit__card">
             <address class="visit__address-block">

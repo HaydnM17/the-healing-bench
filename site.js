@@ -2170,6 +2170,90 @@
   }
 
   /* -----------------------------------------------------------------------
+     MECHANISM 14. THE VISIT MAP EMBED LOADER.
+
+     The map in #visit rendered fine on desktop and would not load at all on
+     the owner's phone. Two suspects, neither reproducible here, so this
+     removes both rather than guessing between them.
+
+     One: "maps?q=...&output=embed" is a legacy URL that Google answers with
+     a 302 across to /maps/embed. A cross-origin redirect inside a lazily
+     loaded iframe is a known mobile Safari trouble spot. The canonical
+     endpoint is in the markup now, so nothing redirects.
+
+     Two: the iframe sits inside .visit__media[data-reveal], whose children
+     start at opacity 0 under a translate until initReveal() adds .in.
+     Native loading="lazy" on iframes is recent on iOS and its visibility
+     heuristics misread a transformed, transparent ancestor, so the fetch
+     may simply never have been scheduled. That attribute is gone and the
+     shipped iframe carries no src at all: this decides when to set it, from
+     data-src, and nothing is fetched before then.
+
+     Deliberately independent of the reveal system. It never reads .in,
+     data-reveal, tabPaused or reduced(). A map is information, not motion,
+     and it has to arrive whether or not any of those ever fire, which is
+     also why it is not in boot()'s pinnable list: there is no motion here
+     to pin to a final state.
+
+     Last line of defence is an eight second timer started when src is set.
+     A cross-origin iframe still fires load when its document loads, so
+     clearing on load is reliable. If load never comes, or there is no URL
+     to load, or the assignment throws, the "Open in Google Maps" link below
+     the frame un-hides and the address is still one tap away.
+  ----------------------------------------------------------------------- */
+
+  function initMapEmbed() {
+    var frame = doc.getElementById('visitMap');
+    if (!frame) return { pin: noop, unpin: noop };
+
+    var fallback = doc.querySelector('.visit__map-fallback');
+    var timer = null;
+
+    function clearTimer() {
+      if (timer !== null) { clearTimeout(timer); timer = null; }
+    }
+
+    function showFallback() {
+      clearTimer();
+      if (fallback) fallback.hidden = false;
+    }
+
+    function load() {
+      var url = frame.dataset ? frame.dataset.src : frame.getAttribute('data-src');
+      if (!url) { showFallback(); return; }
+
+      // Attached before src is assigned so the load cannot outrun it.
+      frame.addEventListener('load', clearTimer, { once: true });
+
+      try {
+        frame.src = url;
+      } catch (err) {
+        showFallback();
+        return;
+      }
+
+      timer = setTimeout(showFallback, 8000);
+    }
+
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) {
+            io.disconnect(); // one shot: the src is only ever set once
+            load();
+            return;
+          }
+        }
+      }, { rootMargin: '600px 0px', threshold: 0 });
+      io.observe(frame);
+    } else {
+      load(); // no way to detect approach: fetch it now
+    }
+
+    return { pin: noop, unpin: noop };
+  }
+
+  /* -----------------------------------------------------------------------
      BOOT AND REDUCED-MOTION GOVERNANCE, LIVE AND IN BOTH DIRECTIONS.
   ----------------------------------------------------------------------- */
 
@@ -2190,6 +2274,7 @@
     initHours();
     var spotlight = initSpotlight();
     initJumpArrows();
+    initMapEmbed();
 
     var pinnable = [spine, reveal, wordSplit, carousels, magnetic, progress, heat, steam, spotlight];
 

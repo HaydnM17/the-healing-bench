@@ -960,6 +960,21 @@ strong, b {
   .nav__toggle { display: none; }
 }
 
+/* MOBILE MENU. Full-screen, translucent, type-only. The panel used to be
+   an opaque top drawer with a radial wash, a bottom border and a heavy
+   drop shadow, and it slid down as one block. It is now the whole
+   viewport (inset: 0) so the blur treats the entire screen -- a blurred
+   band with an unblurred page under it reads as a rendering bug -- with
+   the page itself still legible through it, and the links arrive one
+   after another from the left.
+
+   On the blur and performance: backdrop-filter is declared on the base
+   rule rather than only on .is-open so the frosting fades in AND out with
+   the panel's own opacity instead of snapping off the instant the class
+   is dropped. It costs nothing while the menu is closed because the
+   closed panel is visibility: hidden and is therefore never painted, so
+   there is no surface to recomposite. This is the opposite case to the
+   header logo blur pulled today, which was live on every scroll frame. */
 @media (max-width: 899.98px) {
   .nav, .nav__list {
     display: flex;
@@ -967,35 +982,162 @@ strong, b {
     align-items: stretch;
     gap: 0;
     position: fixed;
-    inset: 0 0 auto 0;
-    padding: calc(var(--space-2xl) + 12px) var(--gutter) var(--space-lg);
-    background:
-      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(217, 198, 172, .12), transparent 70%),
-      var(--espresso-deep);
-    border-bottom: 1px solid rgba(247, 241, 232, .14);
-    box-shadow: 0 24px 56px -20px rgba(0, 0, 0, .7);
+    inset: 0;
+    padding: calc(var(--space-2xl) + 4px) var(--gutter) var(--space-lg);
+    /* Nine links have to survive a landscape phone. Scrolling from the
+       start edge (justify-content stays at flex-start, deliberately --
+       a centred flex column makes overflowing content at the top
+       unreachable) means the last link can never be stranded off the
+       bottom. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    /* Measured off the render, not guessed: the worst ground this can
+       sit on is a white pricing card, where .6 composited to #6E6D6B and
+       left opaque bone at 4.6:1 -- over the floor but with nothing in
+       hand. .64 takes that worst case to ~5.2:1 and every darker band to
+       6:1 and up, and 36% of the page still reads through the blur. */
+    background: rgba(14, 11, 8, .64);
+    -webkit-backdrop-filter: blur(20px) saturate(125%);
+    backdrop-filter: blur(20px) saturate(125%);
+    border: 0;
+    box-shadow: none;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-14px);
     pointer-events: none;
-    transition: opacity .3s var(--ease-out), transform .3s var(--ease-out),
-                visibility 0s linear .3s;
+    transition: opacity .28s var(--ease-out), visibility 0s linear .28s;
   }
 
   .nav.is-open, .nav__list.is-open {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
     pointer-events: auto;
-    transition: opacity .3s var(--ease-out), transform .3s var(--ease-out),
-                visibility 0s linear;
+    transition: opacity .28s var(--ease-out), visibility 0s linear;
+  }
+
+  /* Just the type. No row borders, no panel chrome: each link is a line
+     of text that slides in from the left and settles. The negative
+     inline margin lets the current item's plate breathe past the text
+     without pushing the type off the gutter it shares with the page. */
+  .nav a {
+    padding: clamp(9px, 1.5vh, 15px) 12px;
+    margin-inline: -12px;
+    /* The current item's plate is the only filled box left in the panel.
+       Capped so it stays a highlighted line of text on a landscape phone
+       instead of a 600px bar running the width of the screen; narrower
+       than any phone in portrait, so it changes nothing there. */
+    max-width: 420px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    font-size: clamp(1.25rem, 6vw, 1.75rem);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: .07em;
+    color: var(--bone);
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity .26s var(--ease-out), transform .26s var(--ease-out),
+                color .2s var(--ease-out), background-color .2s var(--ease-out);
+    transition-delay: 0s;
+  }
+
+  /* The desktop wash is a light one, which lifts the ground here and
+     costs the bone text contrast. On the dark blurred panel the press
+     and focus state darkens instead. */
+  .nav a:hover, .nav a:focus-visible {
+    background: rgba(14, 11, 8, .4);
+  }
+
+  .nav.is-open a, .nav__list.is-open a {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* The ladder. 26ms a step across nine links: the last one starts at
+     208ms and the whole menu has landed by 468ms, which is quick enough
+     to read as one gesture rather than a queue. The delays live only on
+     the open state, so dropping .is-open drops every delay with it and
+     the menu leaves all at once instead of unwinding item by item. */
+  .nav.is-open a:nth-child(1), .nav__list.is-open a:nth-child(1) { transition-delay: 0ms; }
+  .nav.is-open a:nth-child(2), .nav__list.is-open a:nth-child(2) { transition-delay: 26ms; }
+  .nav.is-open a:nth-child(3), .nav__list.is-open a:nth-child(3) { transition-delay: 52ms; }
+  .nav.is-open a:nth-child(4), .nav__list.is-open a:nth-child(4) { transition-delay: 78ms; }
+  .nav.is-open a:nth-child(5), .nav__list.is-open a:nth-child(5) { transition-delay: 104ms; }
+  .nav.is-open a:nth-child(6), .nav__list.is-open a:nth-child(6) { transition-delay: 130ms; }
+  .nav.is-open a:nth-child(7), .nav__list.is-open a:nth-child(7) { transition-delay: 156ms; }
+  .nav.is-open a:nth-child(8), .nav__list.is-open a:nth-child(8) { transition-delay: 182ms; }
+  .nav.is-open a:nth-child(9), .nav__list.is-open a:nth-child(9) { transition-delay: 208ms; }
+
+  /* The one you are on. The desktop treatment is a 14%-bone fill tuned
+     for a narrow pill on an opaque bar; on a translucent ground it
+     lightens the plate and reads as a smudge. Inverted here: the plate
+     darkens (bone would wash out over whatever photograph or cream band
+     happens to be behind it), the type turns tan, and a tan marker sits
+     at the head of the line. Tan on the darkened plate measures 7:1. */
+  .nav a.is-current,
+  .nav a[aria-current='true'] {
+    color: var(--tan);
+    font-weight: 500;
+    background: rgba(14, 11, 8, .5);
+  }
+
+  .nav a.is-current::before,
+  .nav a[aria-current='true']::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    width: 3px;
+    height: .9em;
+    transform: translateY(-50%);
+    border-radius: 2px;
+    background: var(--tan);
+  }
+}
+
+/* Where the blur cannot run the panel is nearly opaque instead: a 60%
+   fill with the page sitting sharp behind it is unreadable. */
+@media (max-width: 899.98px) {
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nav, .nav__list {
+      background: rgba(14, 11, 8, .95);
+    }
+  }
+}
+
+/* Landscape phone. Nine links, a 76px header above them and 360px of
+   screen: the type steps down and the padding tightens so the whole set
+   fits without scrolling. If a shorter viewport than this turns up, the
+   panel scrolls rather than losing Book off the bottom. */
+@media (max-width: 899.98px) and (max-height: 599.98px) {
+  .nav, .nav__list {
+    padding-top: 84px;
+    padding-bottom: var(--space-sm);
   }
 
   .nav a {
-    padding-block: var(--space-sm);
-    font-size: var(--fs-md);
-    color: var(--bone);
-    border-bottom: 1px solid rgba(247, 241, 232, .14);
+    padding-block: 4px;
+    font-size: 1.0625rem;
+    letter-spacing: .06em;
+  }
+}
+
+/* Reduced motion: no slide, no ladder. The links are held at their
+   settled position and full opacity in BOTH states rather than being
+   transitioned to it instantly, so there is no reveal left to strand --
+   the panel's own visibility is the only thing that shows or hides
+   them. The delay reset matches the ladder's specificity and comes
+   later in source order, so it wins without !important. */
+@media (max-width: 899.98px) and (prefers-reduced-motion: reduce) {
+  .nav a, .nav__list a {
+    opacity: 1;
+    transform: none;
+    transition: color .2s var(--ease-out), background-color .2s var(--ease-out);
+  }
+
+  .nav.is-open a:nth-child(n),
+  .nav__list.is-open a:nth-child(n) {
+    transition-delay: 0s;
   }
 }
 

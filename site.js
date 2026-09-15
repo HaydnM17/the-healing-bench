@@ -1,6 +1,6 @@
 /*
   site.js
-  Agent J, below-fold motion for The Healing Bench.
+  Below-fold motion for The Healing Bench.
 
   Vanilla JS, no libraries, no build step. Owns: the spine drive, the hold
   interaction, per-child staggered reveal choreography, the word-mask heading
@@ -168,8 +168,8 @@
   }
 
   /* -----------------------------------------------------------------------
-     TAB VISIBILITY. body.paused toggled on visibilitychange. Agent S's CSS
-     rule is body.paused *, body.paused *::before, body.paused *::after
+     TAB VISIBILITY. body.paused toggled on visibilitychange. The matching
+     CSS rule is body.paused *, body.paused *::before, body.paused *::after
        { animation-play-state: paused !important }
   ----------------------------------------------------------------------- */
 
@@ -476,7 +476,7 @@
 
      The practitioner photo clip-path unwrap (mechanism 5) rides this same
      stagger: .practitioners__grid carries data-stagger, each
-     .practitioner-card gets .in in turn, and Agent S's CSS keys the
+     .practitioner-card gets .in in turn, and the stylesheet keys the
      clip-path and photo scale off ".practitioner-card.in ...". No bespoke
      JS is needed for that mechanism because a clip-path transition is pure
      CSS; this function's only job is handing out the right class at the
@@ -593,14 +593,15 @@
 
   /* -----------------------------------------------------------------------
      MECHANISM 1. WORD-MASK HEADING REVEAL. Every [data-split="words"]
-     element outside the hero (Agent F already splits the hero's own bands
-     inside film-engine.js) is split at runtime into one .word-mask span per
-     word, each wrapping a .word-mask__inner span that Agent S's CSS rises
-     out from behind an overflow:hidden mask, 55ms stagger via inline
-     transitionDelay. The full string is preserved as an aria-label on the
-     element itself and every per-word span is aria-hidden, so nothing is
-     lost to assistive tech. One-shot, same IntersectionObserver shape as
-     initReveal above but kept separate since it drives a different DOM
+     element outside the hero (the hero film engine already splits the
+     hero's own bands, inside film-engine.js) is split at runtime into one
+     .word-mask span per word, each wrapping a .word-mask__inner span that
+     the stylesheet rises out from behind an overflow:hidden mask, 55ms
+     stagger via inline transitionDelay. The full string is preserved as
+     an aria-label on the element itself and every per-word span is
+     aria-hidden, so nothing is lost to assistive tech. One-shot, same
+     IntersectionObserver shape as initReveal above but kept separate since
+     it drives a different DOM
      transform (splitting text nodes) rather than just a class toggle.
   ----------------------------------------------------------------------- */
 
@@ -630,7 +631,7 @@
     var all = Array.prototype.slice.call(doc.querySelectorAll('[data-split="words"]'));
     var els = [];
     for (var i = 0; i < all.length; i++) {
-      // The hero's own bands are Agent F's territory (film-engine.js).
+      // The hero's own bands are split by film-engine.js, not this file.
       if (all[i].closest('#hero') || all[i].closest('#heroStage')) continue;
       els.push(all[i]);
     }
@@ -699,8 +700,7 @@
      opacity and transform-origin every frame as a pure function of its own
      distance from view centre.
 
-     Markup contract (documented for Agent M/Agent S, not enforced here
-     beyond guarded lookups):
+     Markup contract (not enforced here beyond guarded lookups):
        <div class="reviews__carousel" data-carousel>
          <div class="reviews__view" data-carousel-view tabindex="0"
               role="group" aria-label="Reviews, scrolls sideways">
@@ -1536,16 +1536,36 @@
     var STEAM_PROGRESS_TAU = 0.25; // seconds: eases the wave so a jump-scroll can't pop it
     var STEAM_REVEAL_BAND = 0.18; // width, in progress units, of each particle's fade-in
     var STEAM_THRESHOLD_MIN = 0.05;
-    var STEAM_THRESHOLD_RANGE = 0.65; // thresholds spread across [0.05, 0.70] of the section
+    // Thresholds spread across [0.05, 0.40] of the section (was [0.05,
+    // 0.70]). With a 0.18-wide reveal band a particle is fully in by
+    // threshold + 0.09, so the old spread only reached full population at
+    // ~79% down the section -- most of what a visitor actually scrolls
+    // through read as gradually-filling-in at best, sparse at worst. This
+    // narrower spread reaches full population by ~49% down instead, while
+    // the lowest thresholds (~0.05) still put the very top of the section
+    // at a fraction of a percent of reveal, so it still opens visually
+    // empty and fills in as the visitor scrolls, exactly as asked for.
+    var STEAM_THRESHOLD_RANGE = 0.35;
 
     // Population scales with section area rather than a flat count, so a
     // short wide desktop section and a tall narrow phone section both fill
     // without either looking sparse or turning into visual noise. Phones
     // also carry a lower absolute ceiling for GPU budget.
-    var STEAM_AREA_PER_PARTICLE_DESKTOP = 26000;
-    var STEAM_AREA_PER_PARTICLE_PHONE = 21000;
-    var STEAM_CAP_MIN_DESKTOP = 36, STEAM_CAP_MAX_DESKTOP = 70;
-    var STEAM_CAP_MIN_PHONE = 18, STEAM_CAP_MAX_PHONE = 36;
+    //
+    // Raised from the original 26000/21000 divisors and 70/36 ceilings: the
+    // treatments section (opener image, three treatment groups, ten rows)
+    // is tall enough on both desktop and phone that the area-based count
+    // was landing at or near its ceiling anyway, so the ceiling itself --
+    // not the divisor -- was the real limit on how many bubbles could ever
+    // be on screen. The phone ceiling (50) stays well under the desktop one
+    // (100) and both stay two orders of magnitude under "hundreds": a
+    // filled circle via ctx.arc/fill is one of the cheapest things a 2D
+    // canvas can draw, so a few dozen more of them costs nothing a phone
+    // GPU notices.
+    var STEAM_AREA_PER_PARTICLE_DESKTOP = 19000;
+    var STEAM_AREA_PER_PARTICLE_PHONE = 15000;
+    var STEAM_CAP_MIN_DESKTOP = 48, STEAM_CAP_MAX_DESKTOP = 100;
+    var STEAM_CAP_MIN_PHONE = 24, STEAM_CAP_MAX_PHONE = 50;
 
     function particleCap() {
       var area = Math.max(1, width * height);
@@ -2205,8 +2225,8 @@
 })();
 
 /*
-  Mechanism map, one per section, no two neighbours sharing one. Hero (Agent
-  F's territory) sits outside this list:
+  Mechanism map, one per section, no two neighbours sharing one. Hero (owned
+  by film-engine.js) sits outside this list:
 
     About (tan)          -> mechanism 3, per-child staggered entrance
                              (.intro__frame with data-reveal data-stagger)
@@ -2239,8 +2259,8 @@
   connective tissue riding the reveal system across every section rather
   than one section's own identity, the same way the spine (mechanism 9) and
   the ambient steam are continuous systems rather than single-section
-  moments. That is deliberate: the brief asks for nine distinct mechanisms
-  with no two neighbours sharing one AND a shared, recognisable rhythm
-  across the whole page. A different primary mechanism every section gives
-  the first; the shared heading and label treatment gives the second.
+  moments. That is deliberate: the goal is nine distinct mechanisms with no
+  two neighbours sharing one AND a shared, recognisable rhythm across the
+  whole page. A different primary mechanism every section gives the first;
+  the shared heading and label treatment gives the second.
 */

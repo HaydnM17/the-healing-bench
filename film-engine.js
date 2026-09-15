@@ -1,11 +1,12 @@
 /*
   film-engine.js
-  Agent F, the scroll-scrubbed hero engine for The Healing Bench, v2.
+  The scroll-scrubbed hero engine for The Healing Bench, v2.
 
   Vanilla JS, no libraries, no build step. Drives one of two hero films
   (portrait or landscape, chosen by orientation) from scroll position
-  through a pinned hero. Implements references/scrub-pipeline.md and
-  binds to the DOM contract in BUILD-CONTRACT-V2.md.
+  through a pinned hero, and writes the small set of DOM properties and
+  classes documented throughout this file for the rest of the page to
+  read.
 
   What changed from v1:
   - Two source films instead of one. The right one is chosen by a media
@@ -16,11 +17,11 @@
     drives, so the hero is alive on arrival. It stops for good on the
     first real scroll.
   - The five-band hero narration is gone. The hero is now a single
-    composed crest plus caption block, owned by Agent M's markup and
-    Agent S's CSS. This engine's only remaining DOM writes are the poster,
+    composed crest plus caption block, owned by the markup and the
+    stylesheet. This engine's only remaining DOM writes are the poster,
     the canvas, the loading ring, and one custom property, --heroOut, that
-    Agent S reads to move the crest and caption out of the way as the
-    visitor leaves the hero.
+    the stylesheet reads to move the crest and caption out of the way as
+    the visitor leaves the hero.
   - Only one rAF chain exists in this file: tick(). The v1 file had a
     second one (the band-one load ramp) that is no longer needed now that
     there is no band-one to assemble on its own.
@@ -34,7 +35,7 @@
 
   // The two films. Exactly one variant's frames are ever fetched, chosen
   // by FILM_Q below. Portrait: shot at 720x1280, 21.041667s at 24fps (505
-  // frames), confirmed by Agent A, then trimmed and resampled down to the
+  // frames), then trimmed and resampled down to the
   // 193-frame WebP sequence described below. Wide: landscape, encoded
   // separately at its own frame count and timing.
   // Both films are trimmed to end just after the camera reaches the table.
@@ -89,8 +90,8 @@
   // Matching posters, one per film, so the still image painted first
   // during the bandwidth race is already framed for the right aspect
   // ratio and never flashes a mismatched crop while the frames load in.
-  // Not part of the mandated two-film constants above; an Agent F
-  // addition that closes the same "wrong asset" gap for the still frame.
+  // Not part of the two-film constants above; added separately to close
+  // the same "wrong asset" gap for the still frame.
   var POSTER_PORTRAIT = 'assets/hero-poster.jpg?v=3';
   var POSTER_WIDE = 'assets/hero-wide-poster.jpg?v=3';
 
@@ -135,7 +136,7 @@
 
   /* ---------------------------------------------------------------------
      Guard. If the hero film canvas is not on this page, do nothing but
-     still hand Agent J's site.js a safe, inert copy of the public API.
+     still hand site.js a safe, inert copy of the public API.
   --------------------------------------------------------------------- */
 
   var canvas = document.getElementById('heroFilm');
@@ -206,8 +207,8 @@
 
   /* ---------------------------------------------------------------------
      --heroOut: 0 to 1 over HERO_OUT_VH viewport heights of real scroll,
-     independent of the film's own progress mapping. Agent S reads it on
-     #heroStage to translate and fade #heroCrest and #heroCaption. Pure
+     independent of the film's own progress mapping. The stylesheet reads
+     it on #heroStage to translate and fade #heroCrest and #heroCaption. Pure
      function of live scroll geometry, so it is fully reversible: scroll
      back up and the crest returns. Written delta-gated, every tick.
   --------------------------------------------------------------------- */
@@ -233,8 +234,8 @@
 
   /* ---------------------------------------------------------------------
      --heroLate: 0 to 1 across the tail of the film, after the camera has
-     finished its descent and settled on the table. Agent S reads it on
-     #heroStage to bring .hero__reveal in over the settled frame.
+     finished its descent and settled on the table. The stylesheet reads
+     it on #heroStage to bring .hero__reveal in over the settled frame.
 
      Deliberately NOT --heroOut inverted. --heroOut is a function of raw
      scrolled pixels over two thirds of a viewport, which is how the crest
@@ -808,8 +809,8 @@
 
   /* ---------------------------------------------------------------------
      The five static-hero gates. Strings identical, character for
-     character, to BUILD-CONTRACT.md and styles.css. Decided live with
-     change listeners, never once at load.
+     character, to the matching queries in the stylesheet. Decided live
+     with change listeners, never once at load.
   --------------------------------------------------------------------- */
 
   var GATES = [
@@ -873,7 +874,10 @@
   applyHeroMode();
 
   /* ---------------------------------------------------------------------
-     Public API. Agent J's site.js reads and calls into this.
+     Public API. site.js reads and calls into this: the jump arrows check
+     isHeld() before showing the down arrow, and the reduced-motion boot
+     logic calls pinToFinalStates() / unpinFinalStates() alongside the
+     rest of the page's pinnable animations.
   --------------------------------------------------------------------- */
 
   function isScrubOn() { return scrubOn; }

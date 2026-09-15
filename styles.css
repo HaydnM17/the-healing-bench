@@ -1854,6 +1854,7 @@ strong, b {
   margin-top: var(--space-lg);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-xs);
 }
 
@@ -1868,10 +1869,25 @@ strong, b {
               background-color .25s var(--ease-out), border-color .25s var(--ease-out);
 }
 
+/* Body copy, same dark-ground pairing .treatment-row__desc uses elsewhere
+   in this section (font-size: var(--fs-sm), line-height: var(--lh-body),
+   color: var(--bone-soft)) rather than invented values. Capped at 30ch so
+   the sentence reads as a short caption instead of running edge to edge
+   on a wide viewport; centred to match .heat-reveal's own align-items.
+   At a 390px phone width the .stone-interaction card's own padding
+   leaves roughly 300px of column, comfortably wider than 30ch at --fs-sm,
+   so this wraps to two balanced lines rather than cramping or stranding
+   a single word on its own line. */
+.heat-reveal__line {
+  max-width: 30ch;
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--bone-soft);
+}
+
 .heat-reveal__item:nth-child(1) { transition-delay: 0ms; }
 .heat-reveal__item:nth-child(2) { transition-delay: 120ms; }
-.heat-reveal__item:nth-child(3) { transition-delay: 240ms; }
-.heat-reveal__item:nth-child(4) { transition-delay: 360ms; }
 
 .heat-reveal[data-state='warming'] .heat-reveal__item {
   opacity: .4;
@@ -1976,12 +1992,20 @@ strong, b {
    the zoom together, once, on arrival, for: .about__image (inside
    .about__media[data-reveal]), the Treatments opener image (inside
    .treatments__opener[data-reveal]), .visit__image (inside
-   .visit__media[data-reveal]), and — once the html pass wires up its
-   parent — .stone-interaction__bg (inside
-   .stone-interaction__media[data-reveal]). All four are direct children
-   of their own [data-reveal] container, so they already had a correct
-   opacity fade from [data-reveal] > * / .in > *; only transform needed
-   restating.
+   .visit__media[data-reveal]), and .stone-interaction__bg. The first
+   three are direct children of their own [data-reveal] container, so
+   they already had a correct opacity fade from [data-reveal] > * /
+   .in > *; only transform needed restating.
+
+   .stone-interaction__bg is different: the html pass never added
+   data-reveal to .stone-interaction__media, so it never gets near
+   [data-reveal] > * at all. Instead .stone-interaction itself is a
+   direct child of .treatments__group[data-reveal][data-stagger="70"]
+   (confirmed against index.html), so the group's own stagger hands
+   .stone-interaction an .in class directly — see staggerChildren() in
+   site.js. This rule keys the fourth entry off .stone-interaction(.in)
+   rather than an attribute that is not in the markup, and supplies both
+   opacity and transform for it, since nothing else does.
 
    HEADROOM ARITHMETIC — object-fit: cover inside overflow: hidden means
    scale(1.32) leaves 16% of the frame's own height spare above and
@@ -2011,7 +2035,7 @@ strong, b {
 .about__media[data-reveal] .about__image,
 .treatments__opener[data-reveal] img,
 .visit__media[data-reveal] .visit__image,
-.stone-interaction__media[data-reveal] .stone-interaction__bg {
+.stone-interaction .stone-interaction__bg {
   opacity: 0;
   transform: translateY(22px) scale(1.32);
   transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
@@ -2020,7 +2044,7 @@ strong, b {
 .about__media[data-reveal].in .about__image,
 .treatments__opener[data-reveal].in img,
 .visit__media[data-reveal].in .visit__image,
-.stone-interaction__media[data-reveal].in .stone-interaction__bg {
+.stone-interaction.in .stone-interaction__bg {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
@@ -2060,28 +2084,6 @@ strong, b {
 
 .treatments__group[data-stagger].in .treatment-row__media img {
   transform: translateY(0) scale(1);
-}
-
-/* .stone-interaction__ambient is the OTHER direct child of
-   .stone-interaction__media (still-falling.jpg, the screen-blended
-   ambient layer behind the heat stone) — once the html pass adds
-   data-reveal to their shared parent, the generic [data-reveal] > *
-   rule above (section 12) would reach this element too, fading it from
-   opacity: 0 and sliding it in translateY(22px), neither of which it
-   has ever done: today it sits permanently at its own authored
-   opacity: .45 with no transform at all. It carries no [data-parallax],
-   so nothing would fix the translateY half the way [data-parallax]
-   fixes it for .stone-interaction__bg above — left alone, it would
-   visibly drop into place on arrival. Pin it outright, at a specificity
-   the generic rule cannot beat, so this backdrop layer keeps doing
-   exactly what it does today regardless of what its new sibling
-   attribute enables. The interactive stone itself (.stone,
-   #heatStoneHint, .heat-reveal) lives outside .stone-interaction__media
-   entirely — see .stone-interaction > .stone and siblings in section 15
-   — so its behaviour is untouched either way. */
-.stone-interaction__media[data-reveal] .stone-interaction__ambient {
-  opacity: .45;
-  transform: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -2704,11 +2706,12 @@ strong, b {
   max-width: none;
 }
 
-/* The hot-stone hold interaction: a layered photographic backdrop
-   (still-heat.jpg parallaxing under still-falling.jpg's whisper of
-   motion, screen-blended so it reads as drifting light rather than a
-   second flat photo) behind the button and its reveal text, with a
-   scrim so both stay legible over real photography. */
+/* The hot-stone hold interaction: a single photographic backdrop
+   (still-heat.jpg, parallax-cropped per 12A) behind the button and its
+   reveal text, with a scrim so both stay legible over real photography.
+   still-falling.jpg's screen-blended ambient layer
+   (formerly .stone-interaction__ambient) has been removed from the
+   markup entirely; this is one photo, not a two-layer backdrop. */
 .stone-interaction {
   position: relative;
   overflow: hidden;
@@ -2725,18 +2728,12 @@ strong, b {
   background: var(--card-dark);
 }
 
-.stone-interaction__bg,
-.stone-interaction__ambient {
+.stone-interaction__bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.stone-interaction__ambient {
-  opacity: .45;
-  mix-blend-mode: screen;
 }
 
 .stone-interaction__media::after {
@@ -3997,7 +3994,7 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
   .about__media[data-reveal] .about__image,
   .treatments__opener[data-reveal] img,
   .visit__media[data-reveal] .visit__image,
-  .stone-interaction__media[data-reveal] .stone-interaction__bg,
+  .stone-interaction .stone-interaction__bg,
   .treatments__group[data-stagger] .treatment-row__media img,
   .book__media[data-reveal] {
     opacity: 1;

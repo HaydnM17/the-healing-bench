@@ -1459,30 +1459,39 @@
      than a band pinned to the bottom edge. Population scales with section
      area rather than a flat count (a lower absolute ceiling on phones for
      GPU budget), and each particle's own life is matched to its own rise
-     speed so a lap really does travel from the bottom of the section to
-     the top instead of fading out a few dozen pixels up.
+     speed so a lap really does travel from below the section's bottom
+     edge to above its top edge.
 
-     Two scroll couplings, both sampled and eased once per rAF frame
-     rather than driven off scroll events, so neither one can go choppy
-     through a gap in event delivery the way a scroll-position map would:
+     Every particle is fully present the whole time it is inside the
+     section. There is no scroll-depth ramp and no along-life fade: a
+     bubble's opacity is a single fixed per-particle value chosen at spawn,
+     purely so bubbles sit at slightly different depths relative to each
+     other, and it does not change with scroll position or with how far up
+     the section the bubble has travelled. The band therefore reads equally
+     populated at its top edge and at its bottom edge, and stays that way
+     whichever direction the visitor is scrolling. Bubbles only ever leave
+     by physically rising out of the top, and the recycle point sits far
+     enough above the top edge that the whole circle is already off-canvas
+     when it happens, so nothing needs a fade to hide it.
 
-     - Velocity coupling: every frame reads window.scrollY, turns the
-       delta into an eased px/s estimate, and uses that (clamped) as a
-       temporary multiplier on the particles' resting upward speed.
-       Bubbles always drift upward on their own; scrolling speeds that up
-       for as long as it continues, then the multiplier eases back to 1x.
-       This is deliberately NOT a scroll-position map - it is a
-       continuously-integrated velocity multiplier, so motion stays smooth
-       even when scroll events arrive sparsely.
+     Vertical coverage comes from two things working together: the initial
+     fill scatters each particle uniformly along its own bottom-to-top
+     trajectory, so the entire height is populated on the very first frame;
+     and because every particle then rises at a constant speed and respawns
+     just below the bottom edge, that uniform spread is the steady state,
+     not just the opening state.
 
-     - Density/wave coupling: each particle carries a threshold along the
-       section's own scroll progress (0 at the section's top edge, 1 at
-       its bottom edge) and fades in and out around that threshold, so the
-       section reads empty near its top and the bubbles gather into full
-       population by the time the visitor has scrolled into its body. The
-       progress value itself is eased so the fill reads as one gathering
-       wave rather than particles popping in, and it is fully reversible:
-       scrolling back up drains the wave out the same way it filled in.
+     One scroll coupling remains, sampled and eased once per rAF frame
+     rather than driven off scroll events, so it cannot go choppy through a
+     gap in event delivery the way a scroll-position map would: every frame
+     reads window.scrollY, turns the delta into an eased px/s estimate, and
+     uses that (clamped) as a temporary multiplier on the particles'
+     resting upward speed. Bubbles always drift upward on their own;
+     scrolling speeds that up for as long as it continues, then the
+     multiplier eases back to 1x. This is deliberately NOT a
+     scroll-position map - it is a continuously-integrated velocity
+     multiplier, so motion stays smooth even when scroll events arrive
+     sparsely.
 
      Pauses off-screen and when body.paused (tabPaused), and is inert
      under reduced motion, same as before. The particle colour is still
@@ -1530,42 +1539,30 @@
     var STEAM_SCROLL_ATTACK_TAU = 0.15; // seconds: how fast the estimate rises
     var STEAM_SCROLL_DECAY_TAU = 0.5; // seconds: how gently it settles back down
 
-    // Density/wave coupling state: eased section-scroll progress, 0 at the
-    // section's own top edge, 1 at its own bottom edge.
-    var sectionProgress = 0;
-    var STEAM_PROGRESS_TAU = 0.25; // seconds: eases the wave so a jump-scroll can't pop it
-    var STEAM_REVEAL_BAND = 0.18; // width, in progress units, of each particle's fade-in
-    var STEAM_THRESHOLD_MIN = 0.05;
-    // Thresholds spread across [0.05, 0.40] of the section (was [0.05,
-    // 0.70]). With a 0.18-wide reveal band a particle is fully in by
-    // threshold + 0.09, so the old spread only reached full population at
-    // ~79% down the section -- most of what a visitor actually scrolls
-    // through read as gradually-filling-in at best, sparse at worst. This
-    // narrower spread reaches full population by ~49% down instead, while
-    // the lowest thresholds (~0.05) still put the very top of the section
-    // at a fraction of a percent of reveal, so it still opens visually
-    // empty and fills in as the visitor scrolls, exactly as asked for.
-    var STEAM_THRESHOLD_RANGE = 0.35;
-
     // Population scales with section area rather than a flat count, so a
     // short wide desktop section and a tall narrow phone section both fill
     // without either looking sparse or turning into visual noise. Phones
     // also carry a lower absolute ceiling for GPU budget.
     //
-    // Raised from the original 26000/21000 divisors and 70/36 ceilings: the
-    // treatments section (opener image, three treatment groups, ten rows)
-    // is tall enough on both desktop and phone that the area-based count
-    // was landing at or near its ceiling anyway, so the ceiling itself --
-    // not the divisor -- was the real limit on how many bubbles could ever
-    // be on screen. The phone ceiling (50) stays well under the desktop one
-    // (100) and both stay two orders of magnitude under "hundreds": a
-    // filled circle via ctx.arc/fill is one of the cheapest things a 2D
-    // canvas can draw, so a few dozen more of them costs nothing a phone
-    // GPU notices.
-    var STEAM_AREA_PER_PARTICLE_DESKTOP = 19000;
-    var STEAM_AREA_PER_PARTICLE_PHONE = 15000;
-    var STEAM_CAP_MIN_DESKTOP = 48, STEAM_CAP_MAX_DESKTOP = 100;
-    var STEAM_CAP_MIN_PHONE = 24, STEAM_CAP_MAX_PHONE = 50;
+    // Raised again (from 19000/15000 divisors and 100/50 ceilings). The
+    // treatments section is tall enough on both desktop and phone that the
+    // area-based count lands on its ceiling either way, so the ceiling --
+    // not the divisor -- is what actually decides how many bubbles exist.
+    //
+    // Why these ceilings are safe on a phone: the per-frame cost here is
+    // dominated by the full-canvas clearRect, which is a function of the
+    // section's size and does not change at all with population. Each
+    // additional bubble is one beginPath + fillStyle + arc + fill of a
+    // solid circle, which is about the cheapest primitive a 2D canvas has;
+    // going from 50 to 140 of them adds 90 such calls per frame, which is
+    // small next to the clear that was already happening. The phone
+    // ceiling is still kept well under the desktop one (140 vs 260)
+    // because the phone is where jank shows first and is where this site
+    // gets reviewed.
+    var STEAM_AREA_PER_PARTICLE_DESKTOP = 7000;
+    var STEAM_AREA_PER_PARTICLE_PHONE = 9000;
+    var STEAM_CAP_MIN_DESKTOP = 90, STEAM_CAP_MAX_DESKTOP = 260;
+    var STEAM_CAP_MIN_PHONE = 45, STEAM_CAP_MAX_PHONE = 140;
 
     function particleCap() {
       var area = Math.max(1, width * height);
@@ -1584,12 +1581,6 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function computeSectionProgress() {
-      var rect = host.getBoundingClientRect();
-      var vh = window.innerHeight || doc.documentElement.clientHeight || 1;
-      return clamp((vh * 0.5 - rect.top) / Math.max(1, rect.height), 0, 1);
-    }
-
     function spawn(p, scatter) {
       scatter = scatter || 0; // 0 = fresh from the bottom, >0 = fast-forwarded up the section
       p.r = 8 + Math.random() * 16;
@@ -1597,13 +1588,20 @@
       p.sway = 8 + Math.random() * 14;
       p.phase = Math.random() * Math.PI * 2;
       p.freq = 0.4 + Math.random() * 0.3;
+      // The particle's ONLY opacity term. Fixed for this bubble's whole
+      // life, so bubbles differ from each other (depth) but no single
+      // bubble ever fades in or out.
       p.alpha = 0.04 + Math.random() * 0.05; // whisper level
-      p.threshold = STEAM_THRESHOLD_MIN + Math.random() * STEAM_THRESHOLD_RANGE;
       p.baseX = Math.random() * width;
       var startY = height + 20 + Math.random() * 60; // just below the fold
       p.life = Math.max(4, (startY + 40) / p.vy); // seconds to cross from spawn to just above the top
+      // Position is linear in age at a constant vy, so a `scatter` drawn
+      // uniformly from 0 to 1 lands the particle uniformly anywhere along
+      // its own full trajectory -- from just below the bottom edge to just
+      // above the top edge. That is what fills the whole band immediately
+      // instead of starting everything at the bottom and waiting.
       p.age = scatter * p.life;
-      p.y = startY - p.vy * p.age; // fast-forward position to match a staggered/scattered start
+      p.y = startY - p.vy * p.age;
     }
 
     function ensureParticles() {
@@ -1611,7 +1609,10 @@
       if (particles.length > cap) particles.length = cap;
       while (particles.length < cap) {
         var p = {};
-        spawn(p, Math.random()); // scattered across the full height on first fill
+        // Uniform across the full height on first fill (and on any later
+        // top-up after a resize), so a new particle never announces itself
+        // by appearing at the bottom edge of a band that is already full.
+        spawn(p, Math.random());
         particles.push(p);
       }
     }
@@ -1635,26 +1636,22 @@
       scrollSpeed += (speedSample - scrollSpeed) * (1 - Math.exp(-dt / speedTau));
       var velocityMultiplier = 1 + clamp(scrollSpeed / STEAM_SCROLL_REFERENCE, 0, STEAM_SCROLL_BOOST_MAX);
 
-      var targetProgress = computeSectionProgress();
-      sectionProgress += (targetProgress - sectionProgress) * (1 - Math.exp(-dt / STEAM_PROGRESS_TAU));
-
       ctx.clearRect(0, 0, width, height);
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         p.age += dt;
+        // Recycle strictly on leaving the top (y < -40 puts the whole
+        // circle, max radius 24, clear of the canvas), or on running out
+        // of life, which is the same event at resting speed. Either way the
+        // bubble is already invisible when it is reused, so it is cut
+        // rather than faded.
         if (p.age >= p.life || p.y < -40) { spawn(p); continue; }
         p.y -= p.vy * velocityMultiplier * dt;
-        var t = clamp(p.age / p.life, 0, 1);
-        var lifeFade = Math.sin(Math.PI * t);
-        var reveal = clamp((sectionProgress - p.threshold) / STEAM_REVEAL_BAND + 0.5, 0, 1);
-        var alpha = p.alpha * lifeFade * reveal;
-        if (alpha > 0.002) {
-          var x = p.baseX + Math.sin(p.age * p.freq + p.phase) * p.sway;
-          ctx.beginPath();
-          ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha.toFixed(3) + ')';
-          ctx.arc(x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        var x = p.baseX + Math.sin(p.age * p.freq + p.phase) * p.sway;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + p.alpha.toFixed(3) + ')';
+        ctx.arc(x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       rafId = requestAnimationFrame(tick);
@@ -1669,7 +1666,6 @@
       lastTick = 0;
       lastScrollY = window.scrollY || doc.documentElement.scrollTop || 0;
       scrollSpeed = 0;
-      sectionProgress = computeSectionProgress();
       rafId = requestAnimationFrame(tick);
     }
 

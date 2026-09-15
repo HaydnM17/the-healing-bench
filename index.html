@@ -7,7 +7,7 @@
 <meta name="description" content="Registered massage therapy, reflexology and natural facials in Beamsville, Ontario. Three practitioners, evening and Saturday hours, book online.">
 <meta name="theme-color" content="#17120E">
 
-<!-- Favicon: the cairn mark, three stacked stones, on the espresso ground. Matches the in-page sprite drawn in #cairn below, redrawn here as a standalone file since a favicon loads before body markup exists. Recoloured for DIRECTION-V3.md's warm spa palette: no chromatic accent, so the stones sit in cream on espresso rather than the retired ember tone. -->
+<!-- Favicon: the cairn mark, three stacked stones, on the espresso ground. Matches the in-page sprite drawn in #cairn below, redrawn here as a standalone file since a favicon loads before body markup exists. Recoloured for the warm spa palette: no chromatic accent, so the stones sit in cream on espresso rather than the retired ember tone. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2317120E'/%3E%3Cg transform='translate(13,6) scale(0.8)'%3E%3Cellipse cx='24' cy='52' rx='19' ry='9' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='33' rx='13.5' ry='7.5' fill='%23F4EBDD'/%3E%3Cellipse cx='24' cy='17' rx='8.5' ry='6.5' fill='%23F4EBDD'/%3E%3C/g%3E%3C/svg%3E">
 
 <!-- site.webmanifest exists but nothing linked to it; wiring that up here.
@@ -18,7 +18,7 @@
      the cairn mark above and add an icons array to site.webmanifest. -->
 <link rel="manifest" href="site.webmanifest">
 
-<!-- Fonts per DIRECTION-V3.md, warm spa editorial: Playfair Display for display, Jost for body, kickers and buttons. There is no mono face in this direction. Fraunces, Karla, IBM Plex Mono, Bricolage Grotesque and Space Mono are all retired. -->
+<!-- Fonts for the warm spa editorial direction: Playfair Display for display, Jost for body, kickers and buttons. There is no mono face in this direction. Fraunces, Karla, IBM Plex Mono, Bricolage Grotesque and Space Mono are all retired. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet">
@@ -28,8 +28,8 @@
 <meta property="og:title" content="The Healing Bench | Massage Therapy &amp; Reflexology in Beamsville, ON">
 <meta property="og:description" content="Registered massage therapy, reflexology and natural facials in Beamsville, Ontario. Three practitioners, evening and Saturday hours, book online.">
 <!-- Preview build: pointed at the live GitHub Pages URL, not the eventual
-     thehealingbench.ca domain (this is a speculative pitch, not launched
-     there yet). DEPLOY STEP: swap both to the real domain once it goes live. -->
+     thehealingbench.ca domain, since that domain is not live yet.
+     DEPLOY STEP: swap both to the real domain once it goes live. -->
 <meta property="og:url" content="https://haydnm17.github.io/the-healing-bench/">
 <!-- treatment-lengthwise.jpg chosen over hero-poster.jpg/hero-wide-poster.jpg: it is
      the only landscape asset that reads clearly as massage therapy at link-preview
@@ -44,15 +44,14 @@
 
 <!--
   LocalBusiness structured data, carried over unchanged from the prior build.
-  Every fact below is taken only from DESIGN-PACKAGE.md section 14 (verified
-  facts). The old live site shipped a placeholder phone number,
-  123-456-7890, in this exact schema block; this is the fix. Sunday is
-  closed and is intentionally left out of openingHoursSpecification rather
-  than given a fabricated opens/closes pair, per Google's own
-  structured-data guidance for closed days. Sunday's closure is still shown
-  to visitors, in the visible hours table in #visit. No geo coordinates are
-  included because none appear in section 14 and this build never invents
-  a fact.
+  Every fact below is taken only from verified client-supplied facts. The
+  old live site shipped a placeholder phone number, 123-456-7890, in this
+  exact schema block; this is the fix. Sunday is closed and is intentionally
+  left out of openingHoursSpecification rather than given a fabricated
+  opens/closes pair, per Google's own structured-data guidance for closed
+  days. Sunday's closure is still shown to visitors, in the visible hours
+  table in #visit. No geo coordinates are included because none were
+  supplied and this build never invents a fact.
 
   DEPLOY STEP: this schema is missing "geo" (a GeoCoordinates object with
   latitude/longitude for 4460 Ontario Street, Unit 2, Beamsville, ON L3J
@@ -102,7 +101,7 @@
 </head>
 <body>
 
-<!-- The cairn mark below is a design proposal, not an existing brand asset. The Healing Bench has no logo today, so this mark stands in for one until Deborah accepts, adapts or replaces it. Drawn once here as a symbol and referenced everywhere else with use, per BUILD-CONTRACT-V2.md: the hero crest, the header brand, every section label, every spine node, the heat stone, and the favicon above. -->
+<!-- The cairn mark below is a design proposal, not an existing brand asset. The Healing Bench has no logo today, so this mark stands in for one until the owner accepts, adapts or replaces it. Drawn once here as a symbol and referenced everywhere else with use: the hero crest, the header brand, every section label, every spine node, the heat stone, and the favicon above. -->
 <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden" class="cairn-sprite">
   <symbol id="cairn" viewBox="0 0 48 64">
     <ellipse cx="24" cy="52" rx="19" ry="9" fill="currentColor"/>
@@ -163,32 +162,32 @@
 
 <main id="main" tabindex="-1">
 
-  <!-- Hero, exactly per BUILD-CONTRACT-V2.md. The five caption bands from
+  <!-- Hero. The five caption bands from
        v1 are gone entirely. This is a single composed crest plus caption,
-       not a five-beat film narration. The section carries id="hero" per
-       the contract, since the engine looks that id up by name to compute
+       not a five-beat film narration. The section carries id="hero",
+       since the engine looks that id up by name to compute
        scroll progress through the pinned region and fails silently
        (no scrub, no console error) if it is absent. The header brand's
        href points at "#hero" directly rather than a separate "#top"
-       anchor. #heroRing is the frame loader's progress ring, restored
-       here per BUILD-CONTRACT.md; Agent F writes its stroke-dashoffset
-       through the --ld custom property as the frames arrive. Agent F
+       anchor. #heroRing is the frame loader's progress ring; film-engine.js
+       writes its stroke-dashoffset
+       through the --ld custom property as the frames arrive. film-engine.js
        wires the poster through CSS and JS, and paints the film itself
        into the #heroFilm canvas from the WebP sequences under
        assets/frames/, so no raster <img> tags live inside the stage.
-       Agent F also writes --heroOut (0 to 1) onto #heroStage over 0.66 of
-       one viewport height; Agent S uses it to translate and fade
+       film-engine.js also writes --heroOut (0 to 1) onto #heroStage over 0.66 of
+       one viewport height; the stylesheet uses it to translate and fade
        #heroCrest and #heroCaption
        out on the first scroll. This is the one h1 on the page.
 
-       Per DIRECTION-V3.md, room-1.jpg (a real photograph of the practice's
+       room-1.jpg (a real photograph of the practice's
        own treatment room) is the recommended poster and opening-frame
        asset here, since the client's own treatment-room photos are the
        warmest and most human images available and this is one of the
        three high-visibility slots named for them. The poster is an empty
-       div by contract, its background image wired in CSS by Agent S and
-       its video source chosen by Agent F, so this is a note for whoever
-       wires those two, not a markup change I can make directly. -->
+       div, its background image wired in the stylesheet and
+       its video source chosen in film-engine.js, so this is a note for whoever
+       wires those two, not a markup change made directly here. -->
   <section id="hero" class="hero">
     <div class="hero__stage" id="heroStage">
       <div class="hero__poster" id="heroPoster"></div>
@@ -239,11 +238,10 @@
            reversible, scroll back up and it unbuilds itself.
 
            "It's all about you" is the practice's own line, verbatim from
-           the About paragraph and from DESIGN-PACKAGE.md. It is not new
+           the About paragraph. It is not new
            copy written for this panel. The three facts under it are all
            on the page elsewhere: the Google rating and review count, the
-           three named practitioners, and the evening and Saturday hours
-           from DESIGN-PACKAGE.md section 14. -->
+           three named practitioners, and the evening and Saturday hours. -->
       <div class="hero__reveal" id="heroReveal">
         <p class="hero__reveal-kicker" style="--d:0">The Healing Bench</p>
         <p class="hero__reveal-hollow" style="--d:.08">It's all about you</p>
@@ -261,15 +259,12 @@
   </section>
 
   <!-- 01. About. Their real About copy, verbatim, the only edit being the
-       em dash in the original replaced with a comma, per DESIGN-PACKAGE.md
-       section 8.1. Offset editorial: copy left, tall image right, per
-       REDESIGN-PLAN.md's section table, kept as a split layout under
-       DIRECTION-V3.md. Warm tan band. still-linen.jpg runs large and
-       alone, per DIRECTION-V3.md's instruction that every image be
-       cropped generously with room to breathe, no image smaller than a
-       third of viewport width on desktop; room-1.jpg moved to the hero,
-       one of the three high-visibility slots the direction names for the
-       real treatment-room photographs. -->
+       em dash in the original replaced with a comma. Offset editorial:
+       copy left, tall image right, kept as a split layout. Warm tan band.
+       still-oil.jpg runs large and alone, cropped generously with room to
+       breathe, no image smaller than a third of viewport width on desktop;
+       room-1.jpg moved to the hero, one of the three high-visibility slots
+       named for the real treatment-room photographs. -->
   <section id="intro" class="section about tone-tan">
     <div class="container">
       <div class="slabel" data-reveal>
@@ -294,7 +289,7 @@
   <!-- 02. The practitioners. Clients book by name, so each card carries
        photo, name, title, focus and a real review quote. Photos are the
        genuine team photographs from the practice's own site. Cream band.
-       Three cards read naturally as DIRECTION-V3.md's rounded image-card
+       Three cards read naturally as a rounded image-card
        grid, three across on desktop stacking to one column under 760px.
        data-reveal plus data-stagger="80" sit on .practitioners__grid
        itself, per initReveal()'s documented contract in site.js: the
@@ -345,20 +340,18 @@
           </div>
           <div class="practitioner-card__body">
             <h3 class="practitioner-card__name">Laurette Lachance</h3>
-            <!-- Title and services unconfirmed. DESIGN-PACKAGE.md section 8.2
-                 flags Laurette's RMT designation as unconfirmed by Deborah,
-                 and no confirmed service list exists for her either, so this
-                 build never invents either one. The two placeholder
-                 paragraphs (title, services) that briefly shipped here as
-                 literal "[Title to confirm]" / "[Services to confirm]"
-                 bracket text have been removed rather than left visible on
-                 a live pitch page: an unfinished-looking bracket in front of
-                 a prospective client reads worse than the card simply
-                 running shorter than its siblings. Her card is name + quote
-                 only until Deborah confirms a title and services, at which
-                 point those two paragraphs should be restored with the real
-                 text, matching the pattern used by the Deborah and Naira
-                 cards above. -->
+            <!-- Title and services unconfirmed. Laurette's RMT designation
+                 is unconfirmed, and no confirmed service list exists for
+                 her either, so this build never invents either one. The two
+                 placeholder paragraphs (title, services) that briefly
+                 shipped here as literal "[Title to confirm]" /
+                 "[Services to confirm]" bracket text have been removed
+                 rather than left visible: an unfinished-looking bracket
+                 reads worse than the card simply running shorter than its
+                 siblings. Her card is name + quote only until those are
+                 confirmed, at which point those two paragraphs should be
+                 restored with the real text, matching the pattern used by
+                 the other two cards above. -->
             <blockquote class="practitioner-card__quote">
               <p>"She was professional, attentive, and made sure the pressure was perfect throughout the entire massage. I walked in feeling completely knotted up and left feeling like a brand&#8209;new person."</p>
               <cite>Erin Gostick</cite>
@@ -385,9 +378,9 @@
     </div>
   </section>
 
-  <!-- 03. Treatments. Grouped bodywork, reflexology, facials, per
-       DESIGN-PACKAGE.md section 8.3. Descriptions verbatim from section 12,
-       prices verbatim from section 13. Unpriced treatments say exactly
+  <!-- 03. Treatments. Grouped bodywork, reflexology, facials.
+       Descriptions and prices are verbatim from the client's own copy.
+       Unpriced treatments say exactly
        "Price on enquiry" and never invent a number.
 
        Booking: every one of the ten rows below now carries its own
@@ -400,9 +393,9 @@
        scrolling back to the header or hero.
 
        Attribution: a "With [name]" line appears only where a practitioner
-       card states the service as fact. Deborah's card names "Massage
-       therapy, hot stone, prenatal", so those three rows read "With
-       Deborah". Naira's card names "Reflexology and all natural facials",
+       card states the service as fact. The co-owner's card names "Massage
+       therapy, hot stone, prenatal", so those three rows carry a matching
+       "With" line. Naira's card names "Reflexology and all natural facials",
        so Reflexology and all five facial rows read "With Naira". Indian
        Head Massage carries no card claim at all, so it carries no "With"
        line rather than a guess. Laurette's card still has no confirmed
@@ -412,19 +405,14 @@
        Imagery: this was the single worst-served section on the prior
        build, four of ten rows carrying an image. Nine of ten now carry
        one, alternating side via data-side; Massage Therapy alone stays a
-       plain row, since massage-1.jpg already runs as this section's own
-       opener image directly under the heading and repeating it on the
-       first row would be redundant rather than additive. No
-       reflexology-specific or facial-specific photograph exists in the
-       asset library, so those five rows (plus Indian Head Massage, which
-       likewise has no matching photograph) reuse the site's generic
-       stills and textures: still-linen.jpg (already used in #intro), and
-       tex-steam.jpg / tex-contour.jpg / tex-linen.jpg
-       (already used as the Reviews, Fees and FAQ ground textures), plus
-       still-table.jpg (already used in #visit). Each carries honest alt
-       text describing what the image actually shows, warmth, steam,
-       texture, linen, the treatment table, never a claim that it depicts
-       the specific treatment beside it. The one interactive moment, press
+       plain row, since treatment-lengthwise.jpg already runs as this
+       section's own opener image directly under the heading and repeating
+       it on the first row would be redundant rather than additive. Each of
+       the other nine rows carries its own image, honestly captioned,
+       warmth, steam, texture, linen, the treatment table, never a claim
+       that it depicts the specific treatment beside it where no
+       treatment-specific photograph exists (reflexology, the facials, and
+       Indian Head Massage). The one interactive moment, press
        and hold the hot stone, sits inside Bodywork after Hot Stones,
        staged against still-heat.jpg.
 
@@ -476,10 +464,10 @@
         </div>
 
         <!-- The one interactive moment: press and hold a stone to feel it
-             warm. Markup per BUILD-CONTRACT-V2.md, driven by Agent J's
-             site.js, styled by Agent S's styles.css. The cairn mark stands
+             warm. Markup is driven by
+             site.js, styled by the stylesheet. The cairn mark stands
              in for the stone itself. --heat is written onto #heatStone as
-             a CSS custom property by Agent J; data-state on #heatReveal
+             a CSS custom property by site.js; data-state on #heatReveal
              moves from idle through the reveal sequence. -->
         <div class="stone-interaction">
           <div class="stone-interaction__media" aria-hidden="true">
@@ -510,11 +498,11 @@
         </div>
 
         <!-- No Indian Head Massage photograph exists in the asset library,
-             and no practitioner card claims this treatment (Deborah's card
-             names massage therapy, hot stone and prenatal only; Naira's
+             and no practitioner card claims this treatment (the co-owner's
+             card names massage therapy, hot stone and prenatal only; Naira's
              names reflexology and the facials), so this row carries a
-             generic room image, honestly captioned as ambient light rather
-             than as a depiction of the treatment, and no "With" line. -->
+             generic water-texture image, honestly captioned as ambient light
+             rather than as a depiction of the treatment, and no "With" line. -->
         <div class="treatment-row treatment-row--media" data-side="left">
           <figure class="treatment-row__media">
             <img data-parallax src="assets/tex-water.jpg" alt="Warm light rippling across a still water surface" width="1920" height="1080" loading="lazy" decoding="async">
@@ -535,9 +523,9 @@
         </div>
 
         <!-- No reflexology-specific still exists in the asset library.
-             still-linen.jpg is reused here, calm and non-specific, rather
-             than reusing a hot-stone image that would misrepresent the
-             treatment. Flagging as a genuine gap for a future shoot. -->
+             still-towels.jpg runs here instead, calm and non-specific,
+             rather than reusing a hot-stone image that would misrepresent
+             the treatment. Flagging as a genuine gap for a future shoot. -->
         <div class="treatment-row treatment-row--media" data-side="left">
           <figure class="treatment-row__media">
             <img data-parallax src="assets/still-towels.jpg" alt="Rolled cotton towels stacked on a linen surface in warm light" width="1080" height="1440" loading="lazy" decoding="async">
@@ -552,14 +540,14 @@
         </div>
       </div>
 
-      <!-- No facial-specific photography exists in the asset library
-           either: the four rows below reuse the site's generic texture
-           stills (steam, contour, linen) and the treatment-table
-           photograph already used in #visit, each honestly captioned as
-           ambient warmth or texture rather than a depiction of the
-           facial itself. All five facials in this group are attributed
-           to Naira, since her practitioner card states, verbatim,
-           "Reflexology and all natural facials." -->
+      <!-- facial-cupping.jpg genuinely depicts the Cupping and Drainage
+           row's treatment, but no dedicated photograph exists for the
+           other four: those rows run generic stills and textures (steam,
+           eucalyptus, wool, glass dropper bottles), each honestly
+           captioned as ambient warmth or texture rather than a depiction
+           of the facial itself. All five facials in this group are
+           attributed to Naira, since her practitioner card states,
+           verbatim, "Reflexology and all natural facials." -->
       <div class="treatments__group" data-reveal data-stagger="70">
         <div class="treatments__group-head">
           <h3 class="treatments__group-name">Facials, all natural</h3>
@@ -635,15 +623,15 @@
     </div>
   </section>
 
-  <!-- 04. Fees. Real tables, cancellation note verbatim from
-       DESIGN-PACKAGE.md section 13. Cream band under DIRECTION-V3.md,
+  <!-- 04. Fees. Real tables, cancellation note verbatim from the client's
+       own copy. Cream band,
        tabular, hairline rules, with tex-contour.jpg sitting behind the
        whole section at whisper level so the numbers stay the only thing
        competing for attention. That texture was art-directed for a dark
-       ground in v2; it stays in markup since the section still wants a
-       quiet material layer, but Agent S should tune its opacity and blend
-       mode for the cream ground, or hide it if it does not read cleanly
-       there. Panels wipe in on a clip-path via data-reveal plus
+       ground in an earlier version; it stays in markup since the section
+       still wants a quiet material layer, but the stylesheet should tune
+       its opacity and blend mode for the cream ground, or hide it if it
+       does not read cleanly there. Panels wipe in on a clip-path via data-reveal plus
        data-stagger="70" on .fees__grid itself, per initReveal()'s
        documented contract in site.js: each .fees__panel is a direct
        child and carries no data-reveal of its own, so the grid's own
@@ -760,10 +748,10 @@
   </section>
 
   <!-- 05. Hours and finding us. Full week, address with unit number, real
-       tel: and mailto: links. Split layout kept under DIRECTION-V3.md:
+       tel: and mailto: links. Split layout:
        hours left, a map-feel card right holding the address over
        still-table.jpg. Warm tan band. room-2.jpg moved to the book section,
-       one of the three high-visibility slots the direction names for the
+       one of the three high-visibility slots named for the
        client's own treatment-room photography, so this section runs one
        large image rather than two. Hours rise line by line: data-reveal
        plus data-stagger="70" sit on .visit__hours itself, per
@@ -825,12 +813,12 @@
     </div>
   </section>
 
-  <!-- 06. What people say. DESIGN-PACKAGE.md section 8.6 asks for four
-       review pull quotes, but section 8.2 (the only source of real,
-       attributed reviews) supplies exactly three. Shipping a fourth would
+  <!-- 06. What people say. Four review pull quotes were the original
+       design target, but the client's real, attributed reviews supply
+       exactly three. Shipping a fourth would
        mean inventing a review, which the copy gate forbids, so three real
        quotes ship here. Espresso band. Self-driving depth-drift carousel
-       over a faint tex-linen.jpg ground, per REDESIGN-PLAN.md. Markup
+       over a faint tex-linen.jpg ground. Markup
        matches the contract documented at the top of initCarousels() in
        site.js exactly: data-carousel on the root, data-carousel-view on
        the clipping viewport, data-carousel-track on the moving track,
@@ -897,16 +885,15 @@
     </div>
   </section>
 
-  <!-- 07. FAQ. "Do you direct bill my insurance?" is left out entirely:
-       DESIGN-PACKAGE.md section 8.7 says its answer is unconfirmed and
-       explicitly instructs omitting the question rather than guessing or
-       even leaving a bracket. "I have never had a massage. What happens?"
-       keeps its bracket placeholder, since section 8.7 only marks that one
-       [ANSWER TO CONFIRM], with no omit instruction. Cream band under
-       DIRECTION-V3.md. Full-width accordion over a faint tex-steam.jpg
-       ground, per REDESIGN-PLAN.md; that texture was art-directed for a
-       dark ground in v2, so as with Fees, Agent S should tune its opacity
-       for the cream band or hide it if it does not read cleanly there. -->
+  <!-- 07. FAQ. "Do you direct bill my insurance?" and "I have never had a
+       massage. What happens?" are both left out entirely: neither has a
+       confirmed answer, and this build never invents one, so both
+       questions are omitted rather than guessed at or left as a
+       placeholder. Cream band. Full-width accordion over a faint
+       tex-steam.jpg ground; that texture was art-directed for a
+       dark ground in an earlier version, so as with Fees, the stylesheet
+       should tune its opacity for the cream band or hide it if it does
+       not read cleanly there. -->
   <section id="faq" class="section faq tone-cream">
     <div class="faq__ground" aria-hidden="true">
       <img src="assets/tex-steam.jpg" alt="" width="1920" height="1080" loading="lazy" decoding="async">
@@ -927,10 +914,6 @@
         <details class="faq-item">
           <summary class="faq-item__q">Is the pricing all in?</summary>
           <p class="faq-item__a">Yes. Every price includes HST.</p>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-item__q">I have never had a massage. What happens?</summary>
-          <p class="faq-item__a faq-item__a--pending">Deborah's answer to come.</p>
         </details>
         <details class="faq-item">
           <summary class="faq-item__q">Do you see children?</summary>
@@ -959,25 +942,22 @@
        instead of loose columns of text floating on the photograph, which
        is what the first pass at this did and why it read as unfinished.
 
-       Left half: a live open/closed pill over the week's hours (verbatim
-       from DESIGN-PACKAGE.md section 14, already shown once in #visit and
+       Left half: a live open/closed pill over the week's hours (verbatim,
+       already shown once in #visit and
        repeated here so someone who scrolls straight to Book still sees
        them). Right half: the address with its unit number and a
        directions link, the phone and email, and the cancellation policy
-       (verbatim from the FAQ answer above, which itself matches
-       DESIGN-PACKAGE.md section 8.7).
+       (verbatim from the FAQ answer above).
 
-       "What to expect" is deliberately NOT here. Its answer is still
-       [ANSWER TO CONFIRM.] pending Deborah, and an unresolved bracket
-       sitting in the page's closing call to action is worse than the
-       question simply living in the FAQ, which is where it already is
-       and where the real answer will go.
+       "What to expect" is deliberately NOT here, for the same reason it
+       does not appear in the FAQ either: there is no confirmed answer
+       yet, and this build never invents one.
 
-       Espresso band with a full-bleed photograph behind it, per
-       DIRECTION-V3.md, which names this section one of the three
-       high-visibility slots for the client's own treatment-room
-       photography: room-2.jpg. The CTA carries data-magnetic, Agent J's
-       actual hook for the magnetic button behaviour in site.js
+       Espresso band with a full-bleed photograph behind it: room-2.jpg,
+       one of the three
+       high-visibility slots named for the client's own treatment-room
+       photography. The CTA carries data-magnetic, site.js's
+       actual hook for the magnetic button behaviour
        (initMagnetic queries [data-magnetic], not an id). id="bookCta"
        stays too as a stable analytics/CSS hook. -->
   <section id="book" class="section book">
@@ -1072,7 +1052,7 @@
 <!-- Footer: address, hours, phone, email, copyright. No social icons: the
      old site linked facebook.com/wix and instagram.com/wix, which are
      unclaimed Wix template placeholders, not real profiles, so nothing
-     ships here in their place. Add real profile links when Deborah
+     ships here in their place. Add real profile links when the clinic
      supplies them. -->
 <footer class="site-footer">
   <div class="container">

@@ -1011,11 +1011,16 @@ strong, b {
   }
 }
 
-@media (max-width: 899.98px) {
-  .header-actions {
-    display: flex;
-  }
-}
+/* .header-actions is desktop-only (base rule above: display:none, flipped
+   to flex only at the min-width:900px query further up). A leftover
+   max-width:899.98px block used to sit here forcing .header-actions back
+   to display:flex, directly contradicting both of those rules and
+   putting it back on below 900px - a fourth control (the Book pill; the
+   phone-number pill is already hidden site-wide under 1180px by the
+   query above) crowding a header that only has room for the brand, the
+   nav toggle and three links' worth of space at 360-390px, clipping the
+   toggle itself off the right edge. Removed rather than patched: nothing
+   below 900px should ever re-show .header-actions again. */
 
 /* --------------------------------------------------------------------------
    8. BUTTONS AND CHIPS
@@ -1376,6 +1381,20 @@ strong, b {
   display: inline-flex;
   align-items: center;
   gap: .5em;
+  /* No max-width previously: as a non-stretched flex item of the
+     column-direction .hero__caption (align-items:center there), it sized
+     to its own unwrapped max-content width - icon plus "Registered
+     massage therapy in Beamsville" - which runs wider than
+     .hero__caption's own 350px column at a 390px viewport and was
+     spilling past the right edge, silently cut by .hero__stage's
+     overflow:hidden and the html/body clip guard rather than wrapped.
+     100% of .hero__caption's content box is what pins it back inside the
+     column; the text itself already defaults to white-space:normal (no
+     nowrap anywhere in its cascade), so once the pill can no longer grow
+     past that width its own text wraps to a second line, still centred
+     (inherited from .hero__caption's text-align:center) and still beside
+     the icon rather than under it, since only the text run wraps. */
+  max-width: 100%;
   color: var(--bone);
   background: rgba(14, 11, 8, .48);
   border: 1px solid rgba(247, 241, 232, .16);
@@ -1407,6 +1426,14 @@ strong, b {
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
+  /* Same story as .hero__caption .kicker just above: flex-wrap:wrap only
+     wraps the two buttons onto a second line once this row itself is
+     capped to .hero__caption's 350px column. Without a max-width this
+     row took its own unconstrained max-content width (both buttons
+     side by side, wider than the column), so the second button, "See
+     treatments", was pushed past the right edge and clipped instead of
+     dropping to its own line. */
+  max-width: 100%;
 }
 
 
@@ -1462,6 +1489,36 @@ strong, b {
 
 .hero__stage.is-late .hero__reveal {
   pointer-events: auto;
+}
+
+/* pointer-events:none above stops a mouse click, but not Tab: the two
+   real links in .hero__reveal-actions ("Book an appointment", "See
+   treatments") sit in normal document flow the instant .hero__reveal
+   goes display:flex, so a keyboard visitor landed on them, invisible,
+   long before --heroLate ever fades them in. .is-late is the binary
+   film-engine.js already exposes for exactly this pointer-events switch
+   (toggled at heroLate > 0.02, film-engine.js), and it fires well before
+   .hero__reveal-actions itself starts fading in at --d:.62 below, so
+   keying visibility off the same class makes the actions reachable at
+   or before they become visible, never after, in both directions:
+   scrolling past that point makes them visible+focusable together with
+   pointer-events, and scrolling back up only removes .is-late once
+   heroLate has dropped back under .02 - well after --d:.62's own fade
+   has already finished retreating to opacity 0. No transition on
+   visibility here, matching the "no CSS transition on this panel's
+   transform/opacity" rule already documented above: opacity is what
+   visibly fades it, visibility only ever needs to flip in step with
+   that pre-existing, already-safe timing, never against it. Reduced
+   motion needs no separate pin: disableScrub() (film-engine.js) never
+   adds is-scrubbing when prefers-reduced-motion matches, so
+   .hero__reveal stays display:none - and its actions unreachable by
+   design, not stuck - for those visitors regardless of this rule. */
+.hero__reveal-actions {
+  visibility: hidden;
+}
+
+.hero__stage.is-late .hero__reveal-actions {
+  visibility: visible;
 }
 
 /* The panel lands squarely on the brightest thing in the frame: the lit
@@ -1873,15 +1930,35 @@ strong, b {
   gap: var(--space-xs);
 }
 
+/* idle (the default data-state, no attribute-selector rule needed for
+   it): genuinely hidden, not just faded. Previously opacity:0 alone, with
+   no visibility/pointer-events/display guard, left "Book the hot stone
+   treatment" (.heat-reveal__item.btn below) tabbable and clickable
+   before the stone had ever been pressed. visibility's own duration is
+   given the same .5s as opacity's, rather than the 0-duration-plus-delay
+   trick used for the mobile nav panel: the CSS Transitions spec resolves
+   a visible<->hidden transition asymmetrically on its own whenever
+   duration is non-zero - visible for the entire active interval if
+   EITHER endpoint is 'visible', only actually switching to hidden at the
+   very end of it - so one consistent transition here keeps the item
+   visible throughout its whole .5s fade-out (however that .5s ends up
+   delayed by the nth-child stagger below) and only hides it once fully
+   faded, while still flipping to visible immediately when a show starts,
+   with no separate 0-delay override rule needed for the opposite
+   direction the way the nav panel required. */
 .heat-reveal .heat-reveal__item {
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transform: translateY(10px);
-  transition: opacity .5s var(--ease-out), transform .5s var(--ease-out);
+  transition: opacity .5s var(--ease-out), transform .5s var(--ease-out),
+              visibility .5s linear;
 }
 
 .heat-reveal__item.btn {
   transition: opacity .5s var(--ease-out), transform .25s var(--ease-out),
-              background-color .25s var(--ease-out), border-color .25s var(--ease-out);
+              background-color .25s var(--ease-out), border-color .25s var(--ease-out),
+              visibility .5s linear;
 }
 
 /* Body copy, same dark-ground pairing .treatment-row__desc uses elsewhere
@@ -1906,11 +1983,15 @@ strong, b {
 
 .heat-reveal[data-state='warming'] .heat-reveal__item {
   opacity: .4;
+  visibility: visible;
+  pointer-events: auto;
   transform: translateY(6px);
 }
 
 .heat-reveal[data-state='done'] .heat-reveal__item {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
   transform: none;
   transition-delay: 0ms;
 }
@@ -2682,6 +2763,27 @@ strong, b {
 
 .treatment-row__cta .btn {
   display: inline-flex;
+  /* The longest labels ("Book the Sculpt and Decongest Express Facial",
+     46 characters at .btn--sm/13px) run to roughly 350-370px unwrapped,
+     as wide as or wider than the ~350px content column at a 390px
+     viewport (worse at 320px or 200% zoom). .btn's own white-space:nowrap
+     then left the tail of the label, and part of the tap target, silently
+     clipped by the html/body overflow-x guard instead of wrapped. Scoped
+     to this per-treatment CTA rather than to .btn or .btn--sm generally:
+     those still want a one-line pill for short labels like "Book an
+     appointment" elsewhere on the page (header, hero, reviews/FAQ CTAs).
+     max-width, not a fixed width, so the button still hugs short labels
+     ("Book reflexology") as a normal one-line pill and only grows to two
+     or three lines when a label genuinely does not fit. text-align and a
+     tighter line-height keep a wrapped label reading as a deliberately
+     drawn two-line pill rather than a stretched paragraph; align-items
+     (inherited from .btn) still centres it vertically since the box's
+     height simply grows with its content. */
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .treatment-row__price {
@@ -4052,8 +4154,18 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     transform: translateY(0) scale(1);
   }
 
+  /* Same reasoning again, for the two properties just added to
+     .heat-reveal__item: site.js's initHeat() already forces data-state
+     to 'done' synchronously for prefers-reduced-motion (its own pin()
+     path), so this is the same defensive backstop as the opacity/transform
+     pin was already doing - for the moment before that JS runs, or if it
+     never does - now extended to keep the stone's booking link visible
+     and clickable rather than newly stuck invisible-and-unreachable
+     behind the visibility/pointer-events this pass added above. */
   .heat-reveal .heat-reveal__item {
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
     transform: none;
   }
 

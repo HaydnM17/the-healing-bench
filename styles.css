@@ -1930,54 +1930,158 @@ strong, b {
 }
 
 /* --------------------------------------------------------------------------
-   12A. PARALLAX: [data-parallax], reading --p (0 to 1 scroll progress
-   through the element). Agent M confirms this sits on the real <img>
-   itself in every case (About, the Treatments opener, three treatment-row
-   images, the hot-stone backdrop, the Visit photograph) rather than on a
-   wrapping figure, so the transform is built for an image: scaled up so
-   a translate never uncovers an edge, then drifted opposite the scroll
-   direction. Every
-   parallax image's own containing box (figure, card frame, media div)
-   carries overflow:hidden so the scale/translate stays clipped to that
-   box's own shape and radius. Transform only. -------------------------------------------------------------------------- */
-
-/* Travel raised from +/-6% to +/-10% of the image's own height (the -12%
-   coefficient below to -20%): at 6% the effect was real but not felt. A
-   typical treatment-row image is 220px wide by 293px tall at desktop
-   (.treatment-row__media's 220px grid track, 3/4 aspect-ratio) and 350px
-   by 437px on a 390px phone (full container width there, 4/5 aspect-
-   ratio), so the full --p:0->1 sweep was already a genuine 35px swing
-   desktop / 53px swing mobile, not the few pixels it looked like. What
-   ate most of that swing was where in the scroll it happens: --p is
-   computed in site.js as (viewportHeight - elementTop) / (viewportHeight
-   + elementHeight), which reaches 0 and 1 only once the row is just
-   entering or just leaving the screen edge — barely visible and not
-   where a visitor is looking. Through the comfortable middle third of
-   the scroll, where the row is actually being read, --p only moves
-   through a correspondingly narrow band around .5, so the felt drift in
-   that window was a small fraction of the nominal total: a few
-   perceptible pixels, easy to miss while reading the copy beside it.
-   Doubling the coefficient roughly doubles that felt fraction too,
-   without changing where in the scroll it happens.
-   Scale must keep covering the larger drift: a translate of amplitude A%
-   (each direction) needs scale >= 1 + 2A/100 to keep the image's own
-   scaled-up edge from ever clearing the frame, since percentages here
-   resolve against the pre-scale box while the scale itself is centred.
-   At A=10 that floor is 1.20; 1.25 keeps roughly the same five-point
-   margin above the floor that 1.16 gave the old 1.12 floor at A=6, as a
-   guard against object-fit rounding rather than cutting it exactly to
-   the line.
-   That derivation covers this rule in isolation. 12D below adds a
-   second, continuously-running drift on these same three images'
-   `translate`/`scale` properties, which composes with this rule's
-   `transform` rather than replacing it — so the two now stack, and the
-   worst case is both at their extreme in the same direction at once:
-   13%, not 10%. See 12D for that arithmetic; it raises the floor to
-   1.26, which is why the scale below reads 1.32, not the 1.25 this
-   paragraph derives alone. */
+   12A. [data-parallax]: STATIC CROP, NOT A LIVE EFFECT
+   This attribute used to flag the 13 images (About, the Treatments
+   opener, the hot-stone backdrop, several treatment-row photos, the
+   Visit photograph) that took a scroll-linked translate driven by a --p
+   custom property site.js wrote on scroll, composing with a separate
+   continuous idle drift on three of them (formerly section 12D). After
+   two rounds of trying to smooth that motion it still read as choppy, so
+   the owner decided he would rather these photographs just held still.
+   Both motion sources are gone; scale(1.32) is what is left. It is no
+   longer a coverage floor for any travel amplitude — there is no travel
+   left to cover — it is simply the crop these images already sat at,
+   kept exactly as-is so nothing reframes now that the motion has
+   stopped, and because the owner wants this imagery to read ambient,
+   close-up and still. Four groups of these images also sit inside a
+   [data-reveal]/[data-stagger] container and get an explicit combined
+   drop-and-settle entrance on top of this static crop, stated directly
+   rather than left to fall out of whichever of this rule and
+   [data-reveal] > * happens to sit later in the file — see 12A-i,
+   immediately below.
+   -------------------------------------------------------------------------- */
 [data-parallax] {
-  --p: .5;
-  transform: translate3d(0, calc((var(--p, .5) - .5) * -20%), 0) scale(1.32);
+  transform: scale(1.32);
+}
+
+/* --------------------------------------------------------------------------
+   12A-i. THE DROP-AND-SETTLE ENTRANCE
+   Before this rule existed, what these photographs did on arrival was an
+   emergent accident, not a decision. [data-reveal] > * (section 12) and
+   [data-parallax] (12A) are both specificity (0,1,0); whichever sits
+   later in this file wins the RESTING (pre-.in) state outright, and
+   [data-parallax] sits later, so the intended translateY(22px) never
+   actually applied — the image simply started at scale(1.32) with no
+   drop. On arrival, [data-reveal].in > * (0,2,0) beat [data-parallax]
+   (0,1,0) on genuine specificity rather than source order, so the image
+   eased from scale(1.32) down to scale(1) — a zoom with no drop. That
+   zoom-to-rest is the effect the owner likes, but it depended entirely
+   on which rule happened to sit lower in the stylesheet; reordering
+   sections would have silently killed it.
+
+   This rule states both the start and the end transform directly, at a
+   specificity neither of those two rules can beat, so the combined
+   effect no longer depends on source order at all. The owner also asked
+   for the 22px drop back, so the visible entrance is now the drop AND
+   the zoom together, once, on arrival, for: .about__image (inside
+   .about__media[data-reveal]), the Treatments opener image (inside
+   .treatments__opener[data-reveal]), .visit__image (inside
+   .visit__media[data-reveal]), and — once the html pass wires up its
+   parent — .stone-interaction__bg (inside
+   .stone-interaction__media[data-reveal]). All four are direct children
+   of their own [data-reveal] container, so they already had a correct
+   opacity fade from [data-reveal] > * / .in > *; only transform needed
+   restating.
+
+   HEADROOM ARITHMETIC — object-fit: cover inside overflow: hidden means
+   scale(1.32) leaves 16% of the frame's own height spare above and
+   below it ((1.32 − 1) ÷ 2). translateY and scale are two components of
+   the single `transform` property, so one eased progress value f drives
+   both at once, each staying proportional to it: translateY is
+   22px × (1 − f), the spare headroom is 0.16 × height × (1 − f). Their
+   ratio is therefore CONSTANT across the whole transition, not tighter
+   near the end — checking the untransitioned start (f = 0) is enough.
+   22px stays inside the headroom wherever 0.16 × height ≥ 22px, i.e.
+   height ≥ 137.5px. Every frame this rule drives clears that, at its
+   real smallest render:
+     - .treatments__opener img: height: clamp(240px, 34vw, 460px) — a
+       240px floor, never smaller.
+     - .about__media: aspect-ratio-driven (4/5 under 860px, 3/4 at and
+       above); its narrowest real column is ~280px wide at a 320px-wide
+       phone (--gutter's 20px floor on each side), so ~350px tall at its
+       shortest.
+     - .visit__media: min-height: clamp(320px, 44vw, 460px) — a 320px
+       floor, never smaller.
+     - .stone-interaction__media: no fixed height, but its parent's own
+       padding alone (2 × var(--space-2xl) = 192px) already clears
+       137.5px before the stone button, hint and heat-reveal list even
+       enter the count.
+   22px is safe at every one of these frames' real sizes. -------------------------------------------------------------------------- */
+
+.about__media[data-reveal] .about__image,
+.treatments__opener[data-reveal] img,
+.visit__media[data-reveal] .visit__image,
+.stone-interaction__media[data-reveal] .stone-interaction__bg {
+  opacity: 0;
+  transform: translateY(22px) scale(1.32);
+  transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
+}
+
+.about__media[data-reveal].in .about__image,
+.treatments__opener[data-reveal].in img,
+.visit__media[data-reveal].in .visit__image,
+.stone-interaction__media[data-reveal].in .stone-interaction__bg {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* The treatment-row photographs (Hot Stones, Prenatal Massage,
+   Reflexology, the four facials and the rest) sit one level deeper than
+   the four groups above: each <img> is a GRANDCHILD of
+   .treatments__group[data-stagger] (.treatments__group >
+   .treatment-row--media > .treatment-row__media > img), not a direct
+   child, so [data-stagger] > * (section 12) only ever reached the row —
+   fading and rising the row as a whole, photo and text together — and
+   never touched the photo's own scale(1.32) at all. These images have
+   simply sat at a flat crop, permanently, riding along inside their
+   row's own motion with no zoom of their own. Giving the photo its own
+   drop+zoom reuses the same .in class the row already reacts to, rather
+   than inventing a parallel mechanism.
+
+   Their real frame floor: aspect-ratio 4/5 under 640px (full row width,
+   several hundred px), 3/4 at and above 640px inside a
+   minmax(0, 220px) column — 220px × 4/3 ≈ 293px at its narrowest, well
+   past the 137.5px the arithmetic above requires for a 22px drop.
+
+   There is no JS-written per-row transition-delay to inherit this deep
+   — site.js only ever writes that inline style onto the
+   [data-stagger] > * row itself — so every photo in a group settles on
+   the same beat the group's own .in fires, rather than matching its own
+   row's individual stagger step. Since the row is still at opacity: 0
+   for the length of its own delay, the photo's zoom is invisible until
+   the row starts revealing it anyway, so this still reads as the row
+   settling into place rather than as two mistimed effects. Opacity is
+   deliberately left alone here: the image has never faded on its own,
+   only transform changes. */
+.treatments__group[data-stagger] .treatment-row__media img {
+  transform: translateY(22px) scale(1.32);
+  transition: transform .6s var(--ease-out);
+}
+
+.treatments__group[data-stagger].in .treatment-row__media img {
+  transform: translateY(0) scale(1);
+}
+
+/* .stone-interaction__ambient is the OTHER direct child of
+   .stone-interaction__media (still-falling.jpg, the screen-blended
+   ambient layer behind the heat stone) — once the html pass adds
+   data-reveal to their shared parent, the generic [data-reveal] > *
+   rule above (section 12) would reach this element too, fading it from
+   opacity: 0 and sliding it in translateY(22px), neither of which it
+   has ever done: today it sits permanently at its own authored
+   opacity: .45 with no transform at all. It carries no [data-parallax],
+   so nothing would fix the translateY half the way [data-parallax]
+   fixes it for .stone-interaction__bg above — left alone, it would
+   visibly drop into place on arrival. Pin it outright, at a specificity
+   the generic rule cannot beat, so this backdrop layer keeps doing
+   exactly what it does today regardless of what its new sibling
+   attribute enables. The interactive stone itself (.stone,
+   #heatStoneHint, .heat-reveal) lives outside .stone-interaction__media
+   entirely — see .stone-interaction > .stone and siblings in section 15
+   — so its behaviour is untouched either way. */
+.stone-interaction__media[data-reveal] .stone-interaction__ambient {
+  opacity: .45;
+  transform: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -2132,155 +2236,23 @@ strong, b {
 }
 
 /* --------------------------------------------------------------------------
-   12D. AMBIENT DRIFT: THE LARGE FRAMED PHOTOGRAPHS
-   The owner's ask, twice now: the frame holds still, the photograph
-   inside it drifts a little on its own, even when the visitor is not
-   scrolling. [data-parallax] (12A) only moves on scroll, so a visitor
-   reading still is looking at a dead-still photo; this adds a slow,
-   continuous, restrained Ken Burns cycle on top of it.
-
-   Applied to .about__image, .treatments__opener img and .visit__image:
-   the three photographs that sit inside their own visible bordered
-   frame (border-radius + box-shadow on .about__media / .treatments__opener
-   / .visit__media). .book__media was considered and left out: .book__stage
-   is a full-bleed section background with no border-radius or shadow of
-   its own, so there is no "frame" for it to hold still against — the
-   owner's own words were about a photo sitting inside a border, not
-   about a section's whole backdrop.
-
-   [data-parallax] already owns `transform` on every one of these images
-   (translate3d + scale, 12A) — writing to `transform` here too would
-   replace it outright and freeze the scroll-linked drift mid-cycle.
-   `translate` and `scale` are separate standalone properties that
-   compose with `transform` rather than overwrite it (same technique as
-   .practitioner-card__frame's hover lift, 12B, and the [data-spotlight]
-   paragraphs, section 13): the browser always combines translate, then
-   rotate, then scale, then transform into one matrix regardless of
-   which rule set which, so this animation and the parallax scroll-
-   transform ride the same element without either clobbering the other.
-
-   REVISION — "too jumpy, too choppy, doesn't look smooth enough at
-   all." The original 0/22/48/74/100 version had two compounding bugs,
-   not one:
-
-   1. Four independent eases per lap. `animation: ... ease-in-out` with
-      no per-keyframe override applies that same ease-in-out to EACH
-      segment (0->22, 22->48, 48->74, 74->100) separately, and
-      ease-in-out decelerates to zero velocity at the end of every
-      segment it is given. That is four full stop-and-restart events
-      per cycle, not one smooth sweep — the motion visibly paused and
-      re-launched itself every few seconds.
-
-   2. Sharp reversals landing on top of those stops. Plotting the old
-      translate values as vectors between stops: 0->22% moved
-      (-1.5%, -3%); 22->48% then moved (+2.7%, +2.4%) — the cosine
-      between those two is -0.93, i.e. a ~158 degree reversal, almost
-      doubling straight back. 48->74% turned a milder ~62 degrees, then
-      74->100% reversed again by ~157 degrees. So two of the four
-      stops were near-total direction reversals, and both landed
-      exactly on an eased-to-zero keyframe boundary: the image
-      genuinely hit a wall and bounced, twice a lap. The scale value
-      (1 -> 1.012 -> 1.02 -> 1.008 -> 1) rode the same four uneven
-      stops on the same ease-in-out, so the zoom pulsed out of step
-      with the position changes too — a second, unrelated rhythm
-      beating against the first.
-
-   Fix: replace the four-stop zig-zag with an actual orbit, and split
-   the zoom onto its own independent, longer cycle.
-
-   `ambientDrift` (translate only) now traces an ellipse — 8 stops at
-   an even 12.5% apart, one every 45 degrees of angle (cos/sin at
-   1.5% horizontal, 3% vertical, matching the old maximum excursions
-   exactly so the coverage math below does not move). `animation:
-   ambientDrift Ns linear infinite` — linear, not ease-in-out, is the
-   point: with the stops evenly spaced in time AND evenly spaced in
-   angle, linear timing gives constant angular progress around the
-   loop. An orbit never has to decelerate to zero and turn back the
-   way the old path did, because it never reverses — every step keeps
-   turning the same way by the same 45 degrees, so there is no
-   segment-boundary stop and no corner sharper than that 45 degrees.
-   That is what actually reads as "drifting" instead of "lurching."
-
-   `ambientZoom` (scale only) is now a fully separate animation with
-   its own keyframes, its own duration, and its own delay — a single
-   slow pulse, scale 1 -> 1.02 -> 1, ease-in-out. One rise and one
-   fall per lap is exactly the "zooming in, moving around, zooming
-   out" the owner described, and because it is a second `animation-
-   name` in the comma-separated list (not a second property in the
-   same @keyframes as before), it no longer shares stops with the
-   translate orbit at all — nothing to beat against. Its own duration
-   is deliberately not a small integer multiple of the translate
-   duration it rides alongside (e.g. 41s against 26s, not 52s against
-   26s), so the two do not realign into a repeating combined pattern
-   either.
-
-   Coverage math, since translate and the [data-parallax] scroll
-   transform still stack on the same element: [data-parallax] moves
-   the image +/-10% of its own height (12A) and ambientDrift's ellipse
-   adds another +/-3% on that same vertical axis at its own extreme
-   (the 25%/75% stops below), so the worst case — both at their
-   extreme in the same direction at the same instant, which scroll
-   position and orbit phase are free to coincide on at any time — is
-   still 13% off-centre, unchanged from the previous version because
-   the new ellipse's vertical amplitude (3%) matches the old path's
-   vertical maximum exactly. A translate of amplitude A% needs
-   scale >= 1 + 2A/100 to keep the image's own scaled-up edge from
-   ever clearing the frame (12A's own formula); at A=13 that floor is
-   1.26, and [data-parallax] already reads scale(1.32) — untouched by
-   this revision, and still clearing the floor by the same margin as
-   before. The horizontal orbit amplitude (+/-1.5%, no scroll-parallax
-   counterpart to stack against) needs only 1.03 and sits far inside
-   that margin. ambientZoom's own scale (1 -> 1.02) multiplies on top
-   of the 1.32, so it only ever adds further margin above the frame
-   edge, never subtracts from it — the worst case is correctly taken
-   at ambientZoom's own resting value of 1, same reasoning as before,
-   just now against a scale that lives in its own keyframes.
-
-   Translate durations unchanged (26s, 33s, 29s: no common factor,
-   already out of phase via a negative animation-delay, the same
-   de-sync technique 12B uses for the practitioner bubbles). Zoom
-   durations are new, longer, and each other's own no-common-factor
-   set too (41s, 47s, 43s), with their own independent negative delays
-   — two staggered rhythms per image instead of one, both slow. 20-47s
-   a cycle: slow enough that no one can catch it moving by staring,
-   only notice it is different after looking away.
+   12D. FORMERLY: AMBIENT DRIFT ON THE LARGE FRAMED PHOTOGRAPHS
+   .about__image, .treatments__opener img and .visit__image used to carry
+   a slow, continuous Ken Burns-style drift and zoom (ambientDrift +
+   ambientZoom keyframes) on top of the 12A scroll parallax, at the
+   owner's request. Two rounds of retuning that motion — an orbit path,
+   a split zoom cycle, linear easing to kill the stop-and-restart —
+   still read as choppy, so the owner decided he would rather the
+   photographs simply held still. The keyframes and the animation /
+   animation-delay / will-change declarations that drove them are gone;
+   these three images carry no keyframe animation of any kind here any
+   more. They are styled by the sizing/object-fit rules for their
+   classes below, the static [data-parallax] crop in 12A, and — since
+   each also sits inside a [data-reveal] container — the explicit
+   one-shot drop-and-settle entrance transform stated in 12A-i, which
+   replaced an accidental specificity collision between those first two
+   rules with a deliberate one.
    -------------------------------------------------------------------------- */
-
-@keyframes ambientDrift {
-  0%    { translate: 1.5% 0; }
-  12.5% { translate: 1.06% 2.12%; }
-  25%   { translate: 0% 3%; }
-  37.5% { translate: -1.06% 2.12%; }
-  50%   { translate: -1.5% 0; }
-  62.5% { translate: -1.06% -2.12%; }
-  75%   { translate: 0% -3%; }
-  87.5% { translate: 1.06% -2.12%; }
-  100%  { translate: 1.5% 0; }
-}
-
-@keyframes ambientZoom {
-  0%   { scale: 1; }
-  50%  { scale: 1.02; }
-  100% { scale: 1; }
-}
-
-.about__image {
-  animation: ambientDrift 26s linear infinite, ambientZoom 41s ease-in-out infinite;
-  animation-delay: -11s, -17s;
-  will-change: translate, scale;
-}
-
-.treatments__opener img {
-  animation: ambientDrift 33s linear infinite, ambientZoom 47s ease-in-out infinite;
-  animation-delay: -18s, -21s;
-  will-change: translate, scale;
-}
-
-.visit__image {
-  animation: ambientDrift 29s linear infinite, ambientZoom 43s ease-in-out infinite;
-  animation-delay: -6s, -9s;
-  will-change: translate, scale;
-}
 
 /* --------------------------------------------------------------------------
    13. SECTION: ABOUT (tan, split layout)
@@ -3008,18 +2980,30 @@ strong, b {
   font-size: var(--fs-sm);
 }
 
-.visit__hours-row.is-open-late .visit__hours-time {
-  color: var(--ink);
-  font-weight: 500;
-}
-
 .visit__hours-day {
   color: var(--ink-soft);
 }
 
+/* Every open day reads the same way: tabular numerals in the full-ink,
+   medium weight the row's own hours deserve. Only the closed day (below)
+   looks different — that contrast, not a bold-vs-not split that used to
+   track "open until 7pm" with no key on the page explaining it (and once
+   even landed on Saturday, the week's EARLIEST closing time), is what
+   now tells a visitor which row is the exception. */
 .visit__hours-time {
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* The one row that should look quieter than the rest: same tokens
+   .about__copy p (13) already uses for its own secondary/primary split,
+   just applied here in reverse — muted colour, normal weight — so
+   "Closed" reads as the odd one out rather than as an unexplained
+   change in emphasis. */
+.visit__hours-row.is-closed .visit__hours-time {
   color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .visit__media {
@@ -3465,6 +3449,42 @@ strong, b {
   height: 100%;
   object-fit: cover;
   filter: saturate(.8) contrast(1.02) brightness(.82);
+}
+
+/* THE DROP-AND-SETTLE ENTRANCE, extended here (see 12A-i for the
+   original four). room-2.jpg is the section's own full-bleed backdrop —
+   the same kind of large, high-visibility client photograph as the
+   About, Treatments-opener and Visit images — but it currently has no
+   [data-reveal] ancestor of its own (.book__stage, its actual overflow:
+   hidden frame, also directly parents .book__scrim and .container,
+   which already carries three of its own nested [data-reveal] targets;
+   adding data-reveal to .book__stage would catch those two as
+   unintended direct children too, fading the scrim itself from
+   opacity: 0 right when it is needed most to keep the closing CTA
+   legible over the photo). This rule is written to react to data-reveal
+   on .book__media directly instead — a single self-contained reveal
+   target, the same "lone .about__copy, .book__frame" shape section 12
+   already documents — which needs no wrapper and cannot touch the scrim
+   or the content it does not own. It does nothing until that attribute
+   is added: CSS-only per this pass, so flagged here for the html agent
+   rather than added by this file. [data-parallax]'s scale(1.32) is
+   reused directly (not the attribute itself, just its value) for visual
+   consistency with the other large feature photographs on the page.
+
+   Headroom: .book__stage has no fixed height, but its padding alone
+   (.book__stage .container's clamp(80px, 12vh, 140px) block, top and
+   bottom) already clears the 137.5px the 12A-i arithmetic requires for
+   a 22px drop at scale(1.32) before .book__frame, .book__panel or
+   .book__actions add a single pixel of their own real content. */
+.book__media[data-reveal] {
+  opacity: 0;
+  transform: translateY(22px) scale(1.32);
+  transition: opacity .6s var(--ease-out), transform .6s var(--ease-out);
+}
+
+.book__media[data-reveal].in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 /* Lighter than it was. The panel supplies its own local contrast, so
@@ -3955,23 +3975,33 @@ body.paused::before, body.paused::after { animation-play-state: paused !importan
     opacity: 1;
   }
 
-  [data-parallax] {
-    transform: none;
-    opacity: 1;
-  }
+  /* [data-parallax] (12A) alone no longer animates for anyone,
+     reduced-motion or not, so a bare [data-parallax] image with no
+     [data-reveal] ancestor (none remain as of this pass, but a future
+     one might) needs nothing here: transform:none would strip its
+     scale(1.32) crop for reduced-motion visitors only, leaving them
+     looking at a differently framed photo than everyone else.
 
-  /* Ambient drift (12D) stops outright. ambientZoom's own keyframes
-     already return scale to identity (1) at 0%/100%, but ambientDrift's
-     orbit does not pass through translate:0 0 at its own loop point (it
-     is a closed ellipse, not a there-and-back path — see 12D), so this
-     explicit pin is what actually puts the image at rest, the same way
-     [data-spotlight] pins back explicitly above. */
-  .about__image,
-  .treatments__opener img,
-  .visit__image {
-    animation: none;
-    translate: 0 0;
-    scale: 1;
+     The five images with the explicit drop-and-settle entrance (12A-i)
+     are different: that rule has higher specificity than
+     [data-reveal] > * / [data-stagger] > * above, so without a pin here
+     it would keep winning even under reduced motion, leaving anyone who
+     has not yet scrolled an image into view sitting at
+     translateY(22px) scale(1.32) — the collapsed .01ms transition-duration
+     above makes the eventual snap into place instant, but does nothing
+     for the time before .in is ever added. Pin all five to their settled
+     end state instead, same as [data-reveal] > * does for everything
+     else: translateY(0) scale(1) reads identically to transform:none, so
+     this loses nothing — it is genuinely their resting state, not a
+     stand-in for it, unlike the [data-parallax]-only case above. */
+  .about__media[data-reveal] .about__image,
+  .treatments__opener[data-reveal] img,
+  .visit__media[data-reveal] .visit__image,
+  .stone-interaction__media[data-reveal] .stone-interaction__bg,
+  .treatments__group[data-stagger] .treatment-row__media img,
+  .book__media[data-reveal] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   .heat-reveal .heat-reveal__item {

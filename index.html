@@ -418,17 +418,15 @@
        reflexology-specific or facial-specific photograph exists in the
        asset library, so those five rows (plus Indian Head Massage, which
        likewise has no matching photograph) reuse the site's generic
-       stills and textures: still-linen.jpg (already used in #intro),
-       still-falling.jpg (already used as the stone-interaction's ambient
-       layer), and tex-steam.jpg / tex-contour.jpg / tex-linen.jpg
+       stills and textures: still-linen.jpg (already used in #intro), and
+       tex-steam.jpg / tex-contour.jpg / tex-linen.jpg
        (already used as the Reviews, Fees and FAQ ground textures), plus
        still-table.jpg (already used in #visit). Each carries honest alt
        text describing what the image actually shows, warmth, steam,
        texture, linen, the treatment table, never a claim that it depicts
        the specific treatment beside it. The one interactive moment, press
        and hold the hot stone, sits inside Bodywork after Hot Stones,
-       staged against still-heat.jpg with still-falling.jpg layered behind
-       it for a whisper of motion.
+       staged against still-heat.jpg.
 
        Espresso band. Each .treatments__group carries data-reveal plus
        data-stagger="70" so its rows cascade in one after another, per
@@ -486,7 +484,6 @@
         <div class="stone-interaction">
           <div class="stone-interaction__media" aria-hidden="true">
             <img class="stone-interaction__bg" data-parallax src="assets/still-heat.jpg" alt="" width="1080" height="1920" loading="lazy" decoding="async">
-            <img class="stone-interaction__ambient" src="assets/still-falling.jpg" alt="" width="1080" height="1920" loading="lazy" decoding="async">
           </div>
           <button class="stone" id="heatStone" aria-describedby="heatStoneHint" aria-label="Press and hold to feel the hot stone warm">
             <svg class="stone__mark" aria-hidden="true"><use href="#cairn"/></svg>
@@ -494,8 +491,7 @@
           </button>
           <p id="heatStoneHint">Press and hold</p>
           <div class="heat-reveal" id="heatReveal" data-state="idle" aria-live="polite">
-            <p class="heat-reveal__item">Hot Stones, 45 min, $125</p>
-            <p class="heat-reveal__item">Hot Stones, 75 min, $145</p>
+            <p class="heat-reveal__item heat-reveal__line">Warm stones, deep relaxation, tension melted away.</p>
             <a class="heat-reveal__item btn btn--primary" href="https://thehealingbench.clinicsense.com/book/" rel="noopener">Book the hot stone treatment</a>
           </div>
         </div>
@@ -784,19 +780,19 @@
 
       <div class="visit__grid">
         <div class="visit__hours" data-reveal data-stagger="70">
-          <div class="visit__hours-row is-open-late">
+          <div class="visit__hours-row">
             <span class="visit__hours-day">Monday</span>
             <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
           </div>
-          <div class="visit__hours-row is-open-late">
+          <div class="visit__hours-row">
             <span class="visit__hours-day">Tuesday</span>
             <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
           </div>
-          <div class="visit__hours-row is-open-late">
+          <div class="visit__hours-row">
             <span class="visit__hours-day">Wednesday</span>
             <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
           </div>
-          <div class="visit__hours-row is-open-late">
+          <div class="visit__hours-row">
             <span class="visit__hours-day">Thursday</span>
             <span class="visit__hours-time">10:00 a.m. to 7:00 p.m.</span>
           </div>
@@ -804,11 +800,11 @@
             <span class="visit__hours-day">Friday</span>
             <span class="visit__hours-time">9:00 a.m. to 6:00 p.m.</span>
           </div>
-          <div class="visit__hours-row is-open-late">
+          <div class="visit__hours-row">
             <span class="visit__hours-day">Saturday</span>
             <span class="visit__hours-time">9:00 a.m. to 5:00 p.m.</span>
           </div>
-          <div class="visit__hours-row">
+          <div class="visit__hours-row is-closed">
             <span class="visit__hours-day">Sunday</span>
             <span class="visit__hours-time">Closed</span>
           </div>

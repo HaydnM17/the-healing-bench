@@ -4,17 +4,21 @@
 
   Vanilla JS, no libraries, no build step. Owns: the spine drive, the hold
   interaction, per-child staggered reveal choreography, the word-mask heading
-  reveal, scroll-linked parallax, the reviews depth-drift carousel, the
-  magnetic book CTA, the FAQ accordion, nav (smooth scroll, current-section
-  highlight, mobile toggle), tab visibility, live reduced-motion pinning,
-  ambient steam particles and the spine scroll-progress fill.
+  reveal, the reviews depth-drift carousel, the magnetic book CTA, the FAQ
+  accordion, nav (smooth scroll, current-section highlight, mobile toggle),
+  tab visibility, live reduced-motion pinning, ambient steam particles and
+  the spine scroll-progress fill.
 
-  Ten mechanisms, the first nine mapped one per section so no two neighbours
-  read the same way (see the bottom of this file for the map):
+  Nine mechanisms remain, numbered 1-10 with 4 retired (the scroll-linked
+  parallax that used to write --p onto [data-parallax] -- the site owner
+  found it choppy through two smoothing passes and asked for the images to
+  just sit still, so [data-parallax] is now a static CSS-only crop and
+  nothing here writes to it). The first eight mapped one per section so no
+  two neighbours read the same way (see the bottom of this file for the
+  map):
     1. word-mask heading reveal on every [data-split="words"] heading
     2. the section label rule drawing itself in, riding the reveal system
     3. per-child staggered entrances (the workhorse, most sections)
-    4. scroll-linked parallax, writing --p on [data-parallax]
     5. the practitioner bubbles, drifting on their own and opening with an
        iris reveal that rides the reveal system
     6. the reviews depth-drift carousel, self-driving, draggable
@@ -688,222 +692,6 @@
   }
 
   /* -----------------------------------------------------------------------
-     MECHANISM 4. SCROLL-LINKED PARALLAX. Writes --p, 0 to 1, onto every
-     [data-parallax] element as it travels from just entering the bottom of
-     the viewport to fully leaving the top. Agent S's CSS turns --p into an
-     actual transform (never this script: --p is a data channel, so there is
-     no risk of this colliding with a transform another mechanism writes on
-     the same element).
-
-     --p is NOT a plain linear map of scroll position. A raw 0-1 sweep
-     across the whole journey (just entering at the bottom to fully gone at
-     the top) puts the two moments where the element is fully visible but
-     not yet clipped by either edge at raw = height / (vh + height) and raw
-     = vh / (vh + height) -- both of which sit close to 0.5 whenever the
-     element is nearly as tall as the viewport. That is why the drift used
-     to be imperceptible: almost the whole 0-1 budget was spent while the
-     image was still partly off-screen, and the entire time it was actually
-     on screen and centred, --p barely moved. computeAndWrite remaps that
-     raw sweep so most of the travel happens while the element is genuinely
-     on screen, whatever its height happens to be relative to the viewport.
-
-     THE 2026-09 SMOOTHNESS PASS. The site owner reported the drift as
-     "too jumpy, too choppy, doesn't look smooth at all." Three suspects
-     were checked; two were real and are fixed below, one turned out to
-     already be fine (the rounding/delta-gate quantisation -- see the
-     arithmetic inside computeAndWrite, and do not re-open it without
-     redoing that arithmetic first).
-
-     1. THE REMAP HAD TWO CORNERS. It used to be piecewise-linear: a
-        flat-rate segment through the "fully visible" band, a shallower
-        flat-rate segment through each partial-visibility tail, meeting at
-        two hard corners where the rate of change jumped abruptly (roughly
-        2-3x, on this site's actual image sizes). A sudden mid-scroll speed
-        change reads as a stutter even though the position itself never
-        jumped or went backwards. Replaced with a single continuous curve
-        (computeAndWrite's h(t), below): a smooth, always-monotonic
-        rational easing that starts at the rate the old flat middle
-        segment ran at and eases off toward the true edges, instead of
-        switching rate outright. It lands close to, not exactly on, the
-        old 0.15/0.85 checkpoints -- see the code comment for why that
-        trade is the more robust one -- and reads as one continuous glide.
-
-     2. UPDATE CADENCE WAS TIED TO SCROLL-EVENT DISPATCH, NOT TO FRAMES.
-        The write was already rAF-scheduled, never written straight from
-        the scroll handler. But "schedule one frame when a scroll event
-        arrives, then go back to sleep" only samples geometry as often as
-        scroll events happen to be dispatched, and dispatch cadence is not
-        the same clock as the display's paint cadence -- it can burst or
-        go quiet for a stretch, especially during touch-driven momentum
-        scrolling, and each quiet stretch reads as a catch-up jump rather
-        than a glide. frame() now keeps riding requestAnimationFrame for a
-        short coast window (PARALLAX_IDLE_MS) after the last scroll/resize
-        signal, sampling live geometry every displayed frame through that
-        window instead of only when a scroll event happens to land. It
-        still comes to a full stop shortly after scrolling actually stops
-        -- this is a bounded tail, not a free-running loop -- and the
-        IntersectionObserver below still means an off-screen element costs
-        nothing regardless of how long the coast window runs.
-  ----------------------------------------------------------------------- */
-
-  function initParallax() {
-    var els = Array.prototype.slice.call(doc.querySelectorAll('[data-parallax]'));
-    if (!els.length) return { pin: noop, unpin: noop };
-
-    var lastValues = [];
-    for (var i0 = 0; i0 < els.length; i0++) lastValues.push(-1);
-
-    var active = []; // { el, idx }
-    var rafId = null;
-    var enabled = true;
-
-    // How long, after the last scroll/resize signal, frame() keeps asking
-    // for another frame on its own instead of waiting to be asked again.
-    // See the cadence note (point 2) in the big comment above: scroll-event
-    // dispatch is not the same clock as the display's paint cadence and can
-    // go quiet for a stretch mid-scroll, so this bridges that gap by
-    // sampling geometry every real frame for a short while. Long enough to
-    // cover a realistic gap between coalesced scroll events on a touch
-    // device; short enough that the loop is clearly, promptly at rest again
-    // once scrolling actually stops.
-    var PARALLAX_IDLE_MS = 200;
-    var lastActivity = 0;
-
-    function activeIndexOf(idx) {
-      for (var i = 0; i < active.length; i++) if (active[i].idx === idx) return i;
-      return -1;
-    }
-
-    function computeAndWrite(el, idx) {
-      var rect = el.getBoundingClientRect();
-      var vh = window.innerHeight || doc.documentElement.clientHeight;
-      var span = vh + rect.height;
-      var raw = span > 0 ? clamp((vh - rect.top) / span, 0, 1) : 0;
-
-      // w is half the width, in raw units, of the band where the element is
-      // fully visible and not yet clipped by either viewport edge (see the
-      // derivation in the comment above initParallax). A negative or
-      // vanishing w means the element is as tall as, or taller than, the
-      // viewport -- no such band exists worth widening -- so that case,
-      // and only that case, falls back to the plain sweep rather than
-      // dividing by a near-zero w.
-      var w = span > 0 ? (vh - rect.height) / (2 * span) : 0;
-      var p;
-      if (w <= 0.001) {
-        p = raw;
-      } else {
-        var delta = raw - 0.5;
-        var mag = Math.abs(delta);
-        var sign = delta < 0 ? -1 : 1;
-
-        // t: mag renormalised to the 0..1 half-domain, 0 at dead centre
-        // (raw = 0.5) and 1 at the true edge (raw = 0 or 1). a is this
-        // curve's slope at t = 0: 0.35/w, the same rate the old flat
-        // middle segment ran at, kept so the felt speed through the
-        // fully-visible band is unchanged by this rewrite.
-        //
-        // h(t) = a*t / (1 + (a-1)*t) is a single continuous curve from
-        // h(0)=0 to h(1)=1, steep near t=0 and easing off toward t=1,
-        // standing in for the old two straight segments without a second
-        // branch or a join to smooth by hand. Its derivative is
-        // a / (1 + (a-1)*t)^2, positive for every t in 0..1 whenever
-        // a > 0 (the denominator cannot reach 0 there), so it is
-        // monotonic for any element height -- unlike matching the old
-        // curve's checkpoints exactly would have been: solving for a
-        // that hits raw=0.5+w -> p=0.85 on the nose makes a collapse
-        // toward 0 as w approaches 0.5 (a tall element, close to the
-        // viewport's own height), which produces an almost-flat curve
-        // that then rushes at the very end -- a worse artifact than the
-        // corner it would replace. Matching the centre rate instead
-        // stays well-behaved across every w this site actually has.
-        var t = mag * 2;
-        var a = 0.35 / w;
-        var h = (a * t) / (1 + (a - 1) * t);
-        p = 0.5 + sign * h * 0.5;
-      }
-      p = clamp(p, 0, 1);
-
-      // Quantisation, investigated and left alone. Rounding to the nearest
-      // 1/500 is a step of Q = 0.002 in p. The CSS translate is
-      // (p - 0.5) * -20% of the element's own height (see 12A in
-      // styles.css), so one step moves the image Q * 0.20 * height =
-      // 0.0004 * height px. This site's [data-parallax] images run about
-      // 290-460px tall for the documented typical cases (treatment-row
-      // photos, per 12A's own comment) up to roughly 750px for the widest
-      // About/Visit photos on a wide desktop column: that is 0.12px to
-      // 0.30px per step, comfortably under the ~0.5px visibility floor.
-      // It would take a roughly 1250px-tall element to cross that floor,
-      // and nothing on this page is that tall. The delta gate just below
-      // (0.001) is tighter than the 0.002 rounding step, so it never
-      // actually withholds a write the rounding did not already coalesce
-      // -- both numbers are correct as they stand. This was not the
-      // jumpiness; see points 1 and 2 in the comment above instead.
-      var rounded = Math.round(p * 500) / 500;
-      if (Math.abs(rounded - lastValues[idx]) < 0.001) return; // delta gate
-      lastValues[idx] = rounded;
-      el.style.setProperty('--p', rounded.toFixed(4));
-    }
-
-    function frame(now) {
-      rafId = null;
-      if (!enabled || reduced() || tabPaused || !active.length) return;
-      for (var i = 0; i < active.length; i++) computeAndWrite(active[i].el, active[i].idx);
-      // Keep sampling every real frame for a short while after the last
-      // scroll/resize signal, rather than waiting for the next 'scroll'
-      // event to ask for one -- see PARALLAX_IDLE_MS above. Once that
-      // window elapses with no fresh activity, this stops rescheduling
-      // itself and the loop is fully at rest again, exactly as before.
-      if (now - lastActivity < PARALLAX_IDLE_MS) rafId = requestAnimationFrame(frame);
-    }
-
-    function schedule() {
-      lastActivity = performance.now();
-      if (rafId !== null) return;
-      if (!enabled || reduced() || tabPaused || !active.length) return;
-      rafId = requestAnimationFrame(frame);
-    }
-
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-          var entry = entries[i];
-          var idx = els.indexOf(entry.target);
-          if (idx === -1) continue;
-          var pos = activeIndexOf(idx);
-          if (entry.isIntersecting) {
-            if (pos === -1) active.push({ el: entry.target, idx: idx });
-          } else if (pos !== -1) {
-            active.splice(pos, 1);
-          }
-        }
-        schedule();
-      }, { rootMargin: '25% 0px 25% 0px', threshold: 0 });
-      for (var i1 = 0; i1 < els.length; i1++) io.observe(els[i1]);
-    } else {
-      for (var i2 = 0; i2 < els.length; i2++) active.push({ el: els[i2], idx: i2 });
-    }
-
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule, { passive: true });
-    pauseListeners.push(function (paused) { if (!paused) schedule(); });
-
-    function pin() {
-      enabled = false;
-      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-      for (var i = 0; i < els.length; i++) els[i].style.setProperty('--p', '0');
-    }
-    function unpin() {
-      enabled = true;
-      for (var i = 0; i < lastValues.length; i++) lastValues[i] = -1;
-      schedule();
-    }
-
-    if (reduced()) pin(); else schedule();
-
-    return { pin: pin, unpin: unpin };
-  }
-
-  /* -----------------------------------------------------------------------
      MECHANISM 6. THE REVIEWS DEPTH-DRIFT CAROUSEL. One scroll position
      drives everything: a continuous idle drift, and every interaction
      (drag/swipe, arrow keys, the prev/next buttons) moves that same
@@ -1499,14 +1287,15 @@
       stone.setAttribute('aria-label', 'Press and hold to warm the stone');
     }
 
+    var initialLabel = stone.getAttribute('aria-label') || '';
+
     function updateAccessibleLabel() {
-      if (!ownsLabel) return;
       if (state === 'done') {
         stone.setAttribute('aria-label', reduced()
-          ? 'Stone already warmed. Pricing revealed below.'
-          : 'Stone warmed. Pricing revealed below.');
+          ? 'Stone already warmed.'
+          : 'Stone warmed.');
       } else {
-        stone.setAttribute('aria-label', 'Press and hold to warm the stone');
+        stone.setAttribute('aria-label', initialLabel);
       }
     }
 
@@ -1526,7 +1315,7 @@
       if (revealEl) revealEl.setAttribute('data-state', next);
       if (next === 'done' && hint && !pinnedByReducedMotion) {
         hint.setAttribute('aria-live', hint.getAttribute('aria-live') || 'polite');
-        hint.textContent = 'Warmth complete. Pricing revealed below.';
+        hint.textContent = 'Warmth complete.';
       }
       updateAccessibleLabel();
     }
@@ -1664,13 +1453,42 @@
   }
 
   /* -----------------------------------------------------------------------
-     AMBIENT STEAM PARTICLES, hot stone section only, whisper level.
-     Canvas-based. Pauses off-screen and when body.paused. Never runs under
-     reduced motion. Low particle cap on phones. Carried over from v2, with
-     one change for direction v3: the particle colour is read from the host
-     section's own computed text colour at runtime instead of a hardcoded
-     dark-ground token, so it stays legible regardless of which warm band
-     the stone ends up living on.
+     AMBIENT STEAM PARTICLES, hot stone section only.
+     Canvas-based, spanning the section's full width and height so the
+     bubbles read as background texture behind the whole section rather
+     than a band pinned to the bottom edge. Population scales with section
+     area rather than a flat count (a lower absolute ceiling on phones for
+     GPU budget), and each particle's own life is matched to its own rise
+     speed so a lap really does travel from the bottom of the section to
+     the top instead of fading out a few dozen pixels up.
+
+     Two scroll couplings, both sampled and eased once per rAF frame
+     rather than driven off scroll events, so neither one can go choppy
+     through a gap in event delivery the way a scroll-position map would:
+
+     - Velocity coupling: every frame reads window.scrollY, turns the
+       delta into an eased px/s estimate, and uses that (clamped) as a
+       temporary multiplier on the particles' resting upward speed.
+       Bubbles always drift upward on their own; scrolling speeds that up
+       for as long as it continues, then the multiplier eases back to 1x.
+       This is deliberately NOT a scroll-position map - it is a
+       continuously-integrated velocity multiplier, so motion stays smooth
+       even when scroll events arrive sparsely.
+
+     - Density/wave coupling: each particle carries a threshold along the
+       section's own scroll progress (0 at the section's top edge, 1 at
+       its bottom edge) and fades in and out around that threshold, so the
+       section reads empty near its top and the bubbles gather into full
+       population by the time the visitor has scrolled into its body. The
+       progress value itself is eased so the fill reads as one gathering
+       wave rather than particles popping in, and it is fully reversible:
+       scrolling back up drains the wave out the same way it filled in.
+
+     Pauses off-screen and when body.paused (tabPaused), and is inert
+     under reduced motion, same as before. The particle colour is still
+     read from the host section's own computed text colour at runtime
+     instead of a hardcoded dark-ground token, so it stays legible
+     regardless of which warm band the stone ends up living on.
   ----------------------------------------------------------------------- */
 
   function initSteam() {
@@ -1703,7 +1521,39 @@
     var onScreen = false;
     var active = false;
 
-    function particleCap() { return phoneMQ.matches ? 6 : 16; }
+    // Scroll-velocity coupling state: sampled and eased once per rAF
+    // frame, never driven directly off scroll events.
+    var lastScrollY = 0;
+    var scrollSpeed = 0; // eased px/s estimate of how fast the page is moving
+    var STEAM_SCROLL_REFERENCE = 2200; // smoothed px/s that maps to +1x boost
+    var STEAM_SCROLL_BOOST_MAX = 2.2; // clamp: a fast flick tops out at 3.2x resting speed
+    var STEAM_SCROLL_ATTACK_TAU = 0.15; // seconds: how fast the estimate rises
+    var STEAM_SCROLL_DECAY_TAU = 0.5; // seconds: how gently it settles back down
+
+    // Density/wave coupling state: eased section-scroll progress, 0 at the
+    // section's own top edge, 1 at its own bottom edge.
+    var sectionProgress = 0;
+    var STEAM_PROGRESS_TAU = 0.25; // seconds: eases the wave so a jump-scroll can't pop it
+    var STEAM_REVEAL_BAND = 0.18; // width, in progress units, of each particle's fade-in
+    var STEAM_THRESHOLD_MIN = 0.05;
+    var STEAM_THRESHOLD_RANGE = 0.65; // thresholds spread across [0.05, 0.70] of the section
+
+    // Population scales with section area rather than a flat count, so a
+    // short wide desktop section and a tall narrow phone section both fill
+    // without either looking sparse or turning into visual noise. Phones
+    // also carry a lower absolute ceiling for GPU budget.
+    var STEAM_AREA_PER_PARTICLE_DESKTOP = 26000;
+    var STEAM_AREA_PER_PARTICLE_PHONE = 21000;
+    var STEAM_CAP_MIN_DESKTOP = 36, STEAM_CAP_MAX_DESKTOP = 70;
+    var STEAM_CAP_MIN_PHONE = 18, STEAM_CAP_MAX_PHONE = 36;
+
+    function particleCap() {
+      var area = Math.max(1, width * height);
+      if (phoneMQ.matches) {
+        return clamp(Math.round(area / STEAM_AREA_PER_PARTICLE_PHONE), STEAM_CAP_MIN_PHONE, STEAM_CAP_MAX_PHONE);
+      }
+      return clamp(Math.round(area / STEAM_AREA_PER_PARTICLE_DESKTOP), STEAM_CAP_MIN_DESKTOP, STEAM_CAP_MAX_DESKTOP);
+    }
 
     function resize() {
       dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1714,18 +1564,26 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function spawn(p) {
-      p.x = Math.random() * width;
-      p.y = height + Math.random() * 60;
+    function computeSectionProgress() {
+      var rect = host.getBoundingClientRect();
+      var vh = window.innerHeight || doc.documentElement.clientHeight || 1;
+      return clamp((vh * 0.5 - rect.top) / Math.max(1, rect.height), 0, 1);
+    }
+
+    function spawn(p, scatter) {
+      scatter = scatter || 0; // 0 = fresh from the bottom, >0 = fast-forwarded up the section
       p.r = 8 + Math.random() * 16;
-      p.vy = 8 + Math.random() * 10; // px per second, upward
+      p.vy = 8 + Math.random() * 10; // px per second, upward, resting pace
       p.sway = 8 + Math.random() * 14;
       p.phase = Math.random() * Math.PI * 2;
       p.freq = 0.4 + Math.random() * 0.3;
       p.alpha = 0.04 + Math.random() * 0.05; // whisper level
-      p.age = 0;
-      p.life = 7 + Math.random() * 5;
-      p.baseX = p.x;
+      p.threshold = STEAM_THRESHOLD_MIN + Math.random() * STEAM_THRESHOLD_RANGE;
+      p.baseX = Math.random() * width;
+      var startY = height + 20 + Math.random() * 60; // just below the fold
+      p.life = Math.max(4, (startY + 40) / p.vy); // seconds to cross from spawn to just above the top
+      p.age = scatter * p.life;
+      p.y = startY - p.vy * p.age; // fast-forward position to match a staggered/scattered start
     }
 
     function ensureParticles() {
@@ -1733,8 +1591,7 @@
       if (particles.length > cap) particles.length = cap;
       while (particles.length < cap) {
         var p = {};
-        spawn(p);
-        p.age = Math.random() * p.life; // stagger initial phases
+        spawn(p, Math.random()); // scattered across the full height on first fill
         particles.push(p);
       }
     }
@@ -1748,19 +1605,36 @@
         return;
       }
 
+      // Sample real scroll position once per animation frame (never off
+      // the scroll event itself) so the boost keeps integrating smoothly
+      // through any gap in event delivery.
+      var scrollY = window.scrollY || doc.documentElement.scrollTop || 0;
+      var speedSample = dt > 0 ? Math.abs(scrollY - lastScrollY) / dt : 0;
+      lastScrollY = scrollY;
+      var speedTau = speedSample > scrollSpeed ? STEAM_SCROLL_ATTACK_TAU : STEAM_SCROLL_DECAY_TAU;
+      scrollSpeed += (speedSample - scrollSpeed) * (1 - Math.exp(-dt / speedTau));
+      var velocityMultiplier = 1 + clamp(scrollSpeed / STEAM_SCROLL_REFERENCE, 0, STEAM_SCROLL_BOOST_MAX);
+
+      var targetProgress = computeSectionProgress();
+      sectionProgress += (targetProgress - sectionProgress) * (1 - Math.exp(-dt / STEAM_PROGRESS_TAU));
+
       ctx.clearRect(0, 0, width, height);
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         p.age += dt;
         if (p.age >= p.life || p.y < -40) { spawn(p); continue; }
-        p.y -= p.vy * dt;
+        p.y -= p.vy * velocityMultiplier * dt;
         var t = clamp(p.age / p.life, 0, 1);
-        var fade = Math.sin(Math.PI * t);
-        var x = p.baseX + Math.sin(p.age * p.freq + p.phase) * p.sway;
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + (p.alpha * fade).toFixed(3) + ')';
-        ctx.arc(x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
+        var lifeFade = Math.sin(Math.PI * t);
+        var reveal = clamp((sectionProgress - p.threshold) / STEAM_REVEAL_BAND + 0.5, 0, 1);
+        var alpha = p.alpha * lifeFade * reveal;
+        if (alpha > 0.002) {
+          var x = p.baseX + Math.sin(p.age * p.freq + p.phase) * p.sway;
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha.toFixed(3) + ')';
+          ctx.arc(x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       rafId = requestAnimationFrame(tick);
@@ -1773,6 +1647,9 @@
       resize();
       ensureParticles();
       lastTick = 0;
+      lastScrollY = window.scrollY || doc.documentElement.scrollTop || 0;
+      scrollSpeed = 0;
+      sectionProgress = computeSectionProgress();
       rafId = requestAnimationFrame(tick);
     }
 
@@ -1797,7 +1674,9 @@
       onScreen = false; // cannot detect visibility safely: skip the ambient effect
     }
 
-    window.addEventListener('resize', function () { if (active) resize(); }, { passive: true });
+    window.addEventListener('resize', function () {
+      if (active) { resize(); ensureParticles(); }
+    }, { passive: true });
     pauseListeners.push(function () { maybeStart(); });
 
     function pin() { stop(); }
@@ -2286,7 +2165,6 @@
     initNav();
     var reveal = initReveal();
     var wordSplit = initWordSplit();
-    var parallax = initParallax();
     var carousels = initCarousels();
     var magnetic = initMagnetic();
     var progress = initProgress();
@@ -2297,7 +2175,7 @@
     var spotlight = initSpotlight();
     initJumpArrows();
 
-    var pinnable = [spine, reveal, wordSplit, parallax, carousels, magnetic, progress, heat, steam, spotlight];
+    var pinnable = [spine, reveal, wordSplit, carousels, magnetic, progress, heat, steam, spotlight];
 
     function pinToFinalStates() {
       for (var i = 0; i < pinnable.length; i++) pinnable[i].pin();
@@ -2342,8 +2220,13 @@
                              .treatment-row, plus mechanism 8, the
                              press-and-hold heat stone, big moment three
     Fees (cream)          -> mechanism 3's scale-and-fade variant, per panel
-    Visit (tan)           -> mechanism 4, scroll-linked parallax on the
-                             section's own photo layer (data-parallax)
+    Visit (tan)           -> no distinct mechanism of its own any more.
+                             The photo (data-parallax) used to carry
+                             mechanism 4, scroll-linked parallax; that has
+                             been retired and the image is now a static
+                             CSS-only crop, so all that is left here is
+                             mechanism 3's plain staggered entrance on
+                             .visit__hours, shared with About/Fees/FAQ
     Reviews (espresso)    -> mechanism 6, the self-driving depth-drift
                              carousel
     FAQ (cream)           -> mechanism 3, plain per-child staggered

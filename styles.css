@@ -2526,6 +2526,43 @@ strong, b {
   color: var(--ink-soft);
 }
 
+/* Three cards, one grid row: at 1000px+ .practitioners__grid switches to
+   three columns and (default align-items: stretch) every card is
+   stretched to match the tallest. Deborah's and Naira's cards carry a
+   title line and a service line before the quote; Laurette's goes
+   straight from name to quote, because neither is confirmed yet and
+   this build does not invent credentials for a real person. Left as
+   plain block flow, that shortfall became dead air trailing below her
+   quote, which is what actually reads as "broken" rather than
+   "reserved": an empty block at the bottom of one card in an otherwise
+   even row.
+
+   Turning the card into a column flex box and letting the quote's own
+   margin-top consume the slack moves that leftover space above the
+   quote instead of below it, and pins every card's quote and
+   attribution to the same bottom line. The two fuller cards barely
+   move, since there is little or no slack for them to absorb;
+   Laurette's quote sits lower, with more air above it, but ends flush
+   with the other two. That reads as deliberate editorial spacing, not a
+   hole in the layout. Scoped to the same breakpoint as the three-column
+   grid, so the single-column stack below 1000px, where each card is
+   already sized to its own content with nothing to distribute, is
+   untouched. */
+@media (min-width: 1000px) {
+  .practitioner-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .practitioner-card__body {
+    flex: 1 1 auto;
+  }
+
+  .practitioner-card__quote {
+    margin-top: auto;
+  }
+}
+
 /* --------------------------------------------------------------------------
    15. SECTION: TREATMENTS (espresso, image-led)
    massage-1.jpg opens the section full width in .treatments__opener, the
